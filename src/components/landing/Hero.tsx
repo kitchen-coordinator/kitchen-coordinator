@@ -49,7 +49,7 @@ export default function Hero() {
               >
                 Welcome to
                 {' '}
-                <span style={{ color: 'var(--fern-green)' }}>Pantry Pals</span>
+                <span style={{ color: 'var(--fern-green)' }}>Kitchen Coordinator</span>
               </motion.h1>
 
               <motion.p

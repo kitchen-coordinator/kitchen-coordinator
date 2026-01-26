@@ -29,7 +29,7 @@ export default function SignOutPage() {
       <div className={styles.formWrapper}>
         <h1 className={styles.title}>Sign Out</h1>
         <p className={styles.descriptionCentered}>
-          Are you sure you want to sign out of your Pantry Pal account?
+          Are you sure you want to sign out of your Kitchen Coordinator account?
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '25px' }}>

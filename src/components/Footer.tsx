@@ -26,7 +26,7 @@ const Footer = () => {
                   onError={() => setImgSrc('/fallback-logo.png')}
                 />
               </div>
-              <h5 className="fw-bold mb-0">Pantry Pals</h5>
+              <h5 className="fw-bold mb-0">Kitchen Coordinator</h5>
             </Link>
 
             <p className="footer-text-muted small">
@@ -104,7 +104,7 @@ const Footer = () => {
               {' '}
               {currentYear}
               {' '}
-              Pantry Pals. All Rights Reserved.
+              Kitchen Coordinator. All Rights Reserved.
             </Col>
           </Row>
         </Container>

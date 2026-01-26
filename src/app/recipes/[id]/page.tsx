@@ -30,7 +30,7 @@ export default async function RecipeDetailPage({ params }: PageProps) {
   // Create a set of pantry item names (lowercase for case-insensitive matching)
   const pantryNames = new Set(pantry.map((p) => p.name.toLowerCase()));
 
-  const displayOwner = recipe.owner?.includes('admin@foo.com') ? ['Pantry Pals Team'] : recipe.owner;
+  const displayOwner = recipe.owner?.includes('admin@foo.com') ? ['Kitchen Coordinator Team'] : recipe.owner;
 
   // Only use ingredientItems from the relation
   const ingredientItems = recipe.ingredientItems ?? [];
