@@ -42,11 +42,11 @@ const About = () => (
                 marginBottom: '1rem',
               }}
             >
-              About Pantry Pal
+              About Kitchen Coordinator
             </h1>
             <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
-              Pantry Pal is an application designed to help users keep track of
-              the food items they already have at home. With Pantry Pal you
+              Kitchen Coordinator is an application designed to help users keep track of
+              the food items they already have at home. With Kitchen Coordinator you
               can:
             </p>
             <ul
@@ -57,7 +57,7 @@ const About = () => (
               }}
             >
               <li>
-                Track your pantry items - log what you have, how much you have,
+                Track what&apos;s in stock - log what you have, how much you have,
                 and when it expires
               </li>
               <li>
@@ -65,11 +65,11 @@ const About = () => (
                 you&apos;re not caught off guard when cooking
               </li>
               <li>
-                Get recipe ideas - use the items you already have at home to
+                Easy meal planning - use the items you already have at home to
                 find inspiration for meals
               </li>
               <li>
-                Build a shopping list - easily add items to a list as things are
+                Simplified grocery shopping - easily add items to a shopping list as things are
                 running low or out of stock
               </li>
             </ul>
@@ -102,10 +102,15 @@ const About = () => (
               Why We Built It
             </h2>
             <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
-              Our team created Pantry Pal to address the common problem of food
-              waste and disorganization in the kitchen. We wanted to build a
-              tool that would help people make the most of the food they have,
-              reduce waste, and save money by avoiding unnecessary purchases.
+              Our team is dedicated to this project to address food
+              waste and disorganization in the kitchen. Many people struggle to keep track of
+              what they have at home, leading to forgotten items that expire or go unused.
+              This not only wastes food but also money.
+            </p>
+            <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
+              With Kitchen Coordinator, we wanted to offer a simple tool to help people stay organized,
+              make the most of the food they already have,
+              and ultimately make cooking at home easier and more enjoyable.
             </p>
           </Col>
         </Row>
@@ -130,19 +135,33 @@ const About = () => (
           <Col>
             <h2 style={{ marginBottom: '1rem' }}>Looking Ahead</h2>
             <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
-              We&apos;re excited about the future of Pantry Pal and have plans
+              This application is a continuation of a team project developed for:&nbsp;
+              <a
+                href="https://pantry-pals.vercel.app/"
+                style={{
+                  color: 'var(--timberwolf)',
+                  fontSize: '1.1rem',
+                  lineHeight: '1.6',
+                }}
+              >
+                ICS 414 at the University of Hawaii at Manoa.
+              </a>
+            </p>
+            <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
+              We&apos;re excited about the future of Kitchen Coordinator and have plans
               to add even more features to make it an indispensable tool for
               home cooks. Some of the features we&apos;re considering include:
             </p>
             <ul style={{ fontSize: '1.05rem', lineHeight: '1.6' }}>
               <li>Barcode scanning for easy item entry</li>
               <li>Recipe suggestions based on dietary restrictions</li>
-              <li>Integration with grocery delivery services</li>
               <li>Sharing pantry lists with family members or roommates</li>
               <li>Notifications when an item is about to expire</li>
+              <li>Mobile friendly UI to access your pantry on the go</li>
+              <li>Estimated cost of each recipe</li>
             </ul>
             <p style={{ marginTop: '1rem' }}>
-              We&apos;re committed to continuously improving Pantry Pal and
+              We&apos;re committed to continuously improving Kitchen Coordinator and
               making it the best it can be for our users.
             </p>
           </Col>
@@ -182,7 +201,7 @@ const About = () => (
               }}
             >
               Click to learn more about our development
-              process and our pantry pals team
+              process and our team
             </a>
           </Col>
         </Row>
