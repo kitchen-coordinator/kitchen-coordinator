@@ -73,7 +73,7 @@ const authOptions: NextAuthOptions = {
       };
     },
     redirect({ baseUrl }) {
-      return `${baseUrl}/dashboard`;
+      return baseUrl;
     },
   },
   pages: {
