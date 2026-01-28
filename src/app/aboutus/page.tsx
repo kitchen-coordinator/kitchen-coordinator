@@ -22,8 +22,8 @@ const About = () => (
             transition={{ duration: 0.6 }}
           >
             <Image
-              src="/pantrypals-logo.png"
-              alt="Pantry Pals Logo"
+              src="/kitchen-coordinator-logo.png"
+              alt="Kitchen Coordinator Logo"
               width={250}
               height={250}
               className="rounded-lg shadow"

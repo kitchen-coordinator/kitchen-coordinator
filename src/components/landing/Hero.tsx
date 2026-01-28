@@ -28,8 +28,8 @@ export default function Hero() {
               whileHover={{ scale: 1.04, rotate: 0.8 }}
             >
               <Image
-                src="/pantrypals-logo.png"
-                alt="Pantry Pals Logo"
+                src="/kitchen-coordinator-logo.png"
+                alt="Kitchen Coordinator Logo"
                 width={420}
                 height={420}
                 style={{ backgroundColor: 'white' }}
