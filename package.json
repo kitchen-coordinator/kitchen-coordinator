@@ -9,6 +9,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "playwright-development": "npx playwright test",
     "test-acceptance-ci": "testcafe 'edge:headless' tests/acceptance/*.testcafe.js --app 'npm run build && npm run start' --window-size 1920,1080 --app-init-delay 60000",
     "test-acceptance-local": "testcafe 'chrome' tests/acceptance/*.testcafe.js --app 'npm run build && npm run start' --window-size 1920,1080 --app-init-delay 20000",
     "test-acceptance-single": "testcafe 'chrome:headless' tests/acceptance/*.testcafe.js --window-size 1920,1080",
