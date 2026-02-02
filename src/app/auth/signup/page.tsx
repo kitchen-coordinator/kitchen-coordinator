@@ -31,7 +31,7 @@ const SignUp = () => {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      router.replace('/list');
+      router.replace('/dashboard');
     }
   }, [status, router]);
 
@@ -133,7 +133,7 @@ const SignUp = () => {
       if (signInResult?.error) throw new Error(signInResult.error);
 
       setVerificationSuccess('Email verified! Redirecting...');
-      router.push('/list');
+      router.push('/dashboard');
     } catch (err: any) {
       setVerificationError(err.message || 'Verification failed.');
     } finally {
