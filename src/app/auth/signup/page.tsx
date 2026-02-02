@@ -31,7 +31,7 @@ const SignUp = () => {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      router.replace('/list');
+      router.replace('/dashboard');
     }
   }, [status, router]);
 
