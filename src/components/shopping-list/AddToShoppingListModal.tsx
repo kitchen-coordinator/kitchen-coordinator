@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import swal from 'sweetalert';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { AddShoppingListItemSchema } from '@/lib/validationSchemas';
 import { addShoppingListItem } from '@/lib/dbActions';
@@ -17,7 +17,7 @@ type AddItemValues = {
   name: string;
   quantity: number;
   shoppingListId: number;
-  price?: number;
+  price?: number | null;
   unit?: string;
 };
 
@@ -40,24 +40,45 @@ const AddToShoppingListModal = ({
   const { data: session } = useSession();
   const owner = session?.user?.email;
 
+  // list of units
+  const unitOptions = useMemo(
+    () => ['kg', 'g', 'lb', 'oz', 'pcs', 'ml', 'l', 'Other'],
+    [],
+  );
+  const [showCustomUnit, setShowCustomUnit] = useState(false);
+
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<AddItemValues>({
     resolver: yupResolver(AddShoppingListItemSchema),
     defaultValues: {
       name: prefillName,
-      quantity: 0,
-      unit: '',
-      price: 0,
+      quantity: 1,
+      unit: 'kg',
+      price: undefined,
       shoppingListId: shoppingLists[0]?.id ?? 0,
     },
   });
+  const selectedUnit = watch('unit');
 
   useEffect(() => {
-    if (!show) reset({ name: prefillName });
+    if (selectedUnit === 'Other') {
+      setShowCustomUnit(true);
+    } else {
+      setShowCustomUnit(false);
+    }
+  }, [selectedUnit]);
+
+  useEffect(() => {
+    if (!show) {
+      reset({ name: prefillName, quantity: 1, price: undefined, unit: 'kg' });
+      setShowCustomUnit(false);
+    }
   }, [show, reset, prefillName]);
 
   const handleClose = () => {
@@ -67,24 +88,20 @@ const AddToShoppingListModal = ({
 
   const onSubmit = async (data: AddItemValues) => {
     if (!owner) {
-      swal('Error', 'You must be signed in to add to your shopping list.', 'error');
+      swal('Error', 'You must be signed in...', 'error');
       return;
     }
 
     try {
-      const price = typeof data.price === 'number'
-        ? data.price
-        : parseFloat(data.price || '0');
-
       await addShoppingListItem({
         name: data.name.trim(),
         quantity: Number(data.quantity),
-        unit: data.unit || '',
-        price,
+        unit: data.unit === 'Other' ? '' : data.unit || '',
+        price: data.price ?? 0,
         shoppingListId: Number(data.shoppingListId),
       });
 
-      swal('Success', 'Item added to your shopping list', 'success', { timer: 2000 });
+      swal('Success', 'Item added...', 'success', { timer: 2000 });
       handleClose();
       router.refresh();
     } catch (err: any) {
@@ -109,7 +126,7 @@ const AddToShoppingListModal = ({
           </Form.Group>
         </Col>
 
-        <Col xs={3}>
+        <Col xs={2}>
           <Form.Group>
             <Form.Label>Qty</Form.Label>
             <Form.Control
@@ -121,11 +138,36 @@ const AddToShoppingListModal = ({
             <div className="invalid-feedback">{errors.quantity?.message}</div>
           </Form.Group>
         </Col>
-
-        <Col xs={3}>
+        <Col xs={4}>
           <Form.Group>
             <Form.Label>Unit</Form.Label>
-            <Form.Control type="text" {...register('unit')} />
+            {!showCustomUnit ? (
+              <Form.Select {...register('unit')}>
+                {unitOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </Form.Select>
+            ) : (
+              <InputGroup>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter unit..."
+                  {...register('unit')}
+                  autoFocus
+                />
+                <Button
+                  variant="outline-secondary"
+                  onClick={() => {
+                    setValue('unit', 'kg');
+                    setShowCustomUnit(false);
+                  }}
+                >
+                  ✕
+                </Button>
+              </InputGroup>
+            )}
           </Form.Group>
         </Col>
       </Row>
@@ -138,13 +180,15 @@ const AddToShoppingListModal = ({
               <InputGroup.Text>$</InputGroup.Text>
               <Form.Control
                 type="number"
-                step="0.01"
+                step="0.05"
                 min="0"
-                {...register('price', { valueAsNumber: true })}
+                {...register('price')}
                 className={`${errors.price ? 'is-invalid' : ''}`}
               />
             </InputGroup>
-            <div className="invalid-feedback">{errors.price?.message}</div>
+            <div className="text-danger" style={{ fontSize: '0.875em' }}>
+              {errors.price?.message}
+            </div>
           </Form.Group>
         </Col>
 
@@ -152,7 +196,7 @@ const AddToShoppingListModal = ({
           <Form.Group>
             <Form.Label>List</Form.Label>
             <Form.Select
-              {...register('shoppingListId', { valueAsNumber: true })}
+              {...register('shoppingListId')}
               defaultValue={shoppingLists[0]?.id ?? ''}
             >
               <option value="">Choose a list…</option>
@@ -162,7 +206,9 @@ const AddToShoppingListModal = ({
                 </option>
               ))}
             </Form.Select>
-            <div className="invalid-feedback">{errors.shoppingListId?.message}</div>
+            <div className="text-danger" style={{ fontSize: '0.875em' }}>
+              {errors.shoppingListId?.message}
+            </div>
           </Form.Group>
         </Col>
       </Row>
@@ -176,7 +222,10 @@ const AddToShoppingListModal = ({
         <Col>
           <Button
             type="button"
-            onClick={() => reset({ name: prefillName })}
+            onClick={() => {
+              reset({ name: prefillName, quantity: 1, price: undefined, unit: 'kg' });
+              setShowCustomUnit(false);
+            }}
             variant="warning"
             className="btn-reset"
           >
