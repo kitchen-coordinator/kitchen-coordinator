@@ -48,3 +48,16 @@ settings.production.json
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+<<<<<<< Updated upstream
+=======
+
+# Playwright
+node_modules/
+/playwright/.auth/
+
+
+# Notes
+auth-page-protection-analysis.txt
+testcafe-ts-issue-report.txt
+deep-dive-signin-issue.txt
+>>>>>>> Stashed changes
