@@ -52,3 +52,6 @@ settings.production.json
 # Playwright
 node_modules/
 /playwright/.auth/
+auth-page-protection-analysis.txt
+deep-dive-signin-issue.txt
+testcafe-ts-issue-report.txt
