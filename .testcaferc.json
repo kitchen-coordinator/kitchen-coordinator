@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "typescript": {
+      // Point TestCafe at a dedicated TS config so we can stub heavy deps like @prisma/client
+      "configPath": "tsconfig.testcafe.json"
+    }
+  }
+}
+
+

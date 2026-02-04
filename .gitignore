@@ -48,7 +48,3 @@ settings.production.json
 /playwright-report/
 /blob-report/
 /playwright/.cache/
-
-# Playwright
-node_modules/
-/playwright/.auth/

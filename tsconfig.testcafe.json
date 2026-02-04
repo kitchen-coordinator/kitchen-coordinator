@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      // Use a lightweight stub for @prisma/client so TestCafe's TS compiler
+      // doesn't have to parse Prisma's complex generated .d.ts (which requires a newer TS).
+      "@prisma/client": ["./tests/prisma-client-stub"]
+    }
+  },
+  "include": [
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ]
+}
+
