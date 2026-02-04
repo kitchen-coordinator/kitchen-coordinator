@@ -59,5 +59,9 @@ node_modules/
 # Notes
 auth-page-protection-analysis.txt
 testcafe-ts-issue-report.txt
+<<<<<<< Updated upstream
+deep-dive-signin-issue.txt
+>>>>>>> Stashed changes
+=======
 deep-dive-signin-issue.txt
 >>>>>>> Stashed changes
