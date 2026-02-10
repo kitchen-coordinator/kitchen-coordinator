@@ -14,6 +14,8 @@ const ProduceItem = ({
   name,
   quantity,
   unit,
+  displayQuantity,
+  displayUnit,
   type,
   location,
   storage,
@@ -39,8 +41,8 @@ const ProduceItem = ({
         body: JSON.stringify({
           owner,
           name,
-          quantity: Number(quantity),
-          unit: unit ?? '',
+          quantity: Number(displayQuantity ?? quantity),
+          unit: (displayUnit ?? unit) ?? '',
         }),
       });
 
@@ -67,8 +69,8 @@ const ProduceItem = ({
           {(typeof location === 'object' ? location?.name : location) || 'N/A'}
         </td>
         <td>
-          {quantity.toString()}
-          {unit ? ` ${unit}` : ''}
+          {(displayQuantity ?? quantity).toString()}
+          {(displayUnit ?? unit) ? ` ${(displayUnit ?? unit)}` : ''}
         </td>
         <td>{safeRestock}</td>
         <td>{expiration ? new Date(expiration).toISOString().split('T')[0] : 'N/A'}</td>
@@ -104,6 +106,8 @@ const ProduceItem = ({
           name,
           quantity,
           unit,
+          displayQuantity,
+          displayUnit,
           type,
           location,
           storage,
@@ -123,6 +127,8 @@ const ProduceItem = ({
           name,
           quantity,
           unit,
+          displayQuantity,
+          displayUnit,
           type,
           location,
           storage,

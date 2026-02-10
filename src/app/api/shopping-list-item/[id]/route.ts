@@ -30,8 +30,13 @@ export async function DELETE(
     await prisma.produce.create({
       data: {
         name: item.name,
+
         quantity: item.quantity,
         unit: item.unit || '',
+
+        displayQuantity: item.quantity,
+        displayUnit: item.unit || '',
+
         type: 'Other',
         owner: item.shoppingListId.toString(),
         locationId: location.id,
