@@ -75,21 +75,16 @@ export default function DashboardMenu({ ownerEmail, recipes, produce }: Dashboar
           variants={parent}
           initial="hidden"
           animate="show"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            justifyItems: 'center',
-          }}
         >
           {menuItems.map((itemData) => (
             <motion.div
               key={itemData.href}
               variants={item}
-              whileHover={{
-                scale: 1.06,
-                y: -5,
-              }}
+              whileHover={{ scale: 1.06, y: -5 }}
               transition={{ duration: 0.15 }}
+              className="col-4 d-flex justify-content-center"
+            >
+            <div
               style={{
                 background: itemData.color,
                 color: 'white',
@@ -100,7 +95,6 @@ export default function DashboardMenu({ ownerEmail, recipes, produce }: Dashboar
                 textAlign: 'center',
                 cursor: 'pointer',
                 boxShadow: '0 6px 14px rgba(0, 0, 0, 0.15)',
-                transition: 'all 0.25s ease',
               }}
             >
               <Link
@@ -135,6 +129,7 @@ export default function DashboardMenu({ ownerEmail, recipes, produce }: Dashboar
                   {itemData.label}
                 </span>
               </Link>
+            </div>
             </motion.div>
           ))}
         </motion.div>
