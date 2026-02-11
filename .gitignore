@@ -29,6 +29,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env.local
 .env
 
 # vercel
@@ -48,3 +49,7 @@ settings.production.json
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+auth-page-protection-analysis.txt
+auth-page-protection-analysis.txt
+auth-page-protection-analysis.txt
+BYPASS_EMAIL_IMPLEMENTATION.md

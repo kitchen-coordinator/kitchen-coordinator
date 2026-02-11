@@ -31,7 +31,7 @@ const SignUp = () => {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      router.replace('/list');
+      router.replace('/dashboard');
     }
   }, [status, router]);
 
@@ -115,14 +115,32 @@ const SignUp = () => {
     setIsSubmitting(true);
     setVerificationError('');
 
+    // TODO: Likely more comprehensive to palce the if statement
+    //  within the try statement as to not loose other functionality when bypassing verficiation.
+    let isAllowed = false;
     try {
-      const res = await fetch('/api/auth/verify-code', {
+      const bypassRes = await fetch('/api/auth/check-bypass', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, code: enteredCode }),
+        body: JSON.stringify({ email: formData.email }),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Verification failed');
+      const bypassResult = await bypassRes.json();
+      isAllowed = bypassResult.isAllowed || false;
+    } catch (err) {
+      // If bypass check fails, default to false (require verification)
+      isAllowed = false;
+    }
+
+    try {
+      if (!isAllowed) {
+        const res = await fetch('/api/auth/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email, code: enteredCode }),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Verification failed');
+      }
 
       const signInResult = await signIn('credentials', {
         redirect: false,
@@ -133,7 +151,7 @@ const SignUp = () => {
       if (signInResult?.error) throw new Error(signInResult.error);
 
       setVerificationSuccess('Email verified! Redirecting...');
-      router.push('/list');
+      // router.push('/dashboard');
     } catch (err: any) {
       setVerificationError(err.message || 'Verification failed.');
     } finally {
