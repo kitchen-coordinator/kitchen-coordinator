@@ -1,6 +1,6 @@
 'use server';
 
-import { BASE_UNIT, getUnitCategory, normalizeUnit, toBase } from '@/lib/units';
+import { normalizeUnit } from '@/lib/units';
 import { Prisma } from '@prisma/client';
 import { hash, compare } from 'bcrypt';
 import { redirect } from 'next/navigation';
@@ -73,14 +73,12 @@ export async function addProduce(produce: {
   image: string | null;
   restockThreshold?: number;
 }) {
-  // OPTION SAME SAME: Takes user input and saves base units
   const normalizedUnit = normalizeUnit(produce.unit);
-  const category = getUnitCategory(normalizedUnit);
-  const baseUnit = BASE_UNIT[category];
-  const quantityBase = toBase(produce.quantity, normalizedUnit);
-  // eslint-disable-next-line operator-linebreak
-  const restockThresholdBase =
-  typeof produce.restockThreshold === 'number' ? toBase(produce.restockThreshold, normalizedUnit) : 0;
+  const quantityStored = produce.quantity;
+  const restockThresholdStored = typeof produce.restockThreshold === 'number' ? produce.restockThreshold : 0;
+
+  // Note: restockThreshold is assumed to be in the SAME unit as quantity.
+
   // Upsert or find Location by name + owner
   const location = await prisma.location.upsert({
     where: { name_owner: { name: produce.location, owner: produce.owner } },
@@ -102,11 +100,11 @@ export async function addProduce(produce: {
       type: produce.type,
       locationId: location.id,
       storageId: storage.id,
-      quantity: quantityBase,
-      unit: baseUnit,
+      quantity: quantityStored,
+      unit: normalizedUnit,
       expiration: produce.expiration ? new Date(produce.expiration) : null,
       image: produce.image ?? null,
-      restockThreshold: restockThresholdBase,
+      restockThreshold: restockThresholdStored,
     },
     create: {
       name: produce.name,
@@ -114,11 +112,11 @@ export async function addProduce(produce: {
       owner: produce.owner,
       locationId: location.id,
       storageId: storage.id,
-      quantity: quantityBase,
-      unit: baseUnit,
+      quantity: quantityStored,
+      unit: normalizedUnit,
       expiration: produce.expiration ? new Date(produce.expiration) : null,
       image: produce.image ?? null,
-      restockThreshold: restockThresholdBase,
+      restockThreshold: restockThresholdStored,
     },
   });
 
@@ -169,10 +167,8 @@ export async function editProduce(
   if (typeof produce.unit !== 'string') {
     throw new Error('Unit must be provided as a string');
   }
-  // Normalizes and categorizes unit
+  // Normalize unit (store user-entered unit; convert only when needed)
   const normalizedUnit = normalizeUnit(produce.unit);
-  const category = getUnitCategory(normalizedUnit);
-  const baseUnit = BASE_UNIT[category];
 
   const getNumeric = (v: unknown): number | undefined => {
     if (typeof v === 'number') return v;
@@ -187,10 +183,10 @@ export async function editProduce(
   if (quantityInput === undefined) {
     throw new Error('Quantity must be a number');
   }
-  const quantityBase = toBase(quantityInput, normalizedUnit);
+  const quantityStored = quantityInput;
   // Gets restock amount and converts to base unit
   const restockInput = getNumeric(produce.restockThreshold);
-  const restockThresholdBase = typeof restockInput === 'number' ? toBase(restockInput, normalizedUnit) : 0;
+  const restockThresholdStored = typeof restockInput === 'number' ? restockInput : 0;
   // Find or create location and storage first
   const location = await prisma.location.upsert({
     where: { name_owner: { name: produce.location as string, owner: produce.owner as string } },
@@ -224,12 +220,12 @@ export async function editProduce(
       type: produce.type,
       locationId: location.id,
       storageId: storage.id,
-      quantity: quantityBase,
-      unit: baseUnit,
+      quantity: quantityStored,
+      unit: normalizedUnit,
       expiration,
       owner: produce.owner,
       image: produce.image,
-      restockThreshold: restockThresholdBase,
+      restockThreshold: restockThresholdStored,
     },
   });
 
