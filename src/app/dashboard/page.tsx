@@ -7,25 +7,22 @@ import DashboardMenu from '../../components/dashboard/DashboardMenu';
 
 export const dynamic = 'force-dynamic';
 
-type SessionUser = { id: string; email: string; randomKey: string };
-
 const DashboardPage = async () => {
-  const session = (await getServerSession(authOptions)) as { user: SessionUser } | null;
+  const session = await getServerSession(authOptions);
   loggedInProtectedPage(session);
 
-  const email = session?.user?.email || '';
-
-  // Fetch recipes and produce server-side (same pattern as recipes/page.tsx)
-  const recipes = await getRecipes();
-  const pantry = email ? await getUserProduceByEmail(email) : [];
+  const email = session?.user?.email;
+  if (!email) {
+    throw new Error('Authenticated session is missing user email.');
+  }
+  const [recipes, produce] = await Promise.all([
+    getRecipes(),
+    getUserProduceByEmail(email),
+  ]);
 
   return (
     <main>
-      <DashboardMenu
-        ownerEmail={email}
-        recipes={recipes}
-        produce={pantry}
-      />
+      <DashboardMenu ownerEmail={email} recipes={recipes} produce={produce} />
     </main>
   );
 };
