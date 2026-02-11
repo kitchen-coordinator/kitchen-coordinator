@@ -154,3 +154,47 @@ footer a {
 .clickable-card:hover {
   cursor: pointer;
 }
+
+/* testing */
+/* Dashboard cards container */
+#dashboard .dashboard-cards {
+  display: flex;
+  flex-direction: row; /* row layout */
+  flex-wrap: wrap;     /* wrap on smaller screens */
+  justify-content: center;
+  gap: 1rem;           /* spacing between cards */
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Individual card */
+.dashboard-card {
+  width: 250px;        /* fixed width for consistent row */
+  max-width: 100%;     /* shrink if screen smaller */
+  background: var(--hunter-green);
+  color: white;
+  border-radius: 22px;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s;
+}
+
+.dashboard-card a {
+  text-decoration: none;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dashboard-card-icon {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  padding: 0.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
