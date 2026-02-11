@@ -6,6 +6,9 @@
     "project": "./tsconfig.json"
   },
   "rules": {
+    "react/require-default-props": ["error", {
+      "functions": "defaultArguments"
+    }],
     "arrow-parens": "off",
     "func-names": "off",
     "linebreak-style": "off",

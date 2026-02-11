@@ -32,7 +32,14 @@ interface ViewShoppingListModalProps {
   shoppingList?: ShoppingList; // optional for safety
 }
 
-const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListModalProps) => {
+const ViewShoppingListModal = (
+  {
+    show, onHide, shoppingList = {
+      id: 0,
+      name: '',
+      items: [],
+    },
+  }: ViewShoppingListModalProps) => {
   const [items, setItems] = useState<ShoppingListItem[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
@@ -233,14 +240,6 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
       )}
     </>
   );
-};
-
-ViewShoppingListModal.defaultProps = {
-  shoppingList: {
-    id: 0,
-    name: '',
-    items: [],
-  },
 };
 
 export default ViewShoppingListModal;
