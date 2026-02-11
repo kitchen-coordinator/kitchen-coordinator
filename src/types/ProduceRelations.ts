@@ -7,7 +7,4 @@ Produce,
 > & {
   location: Location;
   storage: Storage;
-  displayQuantity?: number | null;
-  displayUnit?: string | null;
-  displayRestockThreshold?: number | null;
 };

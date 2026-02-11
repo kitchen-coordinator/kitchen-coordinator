@@ -55,9 +55,6 @@ model Produce {
   restockThreshold Float?
   customThreshold  Float?
   restockTrigger   String    @default("empty")
-  displayQuantity        Float?
-  displayUnit            String?
-  displayRestockThreshold Float?
   locationId       Int
   storageId        Int
   location         Location  @relation(fields: [locationId], references: [id])

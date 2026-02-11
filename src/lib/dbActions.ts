@@ -80,10 +80,7 @@ export async function addProduce(produce: {
   const quantityBase = toBase(produce.quantity, normalizedUnit);
   // eslint-disable-next-line operator-linebreak
   const restockThresholdBase =
-    typeof produce.restockThreshold === 'number' ? toBase(produce.restockThreshold, normalizedUnit) : 0;
-  const displayQuantity = produce.quantity;
-  const displayUnit = normalizedUnit;
-  const displayRestockThreshold = typeof produce.restockThreshold === 'number' ? produce.restockThreshold : 0;
+  typeof produce.restockThreshold === 'number' ? toBase(produce.restockThreshold, normalizedUnit) : 0;
   // Upsert or find Location by name + owner
   const location = await prisma.location.upsert({
     where: { name_owner: { name: produce.location, owner: produce.owner } },
@@ -107,9 +104,6 @@ export async function addProduce(produce: {
       storageId: storage.id,
       quantity: quantityBase,
       unit: baseUnit,
-      displayQuantity,
-      displayUnit,
-      displayRestockThreshold,
       expiration: produce.expiration ? new Date(produce.expiration) : null,
       image: produce.image ?? null,
       restockThreshold: restockThresholdBase,
@@ -122,9 +116,6 @@ export async function addProduce(produce: {
       storageId: storage.id,
       quantity: quantityBase,
       unit: baseUnit,
-      displayQuantity,
-      displayUnit,
-      displayRestockThreshold,
       expiration: produce.expiration ? new Date(produce.expiration) : null,
       image: produce.image ?? null,
       restockThreshold: restockThresholdBase,
@@ -191,7 +182,6 @@ export async function editProduce(
     }
     return undefined;
   };
-
   // Converts to base units
   const quantityInput = getNumeric(produce.quantity);
   if (quantityInput === undefined) {
@@ -201,9 +191,6 @@ export async function editProduce(
   // Gets restock amount and converts to base unit
   const restockInput = getNumeric(produce.restockThreshold);
   const restockThresholdBase = typeof restockInput === 'number' ? toBase(restockInput, normalizedUnit) : 0;
-  const displayQuantity = quantityInput;
-  const displayUnit = normalizedUnit;
-  const displayRestockThreshold = restockInput ?? 0;
   // Find or create location and storage first
   const location = await prisma.location.upsert({
     where: { name_owner: { name: produce.location as string, owner: produce.owner as string } },
@@ -239,9 +226,6 @@ export async function editProduce(
       storageId: storage.id,
       quantity: quantityBase,
       unit: baseUnit,
-      displayQuantity,
-      displayUnit,
-      displayRestockThreshold,
       expiration,
       owner: produce.owner,
       image: produce.image,
