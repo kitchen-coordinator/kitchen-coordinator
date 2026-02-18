@@ -169,7 +169,7 @@ footer a {
 
 /* Individual card */
 .dashboard-card {
-  width: 250px;        /* fixed width for consistent row */
+  width: 120px;        /* fixed width for consistent row */
   max-width: 100%;     /* shrink if screen smaller */
   background: var(--hunter-green);
   color: white;
@@ -197,4 +197,30 @@ footer a {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+@media(max-width: 640px) {
+  #dashboard .dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(3,1fr); 
+    gap: 0.3rem;
+  }
+  .dashboad-card {
+    width: 100%;
+    padding: 0.25rem 0.2rem;
+    border-radius: 8px;
+    font-size: 0.55rem;
+    min-height: unset;
+  }
+  .dashboard-cash-icon {
+    padding: 0.2rem;
+    transform: scale(0.7);
+  }
+  .dashboard-card-label {
+    font-size: 0.7rem;
+    line-height: 1.1;
+  } 
+  .dashboard-card a {
+    gap: 0.15rem;
+  }
 }
