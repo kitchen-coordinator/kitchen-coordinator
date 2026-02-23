@@ -1,50 +1,37 @@
+/* hero.module.css */
+
 .primaryButton {
-  padding: 12px 28px;
-  background-color: var(--fern-green);
-  color: #fff;
-  font-size: 1rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  display: block;
+  background-color: white;
+  color: black;
+  padding: 0.65rem 2rem; /* CHANGED: reduced from 1rem to slim it down */
+  border-radius: 0.75rem;
+  font-weight: 500;
+  font-size: 1rem;       /* CHANGED: reduced slightly */
   text-decoration: none;
-  display: inline-block;
+  border: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .primaryButton:hover {
-  background-color: var(--hunter-green);
+  opacity: 0.9;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-}
-
-.primaryButton:active {
-  transform: translateY(0);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 .secondaryButton {
-  padding: 12px 28px;
-  background-color: transparent;
-  border: 2px solid var(--brunswick-green);
-  color: var(--brunswick-green);
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  display: block;
+  background-color: white;
+  color: black;
+  padding: 0.3rem 2rem; /* CHANGED: reduced from 1rem to slim it down */
+  border-radius: 0.75rem;
+  font-weight: 500;
+  font-size: 1rem;       /* CHANGED: reduced slightly */
   text-decoration: none;
-  display: inline-block;
+  border: 2px solid rgba(255,255,255,0.5);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .secondaryButton:hover {
-  background-color: var(--brunswick-green);
-  color: var(--timberwolf);
+  opacity: 0.9;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-}
-
-.secondaryButton:active {
-  transform: translateY(0);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
