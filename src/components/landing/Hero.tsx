@@ -21,11 +21,15 @@ export default function Hero() {
         initial="hidden"
         animate="show"
       >
-        <motion.h1 className={styles.heroTitle} variants={item}>
-          Kitchen
-          <br />
-          Coordinator
-        </motion.h1>
+        <motion.div variants={item} style={{ marginBottom: '2.5rem' }}>
+          <Image
+            src="/kitchen-coordinator-logo.png"
+            alt="Kitchen Coordinator"
+            width={360}
+            height={360}
+            priority
+          />
+        </motion.div>
 
         {!isLoading && (
         <motion.div className={styles.buttonGroup} variants={item}>
