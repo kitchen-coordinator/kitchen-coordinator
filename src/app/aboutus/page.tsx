@@ -12,7 +12,7 @@ const About = () => (
       paddingBottom: '2rem',
     }}
   >
-    <Container>
+    <Container className="px-5 px-md-3">
       {/* Logo + Intro */}
       <Row className="align-items-center mb-5">
         <Col md={4} className="text-center mb-4 mb-md-0">
