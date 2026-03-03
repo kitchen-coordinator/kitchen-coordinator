@@ -13,8 +13,7 @@
     "playwright-development": "npx playwright test",
     "test-acceptance-ci": "testcafe 'edge:headless' tests/acceptance/*.testcafe.js --app 'npm run build && npm run start' --window-size 1920,1080 --app-init-delay 60000",
     "test-acceptance-local": "testcafe 'chrome' tests/acceptance/*.testcafe.js --app 'npm run build && npm run start' --window-size 1920,1080 --app-init-delay 20000",
-    "test-acceptance-single": "testcafe 'chrome:headless' tests/acceptance/*.testcafe.js --window-size 1920,1080",
-    "postinstall": "prisma generate"
+    "test-acceptance-single": "testcafe 'chrome:headless' tests/acceptance/*.testcafe.js --window-size 1920,1080"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
@@ -24,6 +23,7 @@
     "@ngneat/falso": "^7.2.0",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/config": "^7.0.1",
+    "@prisma/client": "^7.4.0",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "bcrypt": "^5.1.1",
@@ -50,16 +50,7 @@
     "yup": "^1.4.0"
   },
   "devDependencies": {
-<<<<<<< Updated upstream
     "@playwright/test": "^1.58.0",
-=======
-<<<<<<< Updated upstream
-    "@playwright/test": "^1.48.2",
-=======
-    "@playwright/test": "^1.58.0",
-    "@prisma/client": "^7.4.0",
->>>>>>> Stashed changes
->>>>>>> Stashed changes
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.18.6",
@@ -74,17 +65,8 @@
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.3.1",
     "prettier-eslint": "^16.3.0",
-<<<<<<< Updated upstream
-    "prisma": "^7.0.1",
-<<<<<<< Updated upstream
-    "testcafe": "^3.7.4",
-=======
-    "testcafe": "^3.7.2",
-=======
     "prisma": "^7.4.0",
     "testcafe": "^3.7.4",
->>>>>>> Stashed changes
->>>>>>> Stashed changes
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   }
