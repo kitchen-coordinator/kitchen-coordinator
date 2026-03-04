@@ -1,5 +1,6 @@
 :root {
   --timberwolf: #DAD7CD; /* Light grayish yellow */
+  --metallic-gold: #D4AF37; /* Gold */
   --sage: #A3B18A;       /* Muted green */
   --fern-green: #588157; /* Deep green */
   --hunter-green: #3A5A40; /* Dark green */
@@ -28,6 +29,7 @@ body {
   background-color: var(--hunter-green);
   color: white;
   padding: 1rem;
+  border-radius: 0 0 1.5rem 1.5rem;
 }
 
 /* Default nav/link colors (use classes, not IDs) */
@@ -40,7 +42,7 @@ body {
 /* Hover state */
 .navandfooter .nav-link:hover,
 .navandfooter .navbar-brand:hover {
-  color: #d4af37 !important;
+  color: var(--metallic-gold) !important;
 }
 
 /* Active state (links + brand on home) */
@@ -48,8 +50,82 @@ body {
 .navandfooter .nav-item.show .nav-link,
 .navandfooter .nav-link.show,
 .navandfooter .navbar-brand.active {
-  color: #d4af37 !important;
+  color: var(--metallic-gold) !important;
   font-weight: 700 !important;
+}
+
+.navandfooter .navbar-collapse.show .nav-link,
+.navandfooter .navbar-collapse.collapsing .nav-link {
+  padding: 0.75rem 0.5rem 0.75rem 0.5rem;
+  align-items: center; /* Center if adding icons */
+}
+
+/* <--- Custom Toggler Icon ---> */
+.navandfooter .kc-toggler {
+  border: none;
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Remove Bootstrap's default background icon */
+.navandfooter .kc-toggler .navbar-toggler-icon {
+  display: none;
+}
+
+/* <--- Hamburger Lines ---> */
+.navandfooter .kc-bar {
+  width: 1.6rem;
+  height: 2px;
+  background: white;
+  transition: transform 160ms ease, opacity 160ms ease;
+  transform-origin: center;
+}
+
+.navandfooter .kc-toggler:hover .kc-bar{
+  background-color: var(--metallic-gold);
+}
+
+.navandfooter .kc-toggler:not(.collapsed) .kc-bar:nth-child(1) {
+  transform: translateY(0.5rem) rotate(45deg);
+}
+
+.navandfooter .kc-toggler:not(.collapsed) .kc-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.navandfooter .kc-toggler:not(.collapsed) .kc-bar:nth-child(3) {
+  transform: translateY(-0.5rem) rotate(135deg);
+}
+
+.navandfooter .dropdown-menu {
+  border: 1px solid var(--brunswick-green);
+  padding: 0;
+  border-radius: 1.5rem;
+}
+.navandfooter .dropdown-menu.show {
+  margin-bottom: 0.5rem;
+}
+
+.navandfooter .dropdown-item {
+  padding: 0.75rem 1rem;
+  color: var(--brunswick-green) !important;
+}
+
+.navandfooter .dropdown-item:first-child {
+  border-top-left-radius: 1.5rem;
+  border-top-right-radius: 1.5rem;
+}
+
+.navandfooter .dropdown-item:last-child {
+  border-bottom-left-radius: 1.5rem;
+  border-bottom-right-radius: 1.5rem;
+}
+
+.navandfooter .dropdown-item:hover,
+.navandfooter .dropdown-item:focus {
+  font-weight: 700;
 }
 
 footer a {
