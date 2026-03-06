@@ -6,7 +6,7 @@ import { Card, ListGroup, Image, Button } from 'react-bootstrap/';
 import Link from 'next/link';
 import type { ProduceRelations } from '@/types/ProduceRelations';
 import { useState } from 'react';
-import { PencilSquare, Trash } from 'react-bootstrap-icons';
+import { PencilSquare, Trash, Cart } from 'react-bootstrap-icons';
 import EditProduceModal from './EditProduceModal';
 import DeleteProduceModal from './DeleteProduceModal';
 
@@ -23,6 +23,36 @@ export default function ProduceCard({ produce }: Props) {
   const imageSrc = produce.image || '/no-image.png';
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [addingToList, setAddingToList] = useState(false);
+
+  const handleAddToShoppingList = async () => {
+    if (addingToList) return;
+    try {
+      setAddingToList(true);
+
+      const res = await fetch('/api/shopping-list-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          owner: produce.owner,
+          name: produce.name,
+          quantity: Number(produce.quantity),
+          unit: produce.unit ?? '',
+        }),
+      });
+
+      if (!res.ok) {
+        const msg = await res.text().catch(() => '');
+        throw new Error(msg || 'Failed');
+      }
+
+      swal('Added', `${produce.name} added to your shopping list`, 'success', { timer: 2000 });
+    } catch (e) {
+      swal('Error', 'Failed to add item to shopping list', 'error');
+    } finally {
+      setAddingToList(false);
+    }
+  };
 
   return (
     <Card className="h-100 mb-3 image-shadow">
@@ -68,6 +98,14 @@ export default function ProduceCard({ produce }: Props) {
           >
             <Trash color="white" size={18} />
           </Button>
+          <Button
+            variant="success"
+            className="ms-auto btn-submit"
+            onClick={handleAddToShoppingList}
+            disabled={addingToList}
+          >
+            {addingToList ? 'Adding…' : '+ List'}
+          </Button>
         </Card.Footer>
       </Card.Body>
 
@@ -76,6 +114,7 @@ export default function ProduceCard({ produce }: Props) {
 
       {/* Modal component for deleting produce item */}
       <DeleteProduceModal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} produce={produce} />
+
     </Card>
   );
 }
