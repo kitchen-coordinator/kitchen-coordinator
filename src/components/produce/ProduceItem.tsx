@@ -86,11 +86,11 @@ const ProduceItem = ({
           <Button
             variant="success"
             size="sm"
-            className="btn-submit"
+            className="ms-auto btn-submit"
             onClick={handleAddToShoppingList}
             disabled={addingToList}
           >
-            {addingToList ? 'Adding…' : 'Add'}
+            {addingToList ? 'Adding…' : '+'}
           </Button>
         </td>
       </tr>

@@ -6,7 +6,7 @@ import { Card, ListGroup, Image, Button } from 'react-bootstrap/';
 import Link from 'next/link';
 import type { ProduceRelations } from '@/types/ProduceRelations';
 import { useState } from 'react';
-import { PencilSquare, Trash, Cart } from 'react-bootstrap-icons';
+import { PencilSquare, Trash, CartPlus } from 'react-bootstrap-icons';
 import EditProduceModal from './EditProduceModal';
 import DeleteProduceModal from './DeleteProduceModal';
 
@@ -86,25 +86,24 @@ export default function ProduceCard({ produce }: Props) {
             <strong>Expiration:</strong> {formatDate(produce.expiration)}
           </ListGroup.Item>
         </ListGroup>
-        <Card.Footer className="d-flex">
-          <Button className="me-2 btn-edit" onClick={() => setShowEditModal(true)}>
+        <Card.Footer className="d-flex gap-2">
+          <Button className="btn-edit flex-fill"
+          onClick={() => setShowEditModal(true)}>
             <PencilSquare color="white" size={18} />
           </Button>
           <Button
             variant="danger"
-            className="btn-delete"
-            // style={{ width: '100px' }}
+            className="btn-delete flex-fill"
             onClick={() => setShowDeleteModal(true)}
           >
             <Trash color="white" size={18} />
           </Button>
           <Button
-            variant="success"
-            className="ms-auto btn-submit"
+            className="btn-shopping flex-fill"
             onClick={handleAddToShoppingList}
             disabled={addingToList}
           >
-            {addingToList ? 'Adding…' : '+ List'}
+            <CartPlus color="white" size={18} />
           </Button>
         </Card.Footer>
       </Card.Body>
