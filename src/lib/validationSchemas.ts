@@ -68,9 +68,11 @@ export const AddShoppingListItemSchema = Yup.object({
     .required('Quantity is required'),
   unit: Yup.string().optional(),
   price: Yup.number()
+    .transform((value, originalValue) => (originalValue === '' ? 0 : value))
     .typeError('Price must be a number')
+    .min(0, 'Price cannot be negative')
     .optional()
-    .transform((_, val) => (val !== '' ? Number(val) : null)),
+    .nullable(),
   shoppingListId: Yup.number()
     .typeError('A shopping list must be selected')
     .required('Shopping list is required'),

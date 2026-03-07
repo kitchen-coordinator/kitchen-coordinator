@@ -361,17 +361,25 @@ export async function addShoppingListItem(data: {
   price?: number;
   shoppingListId: number;
 }) {
-  const item = await prisma.shoppingListItem.create({
-    data: {
-      name: data.name,
-      quantity: data.quantity,
-      unit: data.unit || '',
-      price: data.price ?? null,
-      shoppingListId: data.shoppingListId,
-    },
-  });
-  console.log('✅ Added item to shopping list:', item);
-  return item;
+  try {
+    const item = await prisma.shoppingListItem.create({
+      data: {
+        name: data.name.trim(),
+        quantity: data.quantity,
+        unit: data.unit || '',
+        price: data.price ?? null,
+        shoppingListId: data.shoppingListId,
+      },
+    });
+    console.log('✅ Added item to shopping list:', item);
+    return item;
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      throw new Error(`"${data.name}" is already in this list. Please use a different name or edit the existing one.`);
+    }
+    console.error('❌ Prisma Error:', error);
+    throw new Error('Could not add the item. Please check your connection and try again.');
+  }
 }
 
 /**
