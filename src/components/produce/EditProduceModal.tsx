@@ -8,7 +8,8 @@ import {
   InputGroup,
   Image as RBImage,
 } from 'react-bootstrap';
-import { PencilSquare, X } from 'react-bootstrap-icons';
+import { PencilSquare, X, Tag, Grid, GeoAlt,
+  Archive, Stack, Rulers, ArrowRepeat, Calendar } from 'react-bootstrap-icons';
 import { useForm } from 'react-hook-form';
 import swal from 'sweetalert';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -54,7 +55,7 @@ function FieldRow({
   displayValue,
   editingField,
   setEditingField,
-  itemImage,
+  icon,
   children,
 }: {
   fieldKey: string;
@@ -62,7 +63,7 @@ function FieldRow({
   displayValue: string;
   editingField: string | null;
   setEditingField: (f: string | null) => void;
-  itemImage: string;
+  icon: React.ReactNode;
   children: React.ReactNode;
 }) {
   const isEditing = editingField === fieldKey;
@@ -75,18 +76,19 @@ function FieldRow({
       borderBottom: '1px solid #f0f0f0',
     }}
     >
-      <RBImage
-        src={itemImage}
-        alt={label}
-        style={{
-          width: 52,
-          height: 52,
-          objectFit: 'cover',
-          borderRadius: 10,
-          flexShrink: 0,
-          backgroundColor: '#e9e9e9',
-        }}
-      />
+      <div style={{
+        width: 44,
+        height: 44,
+        borderRadius: 10,
+        backgroundColor: 'var(--fern-green)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+      >
+        {icon}
+      </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{label}</div>
         {isEditing ? (
@@ -97,7 +99,14 @@ function FieldRow({
       </div>
       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
         {isEditing ? (
-          <X size={20} style={{ cursor: 'pointer', color: '#888' }} onClick={() => setEditingField(null)} />
+          <X
+            size={20}
+            style={{
+              cursor: 'pointer',
+              color: '#888',
+            }}
+            onClick={() => setEditingField(null)}
+          />
         ) : (
           <PencilSquare
             size={16}
@@ -137,7 +146,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
 
   // Image picker modal state
   const [showPicker, setShowPicker] = useState(false);
-  const [imageAlt, setImageAlt] = useState('');
+  // const [imageAlt, setImageAlt] = useState('');
   const [editingField, setEditingField] = useState<string | null>(null);
 
   // RHF setup
@@ -154,7 +163,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
   });
 
   const imageVal = watch('image') || '';
-  const watchedValues = watch(); 
+  const watchedValues = watch();
   const itemImage = imageVal || produce.image || '/no-image.png';
 
   const fetchStorage = useCallback(
@@ -239,12 +248,44 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
           <input type="hidden" {...register('owner')} value={produce.owner} />
 
           <FieldRow
+            fieldKey="image"
+            label="Image"
+            displayValue={imageVal ? 'Image set' : 'No image'}
+            editingField={editingField}
+            setEditingField={setEditingField}
+            icon={(
+              <RBImage
+                src={itemImage}
+                alt={produce.name}
+                style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 10 }}
+              />
+            )}
+          >
+            <InputGroup>
+              <Form.Control
+                type="text"
+                {...register('image')}
+                placeholder="URL"
+                isInvalid={!!errors.image}
+              />
+              <Button
+                variant="outline-secondary"
+                type="button"
+                style={{ zIndex: 99 }}
+                onClick={() => setShowPicker(true)}
+              >
+                Pick
+              </Button>
+            </InputGroup>
+          </FieldRow>
+
+          <FieldRow
             fieldKey="name"
             label="Name"
             displayValue={watchedValues.name}
             editingField={editingField}
             setEditingField={setEditingField}
-            itemImage={itemImage}
+            icon={<Tag color="white" size={20} />}
           >
             <Form.Control type="text" {...register('name')} placeholder="e.g., Chicken" isInvalid={!!errors.name} />
           </FieldRow>
@@ -255,7 +296,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
             displayValue={watchedValues.type}
             editingField={editingField}
             setEditingField={setEditingField}
-            itemImage={itemImage}
+            icon={<Grid color="white" size={20} />}
           >
             <Form.Control type="text" {...register('type')} placeholder="e.g., Meat" isInvalid={!!errors.type} />
           </FieldRow>
@@ -266,7 +307,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
             displayValue={selectedLocation}
             editingField={editingField}
             setEditingField={setEditingField}
-            itemImage={itemImage}
+            icon={<GeoAlt color="white" size={20} />}
           >
             <Form.Select
               value={selectedLocation}
@@ -308,7 +349,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
             displayValue={selectedStorage}
             editingField={editingField}
             setEditingField={setEditingField}
-            itemImage={itemImage}
+            icon={<Archive color="white" size={20} />}
           >
             <Form.Select
               value={selectedStorage}
@@ -342,7 +383,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
             displayValue={`${watchedValues.quantity ?? ''} ${watchedValues.unit ?? ''}`}
             editingField={editingField}
             setEditingField={setEditingField}
-            itemImage={itemImage}
+            icon={<Stack color="white" size={20} />}
           >
             <Form.Control
               type="number"
@@ -359,7 +400,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
             displayValue={unitChoice}
             editingField={editingField}
             setEditingField={setEditingField}
-            itemImage={itemImage}
+            icon={<Rulers color="white" size={20} />}
           >
             <>
               <Form.Select
@@ -391,7 +432,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
             displayValue={String(watchedValues.restockThreshold ?? '—')}
             editingField={editingField}
             setEditingField={setEditingField}
-            itemImage={itemImage}
+            icon={<ArrowRepeat color="white" size={20} />}
           >
             <Form.Control
               type="number"
@@ -408,39 +449,13 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
             displayValue={watchedValues.expiration ?? '—'}
             editingField={editingField}
             setEditingField={setEditingField}
-            itemImage={itemImage}
+            icon={<Calendar color="white" size={20} />}
           >
             <Form.Control
               type="date"
               {...register('expiration')}
               isInvalid={!!errors.expiration}
             />
-          </FieldRow>
-
-          <FieldRow
-            fieldKey="image"
-            label="Image"
-            displayValue={imageVal ? 'Image set' : 'No image'}
-            editingField={editingField}
-            setEditingField={setEditingField}
-            itemImage={itemImage}
-          >
-            <InputGroup>
-              <Form.Control
-                type="text"
-                {...register('image')}
-                placeholder="URL"
-                isInvalid={!!errors.image}
-              />
-              <Button
-                variant="outline-secondary"
-                type="button"
-                style={{ zIndex: 99 }}
-                onClick={() => setShowPicker(true)}
-              >
-                Pick
-              </Button>
-            </InputGroup>
           </FieldRow>
 
           <div className="d-flex gap-2 mt-4">
@@ -465,9 +480,8 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
       <ImagePickerModal
         show={showPicker}
         onClose={() => setShowPicker(false)}
-        onSelect={(url, meta) => {
+        onSelect={(url) => {
           setValue('image', url, { shouldValidate: true, shouldDirty: true });
-          if (meta?.alt) setImageAlt(meta.alt);
         }}
       />
     </Modal>
