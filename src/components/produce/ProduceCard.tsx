@@ -87,8 +87,10 @@ export default function ProduceCard({ produce }: Props) {
           </ListGroup.Item>
         </ListGroup>
         <Card.Footer className="d-flex gap-2">
-          <Button className="btn-edit flex-fill"
-          onClick={() => setShowEditModal(true)}>
+          <Button
+            className="btn-edit flex-fill"
+            onClick={() => setShowEditModal(true)}
+          >
             <PencilSquare color="white" size={18} />
           </Button>
           <Button
