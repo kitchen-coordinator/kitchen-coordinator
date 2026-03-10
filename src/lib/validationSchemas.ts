@@ -93,3 +93,11 @@ export const EditShoppingListItemSchema = Yup.object({
     .min(0, 'Threshold cannot be negative')
     .notRequired(),
 });
+
+export const CommonItemSchema = Yup.object({
+  owner: Yup.string().required('Owner is required'),
+  name: Yup.string().trim().required('Common item name is required'),
+  type: Yup.string().nullable().notRequired(),
+  defaultUnit: Yup.string().required('Default unit is required'),
+  preferredDisplayUnit: Yup.string().required('Preferred display unit is required'),
+});

@@ -18,29 +18,35 @@ import { addProduce } from '@/lib/dbActions';
 import { useRouter } from 'next/navigation';
 import ImagePickerModal from '@/components/images/ImagePickerModal';
 import BarcodeScanner from './BarcodeScanner';
+import CommonItemModal from './CommonItemModal';
 import '../../styles/buttons.css';
 
-/** Form value shape used by RHF (kept independent from Prisma model). */
 type ProduceValues = {
-  id: number
+  id: number;
   name: string;
   type: string;
   location: string;
   storage: string;
   quantity: number;
   unit: string;
-  /** HTML date input gives a string (yyyy-mm-dd) or '' -> we store string|null in the form. */
   expiration: string | null;
   owner: string;
-  image: string; // keep as string in the form; convert to null on submit if empty
+  image: string;
   restockThreshold: number | null;
+  commonItemId: number | null;
 };
 
-/** Props */
+type CommonItemOption = {
+  id: number;
+  name: string;
+  type?: string | null;
+  defaultUnit: string;
+  preferredDisplayUnit?: string | null;
+};
+
 interface AddProduceModalProps {
   show: boolean;
   onHide: () => void;
-  // eslint-disable-next-line react/require-default-props
   produce?: {
     id?: number;
     name?: string;
@@ -53,12 +59,16 @@ interface AddProduceModalProps {
     owner?: string;
     image?: string | null;
     restockThreshold?: number | null;
+    commonItemId?: number | null;
   };
 }
 
 export default function AddProduceModal({ show, onHide, produce }: AddProduceModalProps) {
   const [locations, setLocations] = useState<string[]>([]);
   const [storageOptions, setStorageOptions] = useState<string[]>([]);
+  const [commonItems, setCommonItems] = useState<CommonItemOption[]>([]);
+  const [showCommonItemModal, setShowCommonItemModal] = useState(false);
+  const [selectedCommonItemId, setSelectedCommonItemId] = useState('');
 
   const unitOptions = useMemo(
     () => ['kg', 'g', 'lb', 'oz', 'pcs', 'ml', 'l', 'Other'],
@@ -73,12 +83,11 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
     reset,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ProduceValues>({
-    // Ensure resolver is typed for ProduceValues to avoid generic inference errors.
     resolver: yupResolver(AddProduceSchema) as unknown as Resolver<ProduceValues>,
-    // defaultValues is DeepPartial<ProduceValues>; everything here aligns with the field types above.
     defaultValues: {
+      id: produce?.id ?? 0,
       name: '',
       type: '',
       location: '',
@@ -89,6 +98,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
       owner: produce?.owner ?? '',
       image: '',
       restockThreshold: null,
+      commonItemId: null,
     },
   });
 
@@ -103,437 +113,463 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
   const fetchStorage = useCallback(
     async (location: string) => {
       if (!produce?.owner || !location) return;
+
       const res = await fetch(
         `/api/produce/${produce?.id ?? 0}/storage?owner=${produce.owner}&location=${encodeURIComponent(location)}`,
       );
+
       if (!res.ok) return;
+
       const data = await res.json();
       setStorageOptions(data);
 
-      // Optional: auto-select first storage if only one exists
       if (data.length === 1) {
         setSelectedStorage(data[0]);
         setValue('storage', data[0]);
       }
     },
-    [produce?.owner, produce?.id, setValue], // dependencies for useCallback
+    [produce?.owner, produce?.id, setValue],
   );
 
-  // useEffect
   useEffect(() => {
-    if (show) {
-      reset();
-      setSelectedLocation('');
-      setSelectedStorage('');
-      setUnitChoice('');
+    if (!show) return;
 
-      // Always fetch all available locations for this owner
-      const fetchLocations = async () => {
-        if (!produce?.owner) return;
-        const res = await fetch(`/api/produce/${produce?.id ?? 0}/locations?owner=${produce.owner}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setLocations(data);
-      };
-      fetchLocations();
+    reset({
+      id: produce?.id ?? 0,
+      name: produce?.name ?? '',
+      type: produce?.type ?? '',
+      location: typeof produce?.location === 'string' ? produce.location : '',
+      storage: typeof produce?.storage === 'string' ? produce.storage : '',
+      quantity: produce?.quantity,
+      unit: produce?.unit ?? '',
+      expiration: produce?.expiration
+        ? new Date(produce.expiration).toISOString().split('T')[0]
+        : null,
+      owner: produce?.owner ?? '',
+      image: produce?.image ?? '',
+      restockThreshold: produce?.restockThreshold ?? null,
+      commonItemId: produce?.commonItemId ?? null,
+    });
 
-      // If editing an existing produce, pre-select its location and storage
-      if (produce?.location) {
-        const locationName = typeof produce.location === 'string'
-          ? produce.location
-          : (produce.location as any)?.name ?? '';
+    setSelectedLocation(typeof produce?.location === 'string' ? produce.location : '');
+    setSelectedStorage(typeof produce?.storage === 'string' ? produce.storage : '');
+    setUnitChoice(
+      produce?.unit && unitOptions.includes(produce.unit)
+        ? produce.unit
+        : produce?.unit
+          ? 'Other'
+          : '',
+    );
+    setSelectedCommonItemId(produce?.commonItemId ? String(produce.commonItemId) : '');
 
-        setSelectedLocation(locationName);
-        if (locationName) {
-          fetchStorage(locationName);
-        }
+    const fetchModalData = async () => {
+      if (!produce?.owner) return;
+
+      const [locationsRes, commonItemsRes] = await Promise.all([
+        fetch(`/api/produce/${produce?.id ?? 0}/locations?owner=${produce.owner}`),
+        fetch(`/api/common-items?owner=${encodeURIComponent(produce.owner)}`),
+      ]);
+
+      if (locationsRes.ok) {
+        const locationData = await locationsRes.json();
+        setLocations(locationData);
       }
+
+      if (commonItemsRes.ok) {
+        const commonItemData = await commonItemsRes.json();
+        setCommonItems(commonItemData);
+      }
+    };
+
+    fetchModalData();
+
+    if (typeof produce?.location === 'string' && produce.location) {
+      fetchStorage(produce.location);
     }
-  }, [show, reset, produce, setValue, fetchStorage]);
+  }, [show, produce, reset, fetchStorage, unitOptions]);
 
   const handleClose = () => {
     reset();
     setSelectedLocation('');
     setSelectedStorage('');
+    setStorageOptions([]);
+    setSelectedCommonItemId('');
     setUnitChoice('');
+    setShowScanner(false);
+    setShowPicker(false);
     onHide();
   };
 
-  const fetchProductByBarcode = async (barcode: string) => {
-    try {
-      const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
-      const data = await res.json();
-
-      if (data.status === 1) {
-        const { product } = data;
-        setValue('name', product.product_name || '');
-        setValue('image', product.image_url || '');
-        setValue('type', (product.categories_tags?.[0]?.replace('en:', '') || '') as string);
-      } else {
-        await swal('Not found', 'No product found for this barcode', 'warning');
-      }
-    } catch {
-      await swal('Error', 'Failed to fetch product info', 'error');
-    }
+  const handleLocationChange = async (value: string) => {
+    setSelectedLocation(value);
+    setValue('location', value);
+    setSelectedStorage('');
+    setValue('storage', '');
+    await fetchStorage(value);
   };
 
   const onSubmit: SubmitHandler<ProduceValues> = async (data) => {
     try {
-      // Normalize payload for your DB action.
-      const payload = {
-        ...data,
-        quantity: Number(data.quantity), // ensure number
-        expiration: data.expiration ? new Date(data.expiration) : null,
-        image: data.image.trim() === '' ? null : data.image.trim(),
+      await addProduce({
+        name: data.name,
+        type: data.type,
+        location: data.location,
+        storage: data.storage,
+        quantity: Number(data.quantity),
+        unit: data.unit,
+        expiration: data.expiration,
+        owner: data.owner,
+        image: data.image || null,
         restockThreshold:
           data.restockThreshold == null || Number.isNaN(Number(data.restockThreshold))
-            ? 0
+            ? undefined
             : Number(data.restockThreshold),
-      };
-      await addProduce(payload);
+        commonItemId: data.commonItemId == null ? null : Number(data.commonItemId),
+      });
 
-      await swal('Success', 'Your item has been added', 'success', { timer: 2000 });
+      await swal('Success', 'Item added successfully.', 'success');
       handleClose();
       router.refresh();
-    } catch {
-      await swal('Error', 'Failed to add item', 'error');
+    } catch (error) {
+      await swal(
+        'Error',
+        error instanceof Error ? error.message : 'Failed to add item',
+        'error',
+      );
     }
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered>
-      <Modal.Header className="justify-content-center">
-        <Modal.Title>Add Pantry Item</Modal.Title>
-      </Modal.Header>
+    <>
+      <Modal show={show} onHide={handleClose} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Add Pantry Item</Modal.Title>
+        </Modal.Header>
 
-      <Modal.Body className="text-center">
         <Form onSubmit={handleSubmit(onSubmit)}>
-          {/* Barcode Scanner - Highlighted */}
-          <Row className="mb-4 justify-content-center">
-            <Col xs={12}>
-              <div
-                className="p-3 mb-3 border rounded bg-light text-center"
-                style={{ boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}
-              >
-                <p className="mb-2 fw-bold">Scan a barcode to auto-fill product info</p>
+          <Modal.Body>
+            <input type="hidden" {...register('owner')} />
+            <input type="hidden" {...register('commonItemId', { valueAsNumber: true })} />
+
+            <Row className="mb-3">
+              <Col xs={8}>
+                <Form.Group>
+                  <Form.Label className="mb-0">Common Item</Form.Label>
+                  <Form.Select
+                    value={selectedCommonItemId}
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      setSelectedCommonItemId(value);
+
+                      if (!value) {
+                        setValue('commonItemId', null);
+                        return;
+                      }
+
+                      const item = commonItems.find((entry) => String(entry.id) === value);
+                      if (!item) return;
+
+                      const chosenUnit = item.preferredDisplayUnit || item.defaultUnit;
+
+                      setValue('commonItemId', Number(item.id));
+                      setValue('name', item.name);
+                      setValue('type', item.type || '');
+                      setValue('unit', chosenUnit);
+
+                      setUnitChoice(unitOptions.includes(chosenUnit) ? chosenUnit : 'Other');
+                    }}
+                  >
+                    <option value="">Select a saved common item...</option>
+                    {commonItems.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} ({item.preferredDisplayUnit || item.defaultUnit})
+                      </option>
+                    ))}
+                  </Form.Select>
+                  <Form.Text className="text-muted">
+                    Selecting one auto-fills the pantry item unit.
+                  </Form.Text>
+                </Form.Group>
+              </Col>
+
+              <Col xs={4} className="d-flex align-items-end">
                 <Button
                   type="button"
-                  variant="primary"
-                  size="lg"
-                  onClick={() => setShowScanner(true)}
-                  style={{ fontSize: '1.1rem', padding: '0.75rem 1.5rem' }}
+                  variant="outline-secondary"
+                  className="w-100"
+                  onClick={() => setShowCommonItemModal(true)}
                 >
-                  Scan Barcode
+                  Save Current as Common
                 </Button>
+              </Col>
+            </Row>
 
-                {showScanner && (
-                <BarcodeScanner
-                  onDetected={async (code) => {
-                    await fetchProductByBarcode(code);
-                    setShowScanner(false);
-                  }}
-                  onClose={() => setShowScanner(false)}
-                />
-                )}
-              </div>
-            </Col>
-          </Row>
-
-          {/* Name and Type */}
-          <Row className="mb-3">
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="e.g., Chicken"
-                  isInvalid={!!errors.name}
-                  {...register('name')}
-                  required
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.name?.message as string}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Type</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="e.g., Meat"
-                  isInvalid={!!errors.type}
-                  {...register('type')}
-                  required
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.type?.message as string}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Location and Storage */}
-          <Row className="mb-3">
-            <Col xs={6} className="text-center">
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Location</Form.Label>
-                <Form.Select
-                  value={selectedLocation}
-                  required
-                  className={`${errors.location ? 'is-invalid' : ''}`}
-                  onChange={async (e) => {
-                    const { value } = e.target;
-                    setSelectedLocation(value);
-                    if (value === 'Add Location') {
-                      setValue('location', '');
-                      setStorageOptions([]);
-                      setSelectedStorage('Add Storage'); // force user to add storage
-                      setValue('storage', '');
-                    } else {
-                      setValue('location', value);
-                      await fetchStorage(value); // fetch storages for that location
-                    }
-                  }}
-                >
-                  <option value="" disabled>Select location...</option>
-                  {locations.map((loc) => (
-                    <option key={loc} value={loc}>
-                      {loc}
-                    </option>
-                  ))}
-                  <option value="Add Location">Add Location</option>
-                </Form.Select>
-
-                {selectedLocation === 'Add Location' && (
+            <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Name</Form.Label>
                   <Form.Control
                     type="text"
-                    placeholder="Enter new location"
-                    className={`mt-2 ${errors.location ? 'is-invalid' : ''}`}
-                    {...register('location', { required: true })}
-                    onChange={(e) => setValue('location', e.target.value)}
-                    required
+                    {...register('name')}
+                    isInvalid={!!errors.name}
                   />
-                )}
+                  <Form.Control.Feedback type="invalid">
+                    {errors.name?.message}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
 
-                <div className="invalid-feedback">{errors.location?.message}</div>
-              </Form.Group>
-            </Col>
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Storage</Form.Label>
-                <Form.Select
-                  value={selectedStorage}
-                  required
-                  className={`${errors.storage ? 'is-invalid' : ''}`}
-                  onChange={(e) => {
-                    const { value } = e.target;
-                    setSelectedStorage(value);
-
-                    if (value === 'Add Storage') {
-                      // Clear the field so user can enter custom storage
-                      setValue('storage', '');
-                    } else {
-                      setValue('storage', value);
-                    }
-                  }}
-                >
-                  <option value="" disabled>
-                    Select storage...
-                  </option>
-
-                  {storageOptions.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-
-                  <option value="Add Storage">Add Storage</option>
-                </Form.Select>
-
-                {/* Conditionally render a text input when "Add Storage" is selected */}
-                {selectedStorage === 'Add Storage' && (
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Type</Form.Label>
                   <Form.Control
                     type="text"
-                    placeholder="Enter new storage"
-                    className={`mt-2 ${errors.storage ? 'is-invalid' : ''}`}
-                    {...register('storage', { required: true })}
-                    onChange={(e) => setValue('storage', e.target.value)}
-                    required
+                    {...register('type')}
+                    isInvalid={!!errors.type}
                   />
-                )}
+                  <Form.Control.Feedback type="invalid">
+                    {errors.type?.message}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
 
-                <div className="invalid-feedback">{errors.storage?.message}</div>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Quantity and Unit */}
-          <Row className="mb-3 mt-2">
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Quantity</Form.Label>
-                <Form.Control
-                  type="number"
-                  step={0.5}
-                  placeholder="e.g., 1, 1.5"
-                  isInvalid={!!errors.quantity}
-                  {...register('quantity', { valueAsNumber: true })}
-                  required
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.quantity?.message as string}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Unit</Form.Label>
-                <Form.Select
-                  value={unitChoice}
-                  required
-                  className={`${errors.unit ? 'is-invalid' : ''}`}
-                  onChange={(e) => {
-                    const { value } = e.target;
-                    setUnitChoice(value);
-                    setValue('unit', value === 'Other' ? '' : value);
-                  }}
-                  isInvalid={!!errors.unit}
-                >
-                  <option value="" disabled>Select unit...</option>
-                  {unitOptions.map((u) => (
-                    <option key={u}>{u}</option>
-                  ))}
-                </Form.Select>
-                {unitChoice === 'Other' && (
+            <Row className="mb-3">
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Quantity</Form.Label>
                   <Form.Control
-                    type="text"
-                    placeholder="Enter custom unit"
-                    className="mt-2"
+                    type="number"
+                    step="0.01"
+                    {...register('quantity', { valueAsNumber: true })}
+                    isInvalid={!!errors.quantity}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.quantity?.message}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Unit</Form.Label>
+                  <Form.Select
+                    value={unitChoice}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setUnitChoice(value);
+
+                      if (value !== 'Other') {
+                        setValue('unit', value);
+                      } else {
+                        setValue('unit', '');
+                      }
+                    }}
                     isInvalid={!!errors.unit}
-                    {...register('unit')}
-                    required
-                  />
-                )}
-                <Form.Control.Feedback type="invalid">
-                  {errors.unit?.message as string}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Restock Threshold */}
-          <Row className="mb-3">
-            <Col xs={12}>
-              <Form.Group>
-                <Form.Label className="mb-0">Restock Threshold</Form.Label>
-                <Form.Control
-                  type="number"
-                  step={0.5}
-                  placeholder="e.g., 0.5"
-                  isInvalid={!!errors.restockThreshold}
-                  {...register('restockThreshold', {
-                    setValueAs: (v) => {
-                      if (v === '' || v === null || typeof v === 'undefined') return null;
-                      const n = Number(v);
-                      return Number.isNaN(n) ? null : n;
-                    },
-                  })}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.restockThreshold?.message as string}
-                </Form.Control.Feedback>
-                <Form.Text className="text-muted">
-                  When quantity falls below this value, the item will be added to your shopping list.
-                </Form.Text>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Expiration and Image */}
-          <Row className="mb-3">
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0">Expiration Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  isInvalid={!!errors.expiration}
-                  {...register('expiration')}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.expiration?.message as string}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0">Image</Form.Label>
-                <InputGroup>
-                  <Form.Control
-                    type="text"
-                    placeholder="Pick an Image"
-                    isInvalid={!!errors.image}
-                    {...register('image')}
-                  />
-                  <Button
-                    variant="outline-secondary"
-                    type="button"
-                    style={{ display: 'inline-block', zIndex: 99 }}
-                    onClick={() => setShowPicker(true)}
                   >
-                    Pick
-                  </Button>
-                </InputGroup>
-                <Form.Control.Feedback type="invalid">
-                  {errors.image?.message as string}
-                </Form.Control.Feedback>
+                    <option value="">Select unit...</option>
+                    {unitOptions.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {errors.unit?.message}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
 
-                {imageVal && (
-                  <div className="mt-2">
-                    <RBImage
-                      src={imageVal}
-                      alt={imageAlt || 'Preview'}
-                      style={{ maxHeight: 120, borderRadius: 8, objectFit: 'cover' }}
-                      thumbnail
+              <Col md={4}>
+                {unitChoice === 'Other' && (
+                  <Form.Group>
+                    <Form.Label>Custom Unit</Form.Label>
+                    <Form.Control
+                      type="text"
+                      {...register('unit')}
+                      isInvalid={!!errors.unit}
                     />
-                  </div>
+                    <Form.Control.Feedback type="invalid">
+                      {errors.unit?.message}
+                    </Form.Control.Feedback>
+                  </Form.Group>
                 )}
-              </Form.Group>
-            </Col>
-          </Row>
+              </Col>
+            </Row>
 
-          {/* owner hidden (kept in form for your add action) */}
-          <input type="hidden" {...register('owner')} value={produce?.owner ?? ''} />
+            <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Expiration</Form.Label>
+                  <Form.Control
+                    type="date"
+                    {...register('expiration')}
+                    isInvalid={!!errors.expiration}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.expiration?.message as string}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
 
-          <Row className="d-flex justify-content-between mt-4">
-            <Col xs={6}>
-              <Button type="submit" className="btn-submit">
-                Submit
-              </Button>
-            </Col>
-            <Col xs={6}>
-              <Button
-                type="button"
-                variant="warning"
-                onClick={() => reset()}
-                className="btn-reset"
-              >
-                Reset
-              </Button>
-            </Col>
-          </Row>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Restock Threshold</Form.Label>
+                  <Form.Control
+                    type="number"
+                    step="0.01"
+                    {...register('restockThreshold', { valueAsNumber: true })}
+                    isInvalid={!!errors.restockThreshold}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.restockThreshold?.message as string}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Location</Form.Label>
+                  <Form.Select
+                    value={selectedLocation}
+                    onChange={(e) => handleLocationChange(e.target.value)}
+                    isInvalid={!!errors.location}
+                  >
+                    <option value="">Select location...</option>
+                    {locations.map((location) => (
+                      <option key={location} value={location}>
+                        {location}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {errors.location?.message}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Storage</Form.Label>
+                  <Form.Select
+                    value={selectedStorage}
+                    onChange={(e) => {
+                      setSelectedStorage(e.target.value);
+                      setValue('storage', e.target.value);
+                    }}
+                    isInvalid={!!errors.storage}
+                  >
+                    <option value="">Select storage...</option>
+                    {storageOptions.map((storage) => (
+                      <option key={storage} value={storage}>
+                        {storage}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {errors.storage?.message}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row className="mb-3">
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label>Image</Form.Label>
+                  <InputGroup>
+                    <Form.Control
+                      type="text"
+                      placeholder="Image URL"
+                      {...register('image')}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      onClick={() => setShowPicker(true)}
+                    >
+                      Pick Image
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      onClick={() => setShowScanner(true)}
+                    >
+                      Scan Barcode
+                    </Button>
+                  </InputGroup>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            {imageVal && (
+              <Row className="mb-3">
+                <Col md={12} className="text-center">
+                  <RBImage
+                    src={imageVal}
+                    alt={imageAlt || watch('name') || 'Produce image'}
+                    thumbnail
+                    style={{ maxHeight: '200px', objectFit: 'contain' }}
+                  />
+                </Col>
+              </Row>
+            )}
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              Add Item
+            </Button>
+          </Modal.Footer>
         </Form>
-      </Modal.Body>
+      </Modal>
+
+      <CommonItemModal
+        show={showCommonItemModal}
+        onHide={() => setShowCommonItemModal(false)}
+        owner={produce?.owner ?? ''}
+        initialValues={{
+          name: watch('name'),
+          type: watch('type'),
+          unit: watch('unit') || 'pcs',
+        }}
+        onCreated={(item) => {
+          setCommonItems((prev) => [...prev, item].sort((a, b) => a.name.localeCompare(b.name)));
+          setSelectedCommonItemId(String(item.id));
+          setValue('commonItemId', item.id);
+          setValue('name', item.name);
+          setValue('type', item.type || '');
+
+          const chosenUnit = item.preferredDisplayUnit || item.defaultUnit;
+          setValue('unit', chosenUnit);
+          setUnitChoice(unitOptions.includes(chosenUnit) ? chosenUnit : 'Other');
+        }}
+      />
 
       <ImagePickerModal
         show={showPicker}
-        onClose={() => setShowPicker(false)}
-        onSelect={(url, meta) => {
-          setValue('image', url, { shouldValidate: true, shouldDirty: true });
-          if (meta?.alt) setImageAlt(meta.alt);
+        onHide={() => setShowPicker(false)}
+        onSelectImage={(url: string, alt?: string) => {
+          setValue('image', url);
+          setImageAlt(alt || '');
+          setShowPicker(false);
         }}
       />
-    </Modal>
+
+      <BarcodeScanner
+        show={showScanner}
+        onHide={() => setShowScanner(false)}
+        onDetected={(result: { name?: string; image?: string }) => {
+          if (result.name) setValue('name', result.name);
+          if (result.image) setValue('image', result.image);
+          setShowScanner(false);
+        }}
+      />
+    </>
   );
 }

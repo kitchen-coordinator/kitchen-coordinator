@@ -1,6 +1,6 @@
 'use server';
 
-import { normalizeUnit } from '@/lib/units';
+import { BASE_UNIT, getUnitCategory, normalizeUnit } from '@/lib/units';
 import { Prisma } from '@prisma/client';
 import { hash, compare } from 'bcrypt';
 import { redirect } from 'next/navigation';
@@ -72,6 +72,7 @@ export async function addProduce(produce: {
   owner: string;
   image: string | null;
   restockThreshold?: number;
+  commonItemId?: number | null;
 }) {
   const normalizedUnit = normalizeUnit(produce.unit);
   const quantityStored = produce.quantity;
@@ -105,6 +106,7 @@ export async function addProduce(produce: {
       expiration: produce.expiration ? new Date(produce.expiration) : null,
       image: produce.image ?? null,
       restockThreshold: restockThresholdStored,
+      commonItemId: produce.commonItemId ?? null,
     },
     create: {
       name: produce.name,
@@ -117,6 +119,7 @@ export async function addProduce(produce: {
       expiration: produce.expiration ? new Date(produce.expiration) : null,
       image: produce.image ?? null,
       restockThreshold: restockThresholdStored,
+      commonItemId: produce.commonItemId ?? null,
     },
   });
 
@@ -160,6 +163,7 @@ export async function editProduce(
     location: string;
     storage: string;
     owner: string;
+    commonItemId?: number | null;
   },
 ) {
   // OPTION SAME SAME: Normalizes and determines the unit type
@@ -226,6 +230,7 @@ export async function editProduce(
       owner: produce.owner,
       image: produce.image,
       restockThreshold: restockThresholdStored,
+      commonItemId: produce.commonItemId ?? null,
     },
   });
 
@@ -413,5 +418,63 @@ export async function editShoppingListItem(
 export async function deleteShoppingListItem(id: number) {
   await prisma.shoppingListItem.delete({
     where: { id },
+  });
+}
+
+export async function getCommonItemsByOwner(owner: string) {
+  const normalizedOwner = owner.trim();
+  if (!normalizedOwner) return [];
+
+  return prisma.commonItem.findMany({
+    where: { owner: normalizedOwner },
+    orderBy: { name: 'asc' },
+  });
+}
+
+export async function addCommonItem(data: {
+  owner: string;
+  name: string;
+  type?: string | null;
+  defaultUnit: string;
+  preferredDisplayUnit?: string | null;
+}) {
+  const owner = data.owner.trim();
+  const name = data.name.trim();
+  const type = data.type?.trim() || null;
+
+  if (!owner) throw new Error('Owner is required.');
+  if (!name) throw new Error('Common item name is required.');
+
+  const duplicate = await prisma.commonItem.findFirst({
+    where: {
+      owner,
+      name: { equals: name, mode: 'insensitive' },
+    },
+    select: { id: true },
+  });
+
+  if (duplicate) {
+    throw new Error('You already saved a common item with that name.');
+  }
+
+  const defaultUnit = normalizeUnit(data.defaultUnit);
+  const preferredDisplayUnit = normalizeUnit(data.preferredDisplayUnit || data.defaultUnit);
+
+  const defaultCategory = getUnitCategory(defaultUnit);
+  const displayCategory = getUnitCategory(preferredDisplayUnit);
+
+  if (defaultCategory !== displayCategory) {
+    throw new Error('Default unit and preferred display unit must be in the same category.');
+  }
+
+  return prisma.commonItem.create({
+    data: {
+      owner,
+      name,
+      type,
+      defaultUnit,
+      preferredDisplayUnit,
+      baseUnit: BASE_UNIT[defaultCategory],
+    },
   });
 }

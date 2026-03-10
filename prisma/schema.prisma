@@ -44,7 +44,7 @@ model PasswordResetToken {
 }
 
 model Produce {
-  id               Int       @id @default(autoincrement())
+  id               Int         @id @default(autoincrement())
   name             String
   type             String
   quantity         Float
@@ -54,11 +54,13 @@ model Produce {
   unit             String
   restockThreshold Float?
   customThreshold  Float?
-  restockTrigger   String    @default("empty")
+  restockTrigger   String      @default("empty")
   locationId       Int
   storageId        Int
-  location         Location  @relation(fields: [locationId], references: [id])
-  storage          Storage   @relation(fields: [storageId], references: [id])
+  commonItemId     Int?
+  location         Location    @relation(fields: [locationId], references: [id])
+  storage          Storage     @relation(fields: [storageId], references: [id])
+  commonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
 
   @@unique([name, owner])
 }
@@ -85,6 +87,21 @@ model Storage {
   location   Location  @relation(fields: [locationId], references: [id])
 
   @@unique([name, locationId])
+}
+
+model CommonItem {
+  id                   Int       @id @default(autoincrement())
+  name                 String
+  type                 String?
+  owner                String
+  defaultUnit          String
+  baseUnit             String
+  preferredDisplayUnit String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  produces             Produce[]
+
+  @@unique([name, owner])
 }
 
 model ShoppingList {
