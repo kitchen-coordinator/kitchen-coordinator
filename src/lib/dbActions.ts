@@ -278,6 +278,14 @@ export async function getUserProduceByEmail(owner: string) {
   });
 }
 
+export async function getUserProduceWithQuantity(owner: string) {
+  return prisma.produce.findMany({
+    where: { owner },
+    select: { id: true, name: true, quantity: true, unit: true },
+    orderBy: { name: 'asc' },
+  });
+}
+
 /**
  * Adds a new location.
  */
