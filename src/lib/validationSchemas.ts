@@ -98,6 +98,10 @@ export const CommonItemSchema = Yup.object({
   owner: Yup.string().required('Owner is required'),
   name: Yup.string().trim().required('Common item name is required'),
   type: Yup.string().nullable().notRequired(),
-  defaultUnit: Yup.string().required('Default unit is required'),
-  preferredDisplayUnit: Yup.string().required('Preferred display unit is required'),
+  displayUnit: Yup.string().trim().required('Display unit is required'),
+  normalizedQuantityPerUnit: Yup.number()
+    .typeError('Normalized quantity is required')
+    .positive('Normalized quantity must be greater than 0')
+    .required('Normalized quantity is required'),
+  normalizedUnit: Yup.string().required('Normalized unit is required'),
 });

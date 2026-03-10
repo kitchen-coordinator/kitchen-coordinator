@@ -250,7 +250,6 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
           <Modal.Body>
             <input type="hidden" {...register('owner')} />
             <input type="hidden" {...register('commonItemId', { valueAsNumber: true })} />
-
             <Row className="mb-3">
               <Col xs={8}>
                 <Form.Group>
@@ -269,25 +268,18 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                       const item = commonItems.find((entry) => String(entry.id) === value);
                       if (!item) return;
 
-                      const chosenUnit = item.preferredDisplayUnit || item.defaultUnit;
-
                       setValue('commonItemId', Number(item.id));
-                      setValue('name', item.name);
-                      setValue('type', item.type || '');
-                      setValue('unit', chosenUnit);
-
-                      setUnitChoice(unitOptions.includes(chosenUnit) ? chosenUnit : 'Other');
                     }}
                   >
                     <option value="">Select a saved common item...</option>
                     {commonItems.map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.name} ({item.preferredDisplayUnit || item.defaultUnit})
+                        {item.name} (1 {item.displayUnit} = {item.normalizedQuantityPerUnit} {item.normalizedUnit})
                       </option>
                     ))}
                   </Form.Select>
                   <Form.Text className="text-muted">
-                    Selecting one auto-fills the pantry item unit.
+                    Selecting one links this pantry item to a saved conversion rule.
                   </Form.Text>
                 </Form.Group>
               </Col>
@@ -536,18 +528,18 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
         initialValues={{
           name: watch('name'),
           type: watch('type'),
-          unit: watch('unit') || 'pcs',
+          unit: watch('unit') || '',
         }}
         onCreated={(item) => {
-          setCommonItems((prev) => [...prev, item].sort((a, b) => a.name.localeCompare(b.name)));
+          setCommonItems((prev) =>
+            [...prev, item].sort((a, b) => {
+              const nameCompare = a.name.localeCompare(b.name);
+              if (nameCompare !== 0) return nameCompare;
+              return a.displayUnit.localeCompare(b.displayUnit);
+            }),
+          );
           setSelectedCommonItemId(String(item.id));
           setValue('commonItemId', item.id);
-          setValue('name', item.name);
-          setValue('type', item.type || '');
-
-          const chosenUnit = item.preferredDisplayUnit || item.defaultUnit;
-          setValue('unit', chosenUnit);
-          setUnitChoice(unitOptions.includes(chosenUnit) ? chosenUnit : 'Other');
         }}
       />
 

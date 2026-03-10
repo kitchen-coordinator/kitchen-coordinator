@@ -29,7 +29,10 @@ export default function CommonItemModal({
   initialValues,
   onCreated,
 }: CommonItemModalProps) {
-  const unitOptions = useMemo(() => ['kg', 'g', 'lb', 'oz', 'pcs', 'ml', 'l'], []);
+  const normalizedUnitOptions = useMemo(
+    () => ['mg', 'g', 'kg', 'oz', 'lb', 'ml', 'l', 'tsp', 'tbsp', 'cup', 'fl oz', 'pt', 'qt', 'gal'],
+    [],
+  );
 
   const {
     register,
@@ -42,8 +45,9 @@ export default function CommonItemModal({
       owner,
       name: initialValues?.name ?? '',
       type: initialValues?.type ?? '',
-      defaultUnit: initialValues?.unit ?? 'pcs',
-      preferredDisplayUnit: initialValues?.unit ?? 'pcs',
+      displayUnit: initialValues?.unit ?? '',
+      normalizedQuantityPerUnit: 1,
+      normalizedUnit: 'cup',
     },
   });
 
@@ -53,8 +57,9 @@ export default function CommonItemModal({
         owner,
         name: initialValues?.name ?? '',
         type: initialValues?.type ?? '',
-        defaultUnit: initialValues?.unit ?? 'pcs',
-        preferredDisplayUnit: initialValues?.unit ?? 'pcs',
+        displayUnit: initialValues?.unit ?? '',
+        normalizedQuantityPerUnit: 1,
+        normalizedUnit: 'cup',
       });
     }
   }, [show, owner, initialValues, reset]);
@@ -64,8 +69,9 @@ export default function CommonItemModal({
       owner,
       name: initialValues?.name ?? '',
       type: initialValues?.type ?? '',
-      defaultUnit: initialValues?.unit ?? 'pcs',
-      preferredDisplayUnit: initialValues?.unit ?? 'pcs',
+      displayUnit: initialValues?.unit ?? '',
+      normalizedQuantityPerUnit: 1,
+      normalizedUnit: 'cup',
     });
     onHide();
   };
@@ -74,7 +80,10 @@ export default function CommonItemModal({
     const res = await fetch('/api/common-items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        ...data,
+        normalizedQuantityPerUnit: Number(data.normalizedQuantityPerUnit),
+      }),
     });
 
     const payload = await res.json();
@@ -132,46 +141,63 @@ export default function CommonItemModal({
           </Row>
 
           <Row className="mb-3">
-            <Col xs={6}>
+            <Col xs={12}>
               <Form.Group>
-                <Form.Label>Default Unit</Form.Label>
-                <Form.Select
-                  {...register('defaultUnit')}
-                  isInvalid={!!errors.defaultUnit}
-                >
-                  {unitOptions.map((unit) => (
-                    <option key={unit} value={unit}>
-                      {unit}
-                    </option>
-                  ))}
-                </Form.Select>
+                <Form.Label>Display Unit</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="e.g. can, bag, bottle, jar"
+                  {...register('displayUnit')}
+                  isInvalid={!!errors.displayUnit}
+                />
                 <Form.Control.Feedback type="invalid">
-                  {errors.defaultUnit?.message}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label>Preferred Display Unit</Form.Label>
-                <Form.Select
-                  {...register('preferredDisplayUnit')}
-                  isInvalid={!!errors.preferredDisplayUnit}
-                >
-                  {unitOptions.map((unit) => (
-                    <option key={unit} value={unit}>
-                      {unit}
-                    </option>
-                  ))}
-                </Form.Select>
-                <Form.Control.Feedback type="invalid">
-                  {errors.preferredDisplayUnit?.message}
+                  {errors.displayUnit?.message}
                 </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
 
-          <div className="d-flex justify-content-end gap-2">
+          <Row className="mb-3">
+            <Col xs={6}>
+              <Form.Group>
+                <Form.Label>Normalized Quantity per 1 Unit</Form.Label>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  {...register('normalizedQuantityPerUnit', { valueAsNumber: true })}
+                  isInvalid={!!errors.normalizedQuantityPerUnit}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.normalizedQuantityPerUnit?.message}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+
+            <Col xs={6}>
+              <Form.Group>
+                <Form.Label>Normalized Unit</Form.Label>
+                <Form.Select
+                  {...register('normalizedUnit')}
+                  isInvalid={!!errors.normalizedUnit}
+                >
+                  {normalizedUnitOptions.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {errors.normalizedUnit?.message}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Form.Text className="text-muted">
+            Example: 1 can = 2.3 cups, or 1 bag = 16 oz.
+          </Form.Text>
+
+          <div className="d-flex justify-content-end gap-2 mt-3">
             <Button variant="secondary" onClick={closeAndReset}>
               Cancel
             </Button>

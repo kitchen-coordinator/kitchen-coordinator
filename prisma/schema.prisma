@@ -44,23 +44,26 @@ model PasswordResetToken {
 }
 
 model Produce {
-  id               Int         @id @default(autoincrement())
-  name             String
-  type             String
-  quantity         Float
-  expiration       DateTime?
-  owner            String
-  image            String?
-  unit             String
-  restockThreshold Float?
-  customThreshold  Float?
-  restockTrigger   String      @default("empty")
-  locationId       Int
-  storageId        Int
-  commonItemId     Int?
-  location         Location    @relation(fields: [locationId], references: [id])
-  storage          Storage     @relation(fields: [storageId], references: [id])
-  commonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
+  id                 Int         @id @default(autoincrement())
+  name               String
+  type               String
+  quantity           Float
+  expiration         DateTime?
+  owner              String
+  image              String?
+  unit               String
+  normalizedQuantity Float?
+  normalizedUnit     String?
+  restockThreshold   Float?
+  customThreshold    Float?
+  restockTrigger     String      @default("empty")
+  locationId         Int
+  storageId          Int
+  commonItemId       Int?
+
+  location           Location    @relation(fields: [locationId], references: [id])
+  storage            Storage     @relation(fields: [storageId], references: [id])
+  commonItem         CommonItem? @relation(fields: [commonItemId], references: [id])
 
   @@unique([name, owner])
 }
@@ -90,18 +93,18 @@ model Storage {
 }
 
 model CommonItem {
-  id                   Int       @id @default(autoincrement())
-  name                 String
-  type                 String?
-  owner                String
-  defaultUnit          String
-  baseUnit             String
-  preferredDisplayUnit String
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  produces             Produce[]
+  id                        Int       @id @default(autoincrement())
+  name                      String
+  type                      String?
+  owner                     String
+  displayUnit               String
+  normalizedQuantityPerUnit Float
+  normalizedUnit            String
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  produces                  Produce[]
 
-  @@unique([name, owner])
+  @@unique([name, owner, displayUnit])
 }
 
 model ShoppingList {
