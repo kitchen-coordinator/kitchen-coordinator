@@ -21,35 +21,38 @@ export default function Hero() {
         initial="hidden"
         animate="show"
       >
-        <motion.div variants={item} style={{ marginBottom: '2.5rem' }}>
+        {/* Logo */}
+        <motion.div variants={item} style={{ marginBottom: '1.25rem' }}>
           <Image
             src="/kitchen-coordinator-logo.png"
             alt="Kitchen Coordinator"
-            width={360}
-            height={360}
+            width={180}
+            height={180}
             priority
           />
         </motion.div>
 
+        {/* Buttons */}
         {!isLoading && (
-        <motion.div className={styles.buttonGroup} variants={item}>
-          {!session ? (
-            <>
-              <Link href="/auth/signin" className={styles.primaryButton}>
-                Log In
+          <motion.div className={styles.buttonGroup} variants={item}>
+            {!session ? (
+              <>
+                <Link href="/auth/signin" className={styles.primaryButton}>
+                  Log In
+                </Link>
+                <Link href="/auth/signup" className={styles.secondaryButton}>
+                  Create an Account
+                </Link>
+              </>
+            ) : (
+              <Link href="/dashboard" className={styles.primaryButton}>
+                Go to Dashboard
               </Link>
-              <Link href="/auth/signup" className={styles.secondaryButton}>
-                Create an Account
-              </Link>
-            </>
-          ) : (
-            <Link href="/dashboard" className={styles.primaryButton}>
-              Go to Dashboard
-            </Link>
-          )}
-        </motion.div>
+            )}
+          </motion.div>
         )}
 
+        {/* Dashboard preview */}
         <motion.div className={styles.previewWrapper} variants={item}>
           <Image
             src="/dashboard-preview.png"

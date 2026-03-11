@@ -36,21 +36,26 @@ export default function Features() {
     <div style={{ backgroundColor: 'var(--timberwolf, #d4c5b0)' }}>
 
       {/* Intro section */}
-      <section style={{ padding: '3rem 1.5rem 2rem', maxWidth: 700, margin: '0 auto' }}>
+      <section style={{ padding: '3.5rem 2rem 2rem', maxWidth: 900, margin: '0 auto' }}>
         <h2
           style={{
             fontWeight: 800,
-            fontSize: 'clamp(1.75rem, 6vw, 2.5rem)',
+            fontSize: 'clamp(2rem, 5vw, 3rem)',
             color: 'var(--brunswick-green, #3a5a40)',
             marginBottom: '1rem',
-            lineHeight: 1.2,
+            lineHeight: 1.15,
           }}
         >
-          Welcome to Kitchen
-          <br />
-          Coordinator
+          Welcome to Kitchen Coordinator
         </h2>
-        <p style={{ fontSize: '1.05rem', color: '#444', lineHeight: 1.65, marginBottom: '2rem' }}>
+        <p style={{
+          fontSize: '1.05rem',
+          color: '#555',
+          lineHeight: 1.7,
+          marginBottom: '2rem',
+          maxWidth: 560,
+        }}
+        >
           Keep track of your pantry, cut down on food waste, and discover recipes with
           what you already have. Smarter cooking, simplified.
         </p>
@@ -61,9 +66,9 @@ export default function Features() {
               display: 'inline-block',
               backgroundColor: 'var(--brunswick-green, #3a5a40)',
               color: 'white',
-              padding: '0.9rem 2.5rem',
+              padding: '0.85rem 2rem',
               borderRadius: '0.75rem',
-              fontWeight: 500,
+              fontWeight: 700,
               fontSize: '1rem',
               textDecoration: 'none',
             }}
@@ -74,27 +79,26 @@ export default function Features() {
       </section>
 
       {/* Feature cards */}
-      <section style={{ padding: '1rem 1.5rem 4rem', maxWidth: 700, margin: '0 auto' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <section style={{ padding: '1.5rem 2rem 5rem', maxWidth: 900, margin: '0 auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {features.map((feature) => (
             <motion.div
               key={feature.title}
-              whileHover={{ y: -4, scale: 1.02 }}
+              whileHover={{ y: -3, scale: 1.01 }}
               transition={{ duration: 0.15 }}
             >
               <Link
                 href={feature.href}
-                key={feature.title}
                 style={{
                   background: 'white',
-                  borderRadius: '1rem',
-                  padding: '1.75rem',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.07)',
+                  borderRadius: '1.25rem',
+                  padding: '1.5rem 2rem',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '1.25rem',
-                  textDecoration: 'none', // ADDED: removes underline from link
-                  color: 'inherit', // ADDED: prevents link from changing text color
+                  gap: '1.5rem',
+                  textDecoration: 'none',
+                  color: 'inherit',
                 }}
               >
                 <Image
@@ -105,17 +109,16 @@ export default function Features() {
                   style={{ flexShrink: 0 }}
                 />
                 <div>
-                  <h3
-                    style={{
-                      fontWeight: 600,
-                      fontSize: '1.1rem',
-                      color: 'var(--brunswick-green, #3a5a40)',
-                      marginBottom: '0.35rem',
-                    }}
+                  <h3 style={{
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
+                    color: 'var(--brunswick-green, #3a5a40)',
+                    margin: '0 0 0.35rem 0',
+                  }}
                   >
                     {feature.title}
                   </h3>
-                  <p style={{ fontSize: '0.95rem', color: '#555', lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: '0.95rem', color: '#666', lineHeight: 1.6, margin: 0 }}>
                     {feature.description}
                   </p>
                 </div>
