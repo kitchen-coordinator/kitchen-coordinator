@@ -17,7 +17,7 @@ type AddItemValues = {
   name: string;
   quantity: number;
   shoppingListId: number;
-  price?: number | string | null;
+  price?: number | null;
   unit?: string;
 };
 
@@ -86,15 +86,11 @@ const AddToShoppingListModal = ({
     }
 
     try {
-      const priceNum = data.price === '' || data.price === null || typeof data.price === 'undefined'
-        ? undefined
-        : Number(data.price);
-
       await addShoppingListItem({
         name: data.name.trim(),
         quantity: Number(data.quantity),
         unit: data.unit?.trim() ? data.unit.trim() : '',
-        price: Number.isFinite(priceNum as number) ? (priceNum as number) : undefined,
+        price: data.price ?? undefined,
         shoppingListId: Number(data.shoppingListId),
       });
 
@@ -181,7 +177,13 @@ const AddToShoppingListModal = ({
                 min="0"
                 inputMode="decimal"
                 placeholder="e.g., 3.99"
-                {...register('price')}
+                {...register('price', {
+                  setValueAs: (v) => {
+                    if (v === '' || v === null || typeof v === 'undefined') return null;
+                    const n = Number(v);
+                    return Number.isFinite(n) ? n : null;
+                  },
+                })}
                 className={`${errors.price ? 'is-invalid' : ''}`}
               />
             </InputGroup>
