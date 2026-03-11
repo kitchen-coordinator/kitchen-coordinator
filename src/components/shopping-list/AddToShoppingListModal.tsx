@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Col, Form, Modal, Row, InputGroup, Offcanvas } from 'react-bootstrap';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import swal from 'sweetalert';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/navigation';
@@ -54,7 +54,7 @@ const AddToShoppingListModal = ({
     watch,
     formState: { errors, isSubmitting },
   } = useForm<AddItemValues>({
-    resolver: yupResolver(AddShoppingListItemSchema),
+    resolver: yupResolver(AddShoppingListItemSchema) as unknown as Resolver<AddItemValues>,
     defaultValues: {
       name: prefillName,
       quantity: 0,
