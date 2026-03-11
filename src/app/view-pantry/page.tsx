@@ -20,6 +20,7 @@ const ViewPantryPage = async () => {
     include: {
       location: { select: { id: true, name: true } },
       storage: { select: { id: true, name: true } },
+      commonItem: true,
     },
     orderBy: [{ name: 'asc' }],
   });

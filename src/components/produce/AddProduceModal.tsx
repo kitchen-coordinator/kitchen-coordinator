@@ -59,11 +59,32 @@ interface AddProduceModalProps {
     storage?: string;
     quantity?: number;
     unit?: string;
+    displayQuantity?: number | null;
+    displayUnit?: string | null;
     expiration?: Date | string | null;
     owner?: string;
     image?: string | null;
     restockThreshold?: number | null;
     commonItemId?: number | null;
+  };
+}
+
+function mapProduceToFormValues(produce?: AddProduceModalProps['produce']) {
+  return {
+    id: produce?.id ?? 0,
+    name: produce?.name ?? '',
+    type: produce?.type ?? '',
+    location: produce?.location ?? '',
+    storage: produce?.storage ?? '',
+    quantity: produce?.displayQuantity ?? produce?.quantity ?? undefined,
+    unit: produce?.displayUnit ?? produce?.unit ?? '',
+    expiration: produce?.expiration
+      ? new Date(produce.expiration).toISOString().split('T')[0]
+      : null,
+    owner: produce?.owner ?? '',
+    image: produce?.image ?? '',
+    restockThreshold: produce?.restockThreshold ?? null,
+    commonItemId: produce?.commonItemId ?? null,
   };
 }
 
@@ -87,20 +108,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
     formState: { errors, isSubmitting },
   } = useForm<ProduceValues>({
     resolver: yupResolver(AddProduceSchema) as unknown as Resolver<ProduceValues>,
-    defaultValues: {
-      id: produce?.id ?? 0,
-      name: '',
-      type: '',
-      location: '',
-      storage: '',
-      quantity: undefined,
-      unit: '',
-      expiration: null,
-      owner: produce?.owner ?? '',
-      image: '',
-      restockThreshold: null,
-      commonItemId: null,
-    },
+    defaultValues: mapProduceToFormValues(produce),
   });
 
   const imageVal = watch('image') || '';
@@ -137,33 +145,20 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
   useEffect(() => {
     if (!show) return;
 
-    reset({
-      id: produce?.id ?? 0,
-      name: produce?.name ?? '',
-      type: produce?.type ?? '',
-      location: typeof produce?.location === 'string' ? produce.location : '',
-      storage: typeof produce?.storage === 'string' ? produce.storage : '',
-      quantity: produce?.quantity,
-      unit: produce?.unit ?? '',
-      expiration: produce?.expiration
-        ? new Date(produce.expiration).toISOString().split('T')[0]
-        : null,
-      owner: produce?.owner ?? '',
-      image: produce?.image ?? '',
-      restockThreshold: produce?.restockThreshold ?? null,
-      commonItemId: produce?.commonItemId ?? null,
-    });
+    const formValues = mapProduceToFormValues(produce);
+    reset(formValues);
 
-    setSelectedLocation(typeof produce?.location === 'string' ? produce.location : '');
-    setSelectedStorage(typeof produce?.storage === 'string' ? produce.storage : '');
+    setSelectedLocation(formValues.location);
+    setSelectedStorage(formValues.storage);
+    setSelectedCommonItemId(formValues.commonItemId ? String(formValues.commonItemId) : '');
+
     setUnitChoice(
-      produce?.unit && unitOptions.includes(produce.unit)
-        ? produce.unit
-        : produce?.unit
+      formValues.unit && unitOptions.includes(formValues.unit)
+        ? formValues.unit
+        : formValues.unit
           ? 'Other'
           : '',
     );
-    setSelectedCommonItemId(produce?.commonItemId ? String(produce.commonItemId) : '');
 
     const fetchModalData = async () => {
       if (!produce?.owner) return;
@@ -186,13 +181,13 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
 
     fetchModalData();
 
-    if (typeof produce?.location === 'string' && produce.location) {
-      fetchStorage(produce.location);
+    if (formValues.location) {
+      fetchStorage(formValues.location);
     }
   }, [show, produce, reset, fetchStorage, unitOptions]);
 
   const handleClose = () => {
-    reset();
+    reset(mapProduceToFormValues(produce));
     setSelectedLocation('');
     setSelectedStorage('');
     setStorageOptions([]);
@@ -273,18 +268,19 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                       if (!item) return;
 
                       setValue('commonItemId', Number(item.id));
+                      setValue('unit', item.displayUnit);
+
+                      if (unitOptions.includes(item.displayUnit)) {
+                        setUnitChoice(item.displayUnit);
+                      } else {
+                        setUnitChoice('Other');
+                      }
                     }}
                   >
                     <option value="">None (save item as entered)</option>
                     {commonItems.map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.name}
-                        (1
-                        {item.displayUnit}
-                        =
-                        {item.normalizedQuantityPerUnit}
-                        {item.normalizedUnit}
-                        )
+                        {item.name} (1 {item.displayUnit} = {item.normalizedQuantityPerUnit} {item.normalizedUnit})
                       </option>
                     ))}
                   </Form.Select>
@@ -293,9 +289,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                   </Form.Text>
                   {selectedCommonItem && (
                     <Form.Text className="d-block text-muted mt-1">
-                      Enter quantity in
-                      <strong>{selectedCommonItem.displayUnit}</strong>
-                      so the pantry item can be converted correctly.
+                      Enter quantity in <strong>{selectedCommonItem.displayUnit}</strong> so the pantry item can be converted correctly.
                     </Form.Text>
                   )}
                 </Form.Group>
@@ -341,7 +335,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                   <Form.Label>Quantity</Form.Label>
                   <Form.Control
                     type="number"
-                    step="0.01"
+                    step="0.125"
                     {...register('quantity', { valueAsNumber: true })}
                     isInvalid={!!errors.quantity}
                   />
@@ -414,7 +408,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                   <Form.Label>Restock Threshold</Form.Label>
                   <Form.Control
                     type="number"
-                    step="0.01"
+                    step="0.125"
                     {...register('restockThreshold', { valueAsNumber: true })}
                     isInvalid={!!errors.restockThreshold}
                   />
@@ -535,6 +529,13 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
           }));
           setSelectedCommonItemId(String(item.id));
           setValue('commonItemId', item.id);
+          setValue('unit', item.displayUnit);
+
+          if (unitOptions.includes(item.displayUnit)) {
+            setUnitChoice(item.displayUnit);
+          } else {
+            setUnitChoice('Other');
+          }
         }}
       />
 

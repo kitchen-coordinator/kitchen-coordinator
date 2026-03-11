@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { PencilSquare, Trash, CartPlus } from 'react-bootstrap-icons';
 import EditProduceModal from './EditProduceModal';
 import DeleteProduceModal from './DeleteProduceModal';
+import { getPantryDisplayAmount } from '@/lib/displayUnits';
 
 type Props = { produce: ProduceRelations };
 
@@ -24,6 +25,8 @@ export default function ProduceCard({ produce }: Props) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [addingToList, setAddingToList] = useState(false);
+
+  const { quantity: shownQuantity, unit: shownUnit } = getPantryDisplayAmount(produce);
 
   const handleAddToShoppingList = async () => {
     if (addingToList) return;
@@ -79,8 +82,9 @@ export default function ProduceCard({ produce }: Props) {
             {produce.storage?.name || 'Not Available'} at {produce.location?.name || 'Not Available'}
           </ListGroup.Item>
           <ListGroup.Item>
-            <strong>Quantity:</strong> {typeof produce.quantity === 'number' ? produce.quantity : 'Not Available'}
-            {produce.unit ? ` ${produce.unit}` : ''}
+            <strong>Quantity:</strong>{' '}
+            {typeof shownQuantity === 'number' ? shownQuantity : 'Not Available'}
+            {shownUnit ? ` ${shownUnit}` : ''}
           </ListGroup.Item>
           <ListGroup.Item>
             <strong>Expiration:</strong> {formatDate(produce.expiration)}
