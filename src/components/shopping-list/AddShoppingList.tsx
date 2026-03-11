@@ -25,6 +25,7 @@ export default function AddShoppingList({ show, onHide, owner }: Props) {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: yupResolver(AddShoppingListSchema),
@@ -37,6 +38,11 @@ export default function AddShoppingList({ show, onHide, owner }: Props) {
   useEffect(() => {
     if (!show) reset();
   }, [show, reset]);
+
+  // Keep the hidden owner field in sync with session email.
+  useEffect(() => {
+    if (show) setValue('owner', owner ?? '', { shouldValidate: true });
+  }, [owner, setValue, show]);
   const router = useRouter();
   const onSubmit = async (data: FormValues) => {
     try {
@@ -74,7 +80,7 @@ export default function AddShoppingList({ show, onHide, owner }: Props) {
           </Form.Group>
 
           {/* OWNER HIDDEN */}
-          <input type="hidden" {...register('owner')} value={owner} />
+          <input type="hidden" {...register('owner')} />
 
           <Row className="pt-3">
             <Col>

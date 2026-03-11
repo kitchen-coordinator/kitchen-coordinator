@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import swal from 'sweetalert';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { AddShoppingListItemSchema } from '@/lib/validationSchemas';
 import { addShoppingListItem } from '@/lib/dbActions';
@@ -17,7 +17,7 @@ type AddItemValues = {
   name: string;
   quantity: number;
   shoppingListId: number;
-  price?: number;
+  price?: number | string | null;
   unit?: string;
 };
 
@@ -40,10 +40,18 @@ const AddToShoppingListModal = ({
   const { data: session } = useSession();
   const owner = session?.user?.email;
 
+  const unitOptions = useMemo(
+    () => ['kg', 'g', 'lb', 'oz', 'pcs', 'ml', 'l', 'Other'],
+    [],
+  );
+  const [unitChoice, setUnitChoice] = useState<string>('');
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<AddItemValues>({
     resolver: yupResolver(AddShoppingListItemSchema),
@@ -51,17 +59,23 @@ const AddToShoppingListModal = ({
       name: prefillName,
       quantity: 0,
       unit: '',
-      price: 0,
+      price: null,
       shoppingListId: shoppingLists[0]?.id ?? 0,
     },
   });
 
   useEffect(() => {
-    if (!show) reset({ name: prefillName });
-  }, [show, reset, prefillName]);
+    if (!show) {
+      reset({ name: prefillName, price: null, unit: '' });
+      setUnitChoice('');
+    } else if (prefillName) {
+      setValue('name', prefillName, { shouldValidate: true });
+    }
+  }, [show, reset, prefillName, setValue]);
 
   const handleClose = () => {
-    reset({ name: prefillName });
+    reset({ name: prefillName, price: null, unit: '' });
+    setUnitChoice('');
     onHide();
   };
 
@@ -72,15 +86,15 @@ const AddToShoppingListModal = ({
     }
 
     try {
-      const price = typeof data.price === 'number'
-        ? data.price
-        : parseFloat(data.price || '0');
+      const priceNum = data.price === '' || data.price === null || typeof data.price === 'undefined'
+        ? undefined
+        : Number(data.price);
 
       await addShoppingListItem({
         name: data.name.trim(),
         quantity: Number(data.quantity),
-        unit: data.unit || '',
-        price,
+        unit: data.unit?.trim() ? data.unit.trim() : '',
+        price: Number.isFinite(priceNum as number) ? (priceNum as number) : undefined,
         shoppingListId: Number(data.shoppingListId),
       });
 
@@ -92,6 +106,8 @@ const AddToShoppingListModal = ({
       swal('Error', err?.message || 'Something went wrong', 'error');
     }
   };
+
+  const unitValue = watch('unit') ?? '';
 
   const formContent = (
     <Form noValidate onSubmit={handleSubmit(onSubmit)}>
@@ -125,7 +141,30 @@ const AddToShoppingListModal = ({
         <Col xs={3}>
           <Form.Group>
             <Form.Label>Unit</Form.Label>
-            <Form.Control type="text" {...register('unit')} />
+            {/* keep RHF field registered even when using a controlled select */}
+            <input type="hidden" {...register('unit')} />
+            <Form.Select
+              value={unitChoice}
+              onChange={(e) => {
+                const { value } = e.target;
+                setUnitChoice(value);
+                setValue('unit', value === 'Other' ? '' : value, { shouldValidate: true });
+              }}
+            >
+              <option value="">—</option>
+              {unitOptions.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </Form.Select>
+            {unitChoice === 'Other' && (
+              <Form.Control
+                className="mt-2"
+                type="text"
+                placeholder="Enter custom unit"
+                value={unitValue}
+                onChange={(e) => setValue('unit', e.target.value, { shouldValidate: true })}
+              />
+            )}
           </Form.Group>
         </Col>
       </Row>
@@ -140,7 +179,9 @@ const AddToShoppingListModal = ({
                 type="number"
                 step="0.01"
                 min="0"
-                {...register('price', { valueAsNumber: true })}
+                inputMode="decimal"
+                placeholder="e.g., 3.99"
+                {...register('price')}
                 className={`${errors.price ? 'is-invalid' : ''}`}
               />
             </InputGroup>
@@ -176,7 +217,10 @@ const AddToShoppingListModal = ({
         <Col>
           <Button
             type="button"
-            onClick={() => reset({ name: prefillName })}
+            onClick={() => {
+              reset({ name: prefillName, price: null, unit: '' });
+              setUnitChoice('');
+            }}
             variant="warning"
             className="btn-reset"
           >
