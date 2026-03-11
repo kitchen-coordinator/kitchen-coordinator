@@ -60,7 +60,10 @@ function sortProduce(arr: ProduceRelations[], sort: string): ProduceRelations[] 
   return sorted;
 }
 
-const ProduceListWithGrouping: React.FC<{ initialProduce: ProduceRelations[] }> = ({ initialProduce }) => {
+const ProduceListWithGrouping: React.FC<{
+  initialProduce: ProduceRelations[];
+  shoppingLists: any[];
+}> = ({ initialProduce, shoppingLists }) => {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortType>('');
   const [groupByStorage, setGroupByStorage] = useState(false);
@@ -112,11 +115,11 @@ const ProduceListWithGrouping: React.FC<{ initialProduce: ProduceRelations[] }> 
   const renderContent = () => {
     if (groupByStorage) {
       return view === 'table'
-        ? <GroupedSections groups={grouped} view="table" />
+        ? <GroupedSections groups={grouped} view="table" shoppingLists={shoppingLists} />
         : <GroupedSections groups={grouped} view="cards" />;
     }
     return view === 'table'
-      ? <ProduceTable rows={filteredSorted} />
+      ? <ProduceTable rows={filteredSorted} shoppingLists={shoppingLists} />
       : <ProduceCardGrid rows={filteredSorted} />;
   };
 

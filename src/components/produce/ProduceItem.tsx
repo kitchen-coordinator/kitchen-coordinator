@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from 'react-bootstrap';
 import { PencilSquare, Trash } from 'react-bootstrap-icons';
 import { ProduceRelations } from '@/types/ProduceRelations';
+import AddToShoppingListModal from '@/components/shopping-list/AddToShoppingListModal';
 import EditProduceModal from './EditProduceModal';
 import '../../styles/buttons.css';
 import DeleteProduceModal from './DeleteProduceModal';
@@ -21,40 +22,23 @@ const ProduceItem = ({
   owner,
   image,
   restockThreshold = 1,
-}: ProduceRelations & { restockThreshold?: number }) => {
+  shoppingLists,
+}: ProduceRelations & { restockThreshold?: number; shoppingLists: any[] }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [addingToList, setAddingToList] = useState(false);
+  const [showAddToListModal, setShowAddToListModal] = useState(false);
 
   const safeRestock = restockThreshold ?? 1;
 
-  const handleAddToShoppingList = async () => {
+  const handleAddToShoppingList = () => {
     if (addingToList) return;
-    try {
-      setAddingToList(true);
-
-      const res = await fetch('/api/shopping-list-item', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          owner,
-          name,
-          quantity: Number(quantity),
-          unit: unit ?? '',
-        }),
-      });
-
-      if (!res.ok) {
-        const msg = await res.text().catch(() => '');
-        throw new Error(msg || 'Failed');
-      }
-
-      swal('Added', `${name} added to your shopping list`, 'success', { timer: 2000 });
-    } catch (e) {
-      swal('Error', 'Failed to add item to shopping list', 'error');
-    } finally {
-      setAddingToList(false);
+    if (!shoppingLists || shoppingLists.length === 0) {
+      swal('No shopping lists', 'Create a shopping list first, then try again.', 'warning');
+      return;
     }
+    setAddingToList(true);
+    setShowAddToListModal(true);
   };
 
   return (
@@ -132,6 +116,20 @@ const ProduceItem = ({
           restockThreshold: safeRestock,
         }}
       />
+
+      {/* Add to Shopping List modal */}
+      {showAddToListModal && (
+        <AddToShoppingListModal
+          show={showAddToListModal}
+          onHide={() => {
+            setShowAddToListModal(false);
+            setAddingToList(false);
+          }}
+          shoppingLists={shoppingLists}
+          sidePanel={false}
+          prefillName={name}
+        />
+      )}
     </>
   );
 };
