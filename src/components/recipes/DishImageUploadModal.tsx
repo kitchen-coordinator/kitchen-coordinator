@@ -92,7 +92,17 @@ export default function DishImageUploadModal({
       },
       async () => {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-        await addDoc(collection(db, 'recipeImages'), {
+        if (!db) {
+          swal(
+            'Upload Failed',
+            'Database is not configured. Please try again later.',
+            'error',
+          );
+          setUploading(false);
+          return;
+        }
+
+        await addDoc(collection(db!, 'recipeImages'), {
           userEmail,
           recipeId,
           recipeTitle,

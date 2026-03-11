@@ -69,7 +69,13 @@ export default function ImageUploader({ user }: Props) {
       },
       async () => {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-        await addDoc(collection(db, 'images'), {
+        if (!db) {
+          swal('Upload Failed', 'Database is not configured. Please try again later.', 'error');
+          setUploading(false);
+          return;
+        }
+
+        await addDoc(collection(db!, 'images'), {
           uid,
           path: filePath,
           url,
