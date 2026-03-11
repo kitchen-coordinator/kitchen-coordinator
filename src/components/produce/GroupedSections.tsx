@@ -13,9 +13,10 @@ function capitalizeFirst(s: string) {
 type Props = {
   groups: Array<[string, ProduceRelations[]]>;
   view: 'table' | 'cards';
+  shoppingLists?: any[];
 };
 
-const GroupedSections: React.FC<Props> = ({ groups, view }) => {
+const GroupedSections: React.FC<Props> = ({ groups, view, shoppingLists }) => {
   if (groups.length === 0) return <div className="text-center">No items found</div>;
 
   return (
@@ -23,7 +24,9 @@ const GroupedSections: React.FC<Props> = ({ groups, view }) => {
       {groups.map(([storage, items]) => (
         <Container key={storage} className="mb-4">
           <h3 className="mt-2">{capitalizeFirst(storage) || 'Unknown'}</h3>
-          {view === 'table' ? <ProduceTable rows={items} /> : <ProduceCardGrid rows={items} />}
+          {view === 'table'
+            ? <ProduceTable rows={items} shoppingLists={shoppingLists ?? []} />
+            : <ProduceCardGrid rows={items} />}
         </Container>
       ))}
     </>

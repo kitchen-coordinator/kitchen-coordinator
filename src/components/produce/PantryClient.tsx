@@ -12,9 +12,15 @@ interface PantryClientProps {
   initialProduce: any[];
   initialLocations: string[];
   owner: string;
+  initialShoppingLists: any[];
 }
 
-function PantryClient({ initialProduce, initialLocations, owner }: PantryClientProps) {
+function PantryClient({
+  initialProduce,
+  initialLocations,
+  owner,
+  initialShoppingLists,
+}: PantryClientProps) {
   const [showAddProduceModal, setShowAddProduceModal] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [activeLocation, setActiveLocation] = useState<string>('all');
@@ -126,7 +132,10 @@ function PantryClient({ initialProduce, initialLocations, owner }: PantryClientP
         {/* Produce list */}
         <Row>
           <Col>
-            <ProduceListWithGrouping initialProduce={filteredProduce} />
+            <ProduceListWithGrouping
+              initialProduce={filteredProduce}
+              shoppingLists={initialShoppingLists}
+            />
           </Col>
         </Row>
       </Container>

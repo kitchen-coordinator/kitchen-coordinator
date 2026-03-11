@@ -49,7 +49,7 @@ const AddToShoppingListModal = ({
     resolver: yupResolver(AddShoppingListItemSchema),
     defaultValues: {
       name: prefillName,
-      quantity: 0,
+      quantity: 1,
       unit: '',
       price: 0,
       shoppingListId: shoppingLists[0]?.id ?? 0,
@@ -57,11 +57,25 @@ const AddToShoppingListModal = ({
   });
 
   useEffect(() => {
-    if (!show) reset({ name: prefillName });
-  }, [show, reset, prefillName]);
+    if (!show) {
+      reset({
+        name: prefillName,
+        quantity: 1,
+        unit: '',
+        price: 0,
+        shoppingListId: shoppingLists[0]?.id ?? 0,
+      });
+    }
+  }, [show, reset, prefillName, shoppingLists]);
 
   const handleClose = () => {
-    reset({ name: prefillName });
+    reset({
+      name: prefillName,
+      quantity: 1,
+      unit: '',
+      price: 0,
+      shoppingListId: shoppingLists[0]?.id ?? 0,
+    });
     onHide();
   };
 
@@ -176,7 +190,13 @@ const AddToShoppingListModal = ({
         <Col>
           <Button
             type="button"
-            onClick={() => reset({ name: prefillName })}
+            onClick={() => reset({
+              name: prefillName,
+              quantity: 1,
+              unit: '',
+              price: 0,
+              shoppingListId: shoppingLists[0]?.id ?? 0,
+            })}
             variant="warning"
             className="btn-reset"
           >
