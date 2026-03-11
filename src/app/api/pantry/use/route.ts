@@ -19,26 +19,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No items provided' }, { status: 400 });
   }
 
-  const updated = [];
+  const results = await Promise.all(
+    items.map(async (item) => {
+      const produce = await prisma.produce.findUnique({
+        where: { name_owner: { name: item.name, owner: email } },
+      });
 
-  for (const item of items) {
-    const produce = await prisma.produce.findUnique({
-      where: { name_owner: { name: item.name, owner: email } },
-    });
+      if (!produce) return null;
 
-    if (!produce) continue;
+      const newQty = Math.max(0, produce.quantity - item.deductAmount);
 
-    const newQty = Math.max(0, produce.quantity - item.deductAmount);
+      const result = await prisma.produce.update({
+        where: { id: produce.id },
+        data: { quantity: newQty },
+      });
 
-    const result = await prisma.produce.update({
-      where: { id: produce.id },
-      data: { quantity: newQty },
-    });
+      await checkAndAddToShoppingList(produce.id, email);
 
-    await checkAndAddToShoppingList(produce.id, email);
+      return { name: result.name, newQuantity: result.quantity };
+    }),
+  );
 
-    updated.push({ name: result.name, newQuantity: result.quantity });
-  }
+  const updated = results.filter(Boolean);
 
   return NextResponse.json({ updated });
 }

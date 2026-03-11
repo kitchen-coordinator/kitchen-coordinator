@@ -36,8 +36,7 @@ type Props = {
   recipeTitle: string;
 };
 
-const normalizeUnit = (unit: string | null | undefined) =>
-  (unit ?? '').trim().toLowerCase();
+const normalizeUnit = (unit: string | null | undefined) => (unit ?? '').trim().toLowerCase();
 
 function computeRows(ingredientItems: RecipeIngredientItem[], pantry: PantryItem[]): IngredientRow[] {
   const pantryMap = new Map(pantry.map((p) => [p.name.toLowerCase(), p]));
@@ -73,7 +72,12 @@ const statusBadge = (status: IngredientStatus) => {
     case 'low': return <Badge bg="warning" text="dark">Low stock</Badge>;
     case 'mismatch': return <Badge bg="secondary">Unit mismatch</Badge>;
     case 'missing': return <Badge bg="danger">Not in pantry</Badge>;
-    case 'no-quantity': return <Badge bg="light" text="dark" style={{ border: '1px solid #dee2e6' }}>No quantity</Badge>;
+    case 'no-quantity':
+      return (
+        <Badge bg="light" text="dark" style={{ border: '1px solid #dee2e6' }}>
+          No quantity
+        </Badge>
+      );
     default: return null;
   }
 };
@@ -93,8 +97,10 @@ export default function UseIngredientsModal({ show, onHide, ingredientItems, pan
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; variant: 'success' | 'danger' } | null>(null);
 
-  const toggleChecked = (name: string) =>
-    setChecked((prev) => ({ ...prev, [name.toLowerCase()]: !prev[name.toLowerCase()] }));
+  const toggleChecked = (name: string) => {
+    const key = name.toLowerCase();
+    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const actionableRows = rows.filter((r) => r.status === 'ready' || r.status === 'low');
   const selectedCount = actionableRows.filter((r) => checked[r.ingredient.name.toLowerCase()]).length;
@@ -139,7 +145,7 @@ export default function UseIngredientsModal({ show, onHide, ingredientItems, pan
   return (
     <Modal show={show} onHide={handleClose} centered size="lg">
       <Modal.Header closeButton>
-        <Modal.Title>Use Ingredients — {recipeTitle}</Modal.Title>
+        <Modal.Title>{`Use Ingredients — ${recipeTitle}`}</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
@@ -157,7 +163,7 @@ export default function UseIngredientsModal({ show, onHide, ingredientItems, pan
           <table className="table table-sm align-middle mb-2">
             <thead>
               <tr>
-                <th style={{ width: 40 }} />
+                <th style={{ width: 40 }} aria-label="Select" />
                 <th>Ingredient</th>
                 <th>Needed</th>
                 <th>In Pantry</th>
