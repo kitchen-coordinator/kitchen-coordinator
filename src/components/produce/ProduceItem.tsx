@@ -7,6 +7,7 @@ import { ProduceRelations } from '@/types/ProduceRelations';
 import EditProduceModal from './EditProduceModal';
 import '../../styles/buttons.css';
 import DeleteProduceModal from './DeleteProduceModal';
+import { getPantryDisplayAmount } from '@/lib/displayUnits';
 
 /* eslint-disable react/require-default-props */
 const ProduceItem = ({
@@ -21,12 +22,23 @@ const ProduceItem = ({
   owner,
   image,
   restockThreshold = 1,
+  displayQuantity,
+  displayUnit,
+  commonItemId,
+  commonItem,
 }: ProduceRelations & { restockThreshold?: number }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [addingToList, setAddingToList] = useState(false);
 
   const safeRestock = restockThreshold ?? 1;
+
+  const shown = getPantryDisplayAmount({
+    quantity,
+    unit,
+    displayQuantity,
+    displayUnit,
+  });
 
   const handleAddToShoppingList = async () => {
     if (addingToList) return;
@@ -67,8 +79,8 @@ const ProduceItem = ({
           {(typeof location === 'object' ? location?.name : location) || 'N/A'}
         </td>
         <td>
-          {quantity.toString()}
-          {unit ? ` ${unit}` : ''}
+          {shown.quantity.toString()}
+          {shown.unit ? ` ${shown.unit}` : ''}
         </td>
         <td>{safeRestock}</td>
         <td>{expiration ? new Date(expiration).toISOString().split('T')[0] : 'N/A'}</td>
@@ -78,24 +90,17 @@ const ProduceItem = ({
           </Button>
         </td>
         <td>
-          <Button variant="danger" className="btn-delete" onClick={() => setShowDeleteModal(true)}>
+          <Button className="btn-delete" onClick={() => setShowDeleteModal(true)}>
             <Trash color="white" size={18} />
           </Button>
         </td>
         <td>
-          <Button
-            variant="success"
-            size="sm"
-            className="ms-auto btn-submit"
-            onClick={handleAddToShoppingList}
-            disabled={addingToList}
-          >
-            {addingToList ? 'Adding…' : '+'}
+          <Button className="btn-shopping" onClick={handleAddToShoppingList} disabled={addingToList}>
+            Add
           </Button>
         </td>
       </tr>
 
-      {/* Edit modal */}
       <EditProduceModal
         show={showEditModal}
         onHide={() => setShowEditModal(false)}
@@ -110,11 +115,14 @@ const ProduceItem = ({
           expiration,
           owner,
           image,
-          restockThreshold: safeRestock,
+          restockThreshold,
+          displayQuantity,
+          displayUnit,
+          commonItemId,
+          commonItem,
         }}
       />
 
-      {/* Delete modal */}
       <DeleteProduceModal
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
@@ -129,7 +137,11 @@ const ProduceItem = ({
           expiration,
           owner,
           image,
-          restockThreshold: safeRestock,
+          restockThreshold,
+          displayQuantity,
+          displayUnit,
+          commonItemId,
+          commonItem,
         }}
       />
     </>

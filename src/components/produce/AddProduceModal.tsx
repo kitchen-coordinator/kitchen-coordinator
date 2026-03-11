@@ -222,7 +222,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
           data.restockThreshold == null || Number.isNaN(Number(data.restockThreshold))
             ? undefined
             : Number(data.restockThreshold),
-        commonItemId: data.commonItemId == null ? null : Number(data.commonItemId),
+        commonItemId: data.commonItemId ? Number(data.commonItemId) : null,
       });
 
       await swal('Success', 'Item added successfully.', 'success');
@@ -247,7 +247,11 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
         <Form onSubmit={handleSubmit(onSubmit)}>
           <Modal.Body>
             <input type="hidden" {...register('owner')} />
-            <input type="hidden" {...register('commonItemId', { valueAsNumber: true })} />
+            <input
+              type="hidden"
+              {...register('commonItemId', { valueAsNumber: true })}
+              value={selectedCommonItemId || ''}
+            />
 
             <Row className="mb-3">
               <Col xs={8}>
