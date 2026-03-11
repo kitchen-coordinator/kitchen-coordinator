@@ -16,7 +16,6 @@ interface CommonItemModalProps {
   owner: string;
   initialValues?: {
     name?: string;
-    type?: string;
     unit?: string;
   };
   onCreated?: (item: any) => void;
@@ -30,7 +29,7 @@ export default function CommonItemModal({
   onCreated,
 }: CommonItemModalProps) {
   const normalizedUnitOptions = useMemo(
-    () => ['mg', 'g', 'kg', 'oz', 'lb', 'ml', 'l', 'tsp', 'tbsp', 'cup', 'fl oz', 'pt', 'qt', 'gal'],
+    () => ['mg', 'g', 'kg', 'oz', 'lb', 'ml', 'l', 'tsp', 'tbsp', 'cup', 'fl oz'],
     [],
   );
 
@@ -44,7 +43,6 @@ export default function CommonItemModal({
     defaultValues: {
       owner,
       name: initialValues?.name ?? '',
-      type: initialValues?.type ?? '',
       displayUnit: initialValues?.unit ?? '',
       normalizedQuantityPerUnit: 1,
       normalizedUnit: 'cup',
@@ -56,7 +54,6 @@ export default function CommonItemModal({
       reset({
         owner,
         name: initialValues?.name ?? '',
-        type: initialValues?.type ?? '',
         displayUnit: initialValues?.unit ?? '',
         normalizedQuantityPerUnit: 1,
         normalizedUnit: 'cup',
@@ -68,7 +65,6 @@ export default function CommonItemModal({
     reset({
       owner,
       name: initialValues?.name ?? '',
-      type: initialValues?.type ?? '',
       displayUnit: initialValues?.unit ?? '',
       normalizedQuantityPerUnit: 1,
       normalizedUnit: 'cup',
@@ -112,30 +108,8 @@ export default function CommonItemModal({
             <Col xs={12}>
               <Form.Group>
                 <Form.Label>Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  {...register('name')}
-                  isInvalid={!!errors.name}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.name?.message}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row className="mb-3">
-            <Col xs={12}>
-              <Form.Group>
-                <Form.Label>Type</Form.Label>
-                <Form.Control
-                  type="text"
-                  {...register('type')}
-                  isInvalid={!!errors.type}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.type?.message}
-                </Form.Control.Feedback>
+                <Form.Control type="text" {...register('name')} isInvalid={!!errors.name} />
+                <Form.Control.Feedback type="invalid">{errors.name?.message}</Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -176,10 +150,7 @@ export default function CommonItemModal({
             <Col xs={6}>
               <Form.Group>
                 <Form.Label>Normalized Unit</Form.Label>
-                <Form.Select
-                  {...register('normalizedUnit')}
-                  isInvalid={!!errors.normalizedUnit}
-                >
+                <Form.Select {...register('normalizedUnit')} isInvalid={!!errors.normalizedUnit}>
                   {normalizedUnitOptions.map((unit) => (
                     <option key={unit} value={unit}>
                       {unit}

@@ -1,3 +1,7 @@
+/* eslint-disable react/require-default-props */
+/* eslint-disable no-nested-ternary */
+/* eslint-disable max-len */
+
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -39,9 +43,9 @@ type ProduceValues = {
 type CommonItemOption = {
   id: number;
   name: string;
-  type?: string | null;
-  defaultUnit: string;
-  preferredDisplayUnit?: string | null;
+  displayUnit: string;
+  normalizedQuantityPerUnit: number;
+  normalizedUnit: string;
 };
 
 interface AddProduceModalProps {
@@ -70,10 +74,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
   const [showCommonItemModal, setShowCommonItemModal] = useState(false);
   const [selectedCommonItemId, setSelectedCommonItemId] = useState('');
 
-  const unitOptions = useMemo(
-    () => ['kg', 'g', 'lb', 'oz', 'pcs', 'ml', 'l', 'Other'],
-    [],
-  );
+  const unitOptions = useMemo(() => ['kg', 'g', 'lb', 'oz', 'pcs', 'ml', 'l', 'Other'], []);
 
   const router = useRouter();
 
@@ -109,6 +110,8 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
   const [showScanner, setShowScanner] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [imageAlt, setImageAlt] = useState('');
+
+  const selectedCommonItem = commonItems.find((item) => String(item.id) === selectedCommonItemId);
 
   const fetchStorage = useCallback(
     async (location: string) => {
@@ -250,6 +253,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
           <Modal.Body>
             <input type="hidden" {...register('owner')} />
             <input type="hidden" {...register('commonItemId', { valueAsNumber: true })} />
+
             <Row className="mb-3">
               <Col xs={8}>
                 <Form.Group>
@@ -271,16 +275,29 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                       setValue('commonItemId', Number(item.id));
                     }}
                   >
-                    <option value="">Select a saved common item...</option>
+                    <option value="">None (save item as entered)</option>
                     {commonItems.map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.name} (1 {item.displayUnit} = {item.normalizedQuantityPerUnit} {item.normalizedUnit})
+                        {item.name}
+                        (1
+                        {item.displayUnit}
+                        =
+                        {item.normalizedQuantityPerUnit}
+                        {item.normalizedUnit}
+                        )
                       </option>
                     ))}
                   </Form.Select>
                   <Form.Text className="text-muted">
-                    Selecting one links this pantry item to a saved conversion rule.
+                    Optional helper for items like flour, rice, cans, or bottles. Recipes will use the converted amount.
                   </Form.Text>
+                  {selectedCommonItem && (
+                    <Form.Text className="d-block text-muted mt-1">
+                      Enter quantity in
+                      <strong>{selectedCommonItem.displayUnit}</strong>
+                      so the pantry item can be converted correctly.
+                    </Form.Text>
+                  )}
                 </Form.Group>
               </Col>
 
@@ -300,11 +317,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
               <Col md={6}>
                 <Form.Group>
                   <Form.Label>Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    {...register('name')}
-                    isInvalid={!!errors.name}
-                  />
+                  <Form.Control type="text" {...register('name')} isInvalid={!!errors.name} />
                   <Form.Control.Feedback type="invalid">
                     {errors.name?.message}
                   </Form.Control.Feedback>
@@ -314,11 +327,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
               <Col md={6}>
                 <Form.Group>
                   <Form.Label>Type</Form.Label>
-                  <Form.Control
-                    type="text"
-                    {...register('type')}
-                    isInvalid={!!errors.type}
-                  />
+                  <Form.Control type="text" {...register('type')} isInvalid={!!errors.type} />
                   <Form.Control.Feedback type="invalid">
                     {errors.type?.message}
                   </Form.Control.Feedback>
@@ -348,7 +357,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                   <Form.Select
                     value={unitChoice}
                     onChange={(e) => {
-                      const value = e.target.value;
+                      const { value } = e.target;
                       setUnitChoice(value);
 
                       if (value !== 'Other') {
@@ -376,11 +385,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                 {unitChoice === 'Other' && (
                   <Form.Group>
                     <Form.Label>Custom Unit</Form.Label>
-                    <Form.Control
-                      type="text"
-                      {...register('unit')}
-                      isInvalid={!!errors.unit}
-                    />
+                    <Form.Control type="text" {...register('unit')} isInvalid={!!errors.unit} />
                     <Form.Control.Feedback type="invalid">
                       {errors.unit?.message}
                     </Form.Control.Feedback>
@@ -416,6 +421,11 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                   <Form.Control.Feedback type="invalid">
                     {errors.restockThreshold?.message as string}
                   </Form.Control.Feedback>
+                  {selectedCommonItem && (
+                    <Form.Text className="text-muted">
+                      Threshold will be converted using the same common item rule.
+                    </Form.Text>
+                  )}
                 </Form.Group>
               </Col>
             </Row>
@@ -472,23 +482,11 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                 <Form.Group>
                   <Form.Label>Image</Form.Label>
                   <InputGroup>
-                    <Form.Control
-                      type="text"
-                      placeholder="Image URL"
-                      {...register('image')}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      onClick={() => setShowPicker(true)}
-                    >
+                    <Form.Control type="text" placeholder="Image URL" {...register('image')} />
+                    <Button type="button" variant="outline-secondary" onClick={() => setShowPicker(true)}>
                       Pick Image
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      onClick={() => setShowScanner(true)}
-                    >
+                    <Button type="button" variant="outline-secondary" onClick={() => setShowScanner(true)}>
                       Scan Barcode
                     </Button>
                   </InputGroup>
@@ -527,17 +525,14 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
         owner={produce?.owner ?? ''}
         initialValues={{
           name: watch('name'),
-          type: watch('type'),
           unit: watch('unit') || '',
         }}
         onCreated={(item) => {
-          setCommonItems((prev) =>
-            [...prev, item].sort((a, b) => {
-              const nameCompare = a.name.localeCompare(b.name);
-              if (nameCompare !== 0) return nameCompare;
-              return a.displayUnit.localeCompare(b.displayUnit);
-            }),
-          );
+          setCommonItems((prev) => [...prev, item].sort((a, b) => {
+            const nameCompare = a.name.localeCompare(b.name);
+            if (nameCompare !== 0) return nameCompare;
+            return a.displayUnit.localeCompare(b.displayUnit);
+          }));
           setSelectedCommonItemId(String(item.id));
           setValue('commonItemId', item.id);
         }}

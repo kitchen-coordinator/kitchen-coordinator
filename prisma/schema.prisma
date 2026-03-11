@@ -44,26 +44,26 @@ model PasswordResetToken {
 }
 
 model Produce {
-  id                 Int         @id @default(autoincrement())
-  name               String
-  type               String
-  quantity           Float
-  expiration         DateTime?
-  owner              String
-  image              String?
-  unit               String
-  normalizedQuantity Float?
-  normalizedUnit     String?
-  restockThreshold   Float?
-  customThreshold    Float?
-  restockTrigger     String      @default("empty")
-  locationId         Int
-  storageId          Int
-  commonItemId       Int?
+  id               Int         @id @default(autoincrement())
+  name             String
+  type             String
+  quantity         Float
+  expiration       DateTime?
+  owner            String
+  image            String?
+  unit             String
+  displayQuantity  Float?
+  displayUnit      String?
+  restockThreshold Float?
+  customThreshold  Float?
+  restockTrigger   String      @default("empty")
+  locationId       Int
+  storageId        Int
+  commonItemId     Int?
 
-  location           Location    @relation(fields: [locationId], references: [id])
-  storage            Storage     @relation(fields: [storageId], references: [id])
-  commonItem         CommonItem? @relation(fields: [commonItemId], references: [id])
+  location         Location    @relation(fields: [locationId], references: [id])
+  storage          Storage     @relation(fields: [storageId], references: [id])
+  commonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
 
   @@unique([name, owner])
 }
@@ -81,13 +81,13 @@ model Location {
 }
 
 model Storage {
-  id         Int       @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   name       String
   locationId Int
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   produces   Produce[]
-  location   Location  @relation(fields: [locationId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
 
   @@unique([name, locationId])
 }
@@ -95,7 +95,6 @@ model Storage {
 model CommonItem {
   id                        Int       @id @default(autoincrement())
   name                      String
-  type                      String?
   owner                     String
   displayUnit               String
   normalizedQuantityPerUnit Float

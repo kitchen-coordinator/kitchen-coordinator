@@ -11,18 +11,27 @@ function isMassOrVolumeUnit(unit: string) {
   return category === 'mass' || category === 'volume';
 }
 
-async function getNormalizedValuesFromCommonItem(params: {
+function normalizeDisplayUnit(unit: string) {
+  return unit.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+async function resolveProduceUnits(params: {
   owner: string;
   quantity: number;
   unit: string;
+  restockThreshold?: number;
   commonItemId?: number | null;
 }) {
-  const { owner, quantity, unit, commonItemId } = params;
+  const { owner, quantity, unit, restockThreshold, commonItemId } = params;
 
   if (!commonItemId) {
+    const normalizedUnit = normalizeUnit(unit);
     return {
-      normalizedQuantity: null as number | null,
-      normalizedUnit: null as string | null,
+      quantity: Number(quantity),
+      unit: normalizedUnit,
+      displayQuantity: null as number | null,
+      displayUnit: null as string | null,
+      restockThreshold: typeof restockThreshold === 'number' ? restockThreshold : 0,
     };
   }
 
@@ -38,13 +47,23 @@ async function getNormalizedValuesFromCommonItem(params: {
     throw new Error('You do not have access to that common item.');
   }
 
-  if (unit.trim().toLowerCase() !== commonItem.displayUnit.trim().toLowerCase()) {
+  const displayUnit = normalizeDisplayUnit(unit);
+  const commonDisplayUnit = normalizeDisplayUnit(commonItem.displayUnit);
+  if (displayUnit !== commonDisplayUnit) {
     throw new Error(`Unit must match the selected common item display unit: ${commonItem.displayUnit}`);
   }
 
+  const normalizedQuantity = Number(quantity) * Number(commonItem.normalizedQuantityPerUnit);
+  const normalizedThreshold = typeof restockThreshold === 'number'
+    ? Number(restockThreshold) * Number(commonItem.normalizedQuantityPerUnit)
+    : 0;
+
   return {
-    normalizedQuantity: Number(quantity) * Number(commonItem.normalizedQuantityPerUnit),
-    normalizedUnit: commonItem.normalizedUnit,
+    quantity: normalizedQuantity,
+    unit: commonItem.normalizedUnit,
+    displayQuantity: Number(quantity),
+    displayUnit: commonItem.displayUnit,
+    restockThreshold: normalizedThreshold,
   };
 }
 
@@ -116,9 +135,7 @@ export async function addProduce(produce: {
   restockThreshold?: number;
   commonItemId?: number | null;
 }) {
-  const normalizedDisplayUnit = normalizeUnit(produce.unit);
-  const quantityStored = Number(produce.quantity);
-  const restockThresholdStored = typeof produce.restockThreshold === 'number' ? produce.restockThreshold : 0;
+  const quantityInput = Number(produce.quantity);
 
   const location = await prisma.location.upsert({
     where: { name_owner: { name: produce.location, owner: produce.owner } },
@@ -132,10 +149,11 @@ export async function addProduce(produce: {
     create: { name: produce.storage, locationId: location.id },
   });
 
-  const { normalizedQuantity, normalizedUnit } = await getNormalizedValuesFromCommonItem({
+  const resolved = await resolveProduceUnits({
     owner: produce.owner,
-    quantity: quantityStored,
-    unit: normalizedDisplayUnit,
+    quantity: quantityInput,
+    unit: produce.unit,
+    restockThreshold: produce.restockThreshold,
     commonItemId: produce.commonItemId,
   });
 
@@ -145,13 +163,13 @@ export async function addProduce(produce: {
       type: produce.type,
       locationId: location.id,
       storageId: storage.id,
-      quantity: quantityStored,
-      unit: normalizedDisplayUnit,
-      normalizedQuantity,
-      normalizedUnit,
+      quantity: resolved.quantity,
+      unit: resolved.unit,
+      displayQuantity: resolved.displayQuantity,
+      displayUnit: resolved.displayUnit,
       expiration: produce.expiration ? new Date(produce.expiration) : null,
       image: produce.image ?? null,
-      restockThreshold: restockThresholdStored,
+      restockThreshold: resolved.restockThreshold,
       commonItemId: produce.commonItemId ?? null,
     },
     create: {
@@ -160,13 +178,13 @@ export async function addProduce(produce: {
       owner: produce.owner,
       locationId: location.id,
       storageId: storage.id,
-      quantity: quantityStored,
-      unit: normalizedDisplayUnit,
-      normalizedQuantity,
-      normalizedUnit,
+      quantity: resolved.quantity,
+      unit: resolved.unit,
+      displayQuantity: resolved.displayQuantity,
+      displayUnit: resolved.displayUnit,
       expiration: produce.expiration ? new Date(produce.expiration) : null,
       image: produce.image ?? null,
-      restockThreshold: restockThresholdStored,
+      restockThreshold: resolved.restockThreshold,
       commonItemId: produce.commonItemId ?? null,
     },
   });
@@ -217,8 +235,6 @@ export async function editProduce(
     throw new Error('Unit must be provided as a string');
   }
 
-  const normalizedDisplayUnit = normalizeUnit(produce.unit);
-
   const getNumeric = (v: unknown): number | undefined => {
     if (typeof v === 'number') return v;
     if (v && typeof v === 'object' && 'set' in (v as Record<string, unknown>)) {
@@ -233,9 +249,7 @@ export async function editProduce(
     throw new Error('Quantity must be a number');
   }
 
-  const quantityStored = quantityInput;
   const restockInput = getNumeric(produce.restockThreshold);
-  const restockThresholdStored = typeof restockInput === 'number' ? restockInput : 0;
 
   const location = await prisma.location.upsert({
     where: { name_owner: { name: produce.location as string, owner: produce.owner as string } },
@@ -260,10 +274,11 @@ export async function editProduce(
     }
   }
 
-  const { normalizedQuantity, normalizedUnit } = await getNormalizedValuesFromCommonItem({
+  const resolved = await resolveProduceUnits({
     owner: produce.owner,
-    quantity: quantityStored,
-    unit: normalizedDisplayUnit,
+    quantity: quantityInput,
+    unit: produce.unit,
+    restockThreshold: restockInput,
     commonItemId: produce.commonItemId,
   });
 
@@ -274,14 +289,14 @@ export async function editProduce(
       type: produce.type,
       locationId: location.id,
       storageId: storage.id,
-      quantity: quantityStored,
-      unit: normalizedDisplayUnit,
-      normalizedQuantity,
-      normalizedUnit,
+      quantity: resolved.quantity,
+      unit: resolved.unit,
+      displayQuantity: resolved.displayQuantity,
+      displayUnit: resolved.displayUnit,
       expiration,
       owner: produce.owner,
       image: produce.image,
-      restockThreshold: restockThresholdStored,
+      restockThreshold: resolved.restockThreshold,
       commonItemId: produce.commonItemId ?? null,
     },
   });
@@ -482,15 +497,13 @@ export async function getCommonItemsByOwner(owner: string) {
 export async function addCommonItem(data: {
   owner: string;
   name: string;
-  type?: string | null;
   displayUnit: string;
   normalizedQuantityPerUnit: number;
   normalizedUnit: string;
 }) {
   const owner = data.owner.trim();
   const name = data.name.trim();
-  const type = data.type?.trim() || null;
-  const displayUnit = data.displayUnit.trim();
+  const displayUnit = normalizeDisplayUnit(data.displayUnit);
   const normalizedQuantityPerUnit = Number(data.normalizedQuantityPerUnit);
   const normalizedUnit = normalizeUnit(data.normalizedUnit);
 
@@ -521,7 +534,6 @@ export async function addCommonItem(data: {
     data: {
       owner,
       name,
-      type,
       displayUnit,
       normalizedQuantityPerUnit,
       normalizedUnit,
