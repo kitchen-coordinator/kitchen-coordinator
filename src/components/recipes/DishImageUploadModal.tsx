@@ -65,6 +65,13 @@ export default function DishImageUploadModal({
 
     setUploading(true);
     const filePath = `recipe-images/${userEmail}/${recipeId}/${Date.now()}_${file.name}`;
+
+    if (!storage) {
+      swal('Upload Failed', 'Storage is not configured. Please try again later.', 'error');
+      setUploading(false);
+      return;
+    }
+
     const storageRef = ref(storage, filePath);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
