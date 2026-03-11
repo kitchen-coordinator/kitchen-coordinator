@@ -72,7 +72,7 @@ export default function DishImageUploadModal({
       return;
     }
 
-    const storageRef = ref(storage, filePath);
+    const storageRef = ref(storage!, filePath);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
     uploadTask.on(
