@@ -1,50 +1,87 @@
+.heroSection {
+  background-color: #547c54;
+  padding: 2rem 1.5rem 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.heroWrapper {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.heroTitle {
+  color: white;
+  font-weight: 800;
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
+  line-height: 1.1;
+  margin-bottom: 2.5rem;
+}
+
+.buttonGroup {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, max-content));
+  justify-content: center;
+  gap: 0.875rem;
+  padding: 0 0 1.75rem 0;
+}
+
 .primaryButton {
-  padding: 12px 28px;
-  background-color: var(--fern-green);
-  color: #fff;
+  display: block;
+  background-color: white;
+  color: #1a1a1a;
+  padding: 0.75rem 2.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
   font-size: 1rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
   text-decoration: none;
-  display: inline-block;
+  border: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .primaryButton:hover {
-  background-color: var(--hunter-green);
+  opacity: 0.9;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-}
-
-.primaryButton:active {
-  transform: translateY(0);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 .secondaryButton {
-  padding: 12px 28px;
+  display: block;
   background-color: transparent;
-  border: 2px solid var(--brunswick-green);
-  color: var(--brunswick-green);
+  color: white;
+  padding: 0.75rem 2.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
   font-size: 1rem;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
   text-decoration: none;
-  display: inline-block;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .secondaryButton:hover {
-  background-color: var(--brunswick-green);
-  color: var(--timberwolf);
+  opacity: 0.9;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.secondaryButton:active {
-  transform: translateY(0);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+.previewWrapper {
+  border-radius: 1rem 1rem 0 0;
+  overflow: hidden;
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.25);
+  line-height: 0;
+  width: 100%;
+  max-width: 560px;
+  margin-top: 1.5rem;
+  background-color: white;
+}
+
+.previewImage {
+  width: 100%;
+  height: auto;
+  display: block;
 }

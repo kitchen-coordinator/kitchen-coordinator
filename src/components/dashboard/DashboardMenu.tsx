@@ -71,67 +71,25 @@ export default function DashboardMenu({ ownerEmail, recipes, produce }: Dashboar
 
         {/* Dashboard cards */}
         <motion.div
-          className="grid gap-4 mt-5 mb-5"
+          className="dashboard-cards"
           variants={parent}
           initial="hidden"
           animate="show"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            justifyItems: 'center',
-          }}
         >
           {menuItems.map((itemData) => (
             <motion.div
               key={itemData.href}
               variants={item}
-              whileHover={{
-                scale: 1.06,
-                y: -5,
-              }}
+              whileHover={{ scale: 1.06, y: -5 }}
               transition={{ duration: 0.15 }}
-              style={{
-                background: itemData.color,
-                color: 'white',
-                borderRadius: '22px',
-                padding: '2.5rem 1rem',
-                width: '100%',
-                maxWidth: '320px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 6px 14px rgba(0, 0, 0, 0.15)',
-                transition: 'all 0.25s ease',
-              }}
+              className="dashboard-card"
             >
-              <Link
-                href={itemData.href}
-                style={{
-                  textDecoration: 'none',
-                  color: 'white',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                }}
-              >
-                <div
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.15)',
-                    borderRadius: '50%',
-                    padding: '0.75rem',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    transition: 'background-color 0.25s',
-                  }}
-                >
+              <Link href={itemData.href}>
+                <div className="dashboard-card-icon">
                   {itemData.icon}
                 </div>
-                <span style={{
-                  fontSize: '1.3rem',
-                  fontWeight: 600,
-                }}
-                >
+
+                <span className="dashboard-card-label">
                   {itemData.label}
                 </span>
               </Link>
