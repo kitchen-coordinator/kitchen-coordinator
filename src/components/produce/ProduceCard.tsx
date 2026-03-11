@@ -6,7 +6,7 @@ import { Card, ListGroup, Image, Button } from 'react-bootstrap/';
 import Link from 'next/link';
 import type { ProduceRelations } from '@/types/ProduceRelations';
 import { useState } from 'react';
-import { PencilSquare, Trash } from 'react-bootstrap-icons';
+import { PencilSquare, Trash, CartPlus } from 'react-bootstrap-icons';
 import EditProduceModal from './EditProduceModal';
 import DeleteProduceModal from './DeleteProduceModal';
 
@@ -23,6 +23,36 @@ export default function ProduceCard({ produce }: Props) {
   const imageSrc = produce.image || '/no-image.png';
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [addingToList, setAddingToList] = useState(false);
+
+  const handleAddToShoppingList = async () => {
+    if (addingToList) return;
+    try {
+      setAddingToList(true);
+
+      const res = await fetch('/api/shopping-list-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          owner: produce.owner,
+          name: produce.name,
+          quantity: Number(produce.quantity),
+          unit: produce.unit ?? '',
+        }),
+      });
+
+      if (!res.ok) {
+        const msg = await res.text().catch(() => '');
+        throw new Error(msg || 'Failed');
+      }
+
+      swal('Added', `${produce.name} added to your shopping list`, 'success', { timer: 2000 });
+    } catch (e) {
+      swal('Error', 'Failed to add item to shopping list', 'error');
+    } finally {
+      setAddingToList(false);
+    }
+  };
 
   return (
     <Card className="h-100 mb-3 image-shadow">
@@ -56,17 +86,26 @@ export default function ProduceCard({ produce }: Props) {
             <strong>Expiration:</strong> {formatDate(produce.expiration)}
           </ListGroup.Item>
         </ListGroup>
-        <Card.Footer className="d-flex">
-          <Button className="me-2 btn-edit" onClick={() => setShowEditModal(true)}>
+        <Card.Footer className="d-flex gap-2">
+          <Button
+            className="btn-edit flex-fill"
+            onClick={() => setShowEditModal(true)}
+          >
             <PencilSquare color="white" size={18} />
           </Button>
           <Button
             variant="danger"
-            className="btn-delete"
-            // style={{ width: '100px' }}
+            className="btn-delete flex-fill"
             onClick={() => setShowDeleteModal(true)}
           >
             <Trash color="white" size={18} />
+          </Button>
+          <Button
+            className="btn-shopping flex-fill"
+            onClick={handleAddToShoppingList}
+            disabled={addingToList}
+          >
+            <CartPlus color="white" size={18} />
           </Button>
         </Card.Footer>
       </Card.Body>
@@ -76,6 +115,7 @@ export default function ProduceCard({ produce }: Props) {
 
       {/* Modal component for deleting produce item */}
       <DeleteProduceModal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} produce={produce} />
+
     </Card>
   );
 }

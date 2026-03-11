@@ -86,7 +86,7 @@ export default function RecipeCard({
     : owner === 'admin@foo.com';
 
   const ownerLabel = Array.isArray(owner) ? owner.join(', ') : owner;
-  const displayOwner = isAdminOwner ? 'Pantry Pals Team' : ownerLabel;
+  const displayOwner = isAdminOwner ? 'Kitchen Coordinator Team' : ownerLabel;
 
   return (
     <>

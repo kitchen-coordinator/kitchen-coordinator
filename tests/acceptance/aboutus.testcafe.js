@@ -13,6 +13,6 @@ test('About Us page loads', async t => {
     await t.expect(subHeading.exists).ok('Expected subheading "Why We Built It"');
 
     // Optional: check for logo image
-    const logo = Selector('img').withAttribute('alt', 'Pantry Pals Logo');
+    const logo = Selector('img').withAttribute('alt', 'Kitchen Coordinator Logo');
     await t.expect(logo.exists).ok('Expected logo image to be present');
 });

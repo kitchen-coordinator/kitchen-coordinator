@@ -6,7 +6,7 @@ import { GeoAlt, Envelope, Github } from 'react-bootstrap-icons';
 import Link from 'next/link';
 
 const Footer = () => {
-  const [imgSrc, setImgSrc] = useState('/pantrypals-logo.png');
+  const [imgSrc, setImgSrc] = useState('/kitchen-coordinator-logo.png');
   const currentYear = new Date().getFullYear();
 
   return (
@@ -15,28 +15,25 @@ const Footer = () => {
         <Row className="justify-content-center text-start">
 
           {/* Company Info */}
-          <Col md={4} lg={3} className="mb-4 mb-md-0">
+          <Col md={4} lg={4} className="mb-4 mb-md-0">
             <Link href="/" className="navbar-brand d-flex align-items-center mb-2">
-              <div className="p-1 me-4 rounded" style={{ backgroundColor: 'var(--timberwolf)' }}>
+              <div className="me-4">
                 <Image
                   src={imgSrc}
-                  alt="Pantry Pals Logo"
-                  width="50"
-                  height="50"
+                  alt="Kitchen Coordinator Logo"
+                  width="80"
+                  height="80"
                   onError={() => setImgSrc('/fallback-logo.png')}
                 />
               </div>
-              <h5 className="fw-bold mb-0">Pantry Pals</h5>
+              <h5 className="fw-bold mb-0" style={{ fontSize: '1rem' }}>
+                Kitchen Coordinator
+              </h5>
             </Link>
-
-            <p className="footer-text-muted small">
-              Keep track of your pantry, cut down on food waste, and discover recipes with
-              what you already have. Smarter cooking, simplified.
-            </p>
           </Col>
 
           {/* Browse Links */}
-          <Col md={2} className="mb-4 mb-md-0">
+          <Col md={2} lg={2} className="mb-4 mb-md-0">
             <h6 className="fw-bold">Browse</h6>
             <ul className="list-unstyled small footer-links">
               <li className="mb-1">
@@ -52,7 +49,7 @@ const Footer = () => {
           </Col>
 
           {/* Features */}
-          <Col md={2} className="mb-4 mb-md-0">
+          <Col md={2} lg={2} className="mb-4 mb-md-0">
             <h6 className="fw-bold">Features</h6>
             <ul className="list-unstyled small footer-links">
               <li className="mb-1">
@@ -77,11 +74,11 @@ const Footer = () => {
               </li>
               <li className="d-flex align-items-center mb-2">
                 <Envelope className="me-2 flex-shrink-0" />
-                <span>pantrypal808@gmail.com</span>
+                <span>placeholder@gmail.com</span>
               </li>
               <li className="d-flex align-items-center">
                 <a
-                  href="https://github.com/pantry-pals"
+                  href="https://github.com/kitchen-coordinator"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link p-0 d-inline-flex align-items-center"
@@ -104,7 +101,7 @@ const Footer = () => {
               {' '}
               {currentYear}
               {' '}
-              Pantry Pals. All Rights Reserved.
+              Kitchen Coordinator. All Rights Reserved.
             </Col>
           </Row>
         </Container>

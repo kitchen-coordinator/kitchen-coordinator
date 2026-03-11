@@ -1,5 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // This tells Vercel to include the Prisma WASM files in the serverless function
+  experimental: {
+    outputFileTracingIncludes: {
+      '/**': [
+        './node_modules/@prisma/client/runtime/*.js',
+        './node_modules/@prisma/client/runtime/*.wasm',
+        './node_modules/.prisma/client/*.so.node'
+      ],
+    },
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
