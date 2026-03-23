@@ -69,8 +69,14 @@ export const AddShoppingListItemSchema = Yup.object({
   unit: Yup.string().optional(),
   price: Yup.number()
     .typeError('Price must be a number')
-    .optional()
-    .transform((_, val) => (val !== '' ? Number(val) : null)),
+    .nullable()
+    .transform((curr, orig) => {
+      // Allow empty -> null, and guard against NaN from RHF coercion.
+      if (orig === '' || orig === null || typeof orig === 'undefined') return null;
+      return Number.isNaN(curr) ? null : curr;
+    })
+    .min(0, 'Price cannot be negative')
+    .notRequired(),
   shoppingListId: Yup.number()
     .typeError('A shopping list must be selected')
     .required('Shopping list is required'),
