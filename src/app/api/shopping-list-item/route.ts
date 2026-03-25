@@ -91,13 +91,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find or create shopping list for this user
     // Dedupe by item name (prevents same-name duplicates within the request)
     const normalizedUniqueItems = Array.from(
       new Map(normalizedItems.map((i) => [i.name, i] as const)).values(),
+    );
 
     // Optional targeting: add to selected list(s) or create a new list name first.
     let requestedListIdsRaw: unknown[] = [];
+    if (Array.isArray(body.shoppingListIds)) {
       requestedListIdsRaw = body.shoppingListIds;
     } else if (body.shoppingListId != null) {
       requestedListIdsRaw = [body.shoppingListId];

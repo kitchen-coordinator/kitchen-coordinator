@@ -15,8 +15,8 @@ interface PantryClientProps {
   owner: string;
 }
 
-function PantryClient({ initialProduce, initialLocations, owner }: PantryClientProps) {
 function PantryClient({
+  initialProduce,
   initialLocations,
   initialShoppingLists,
   owner,

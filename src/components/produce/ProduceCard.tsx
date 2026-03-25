@@ -23,6 +23,7 @@ const formatDate = (d?: Date | string | null) => {
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
+export default function ProduceCard({ produce, shoppingLists }: Props) {
   const imageSrc = produce.image || '/no-image.png';
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -72,6 +73,7 @@ const formatDate = (d?: Date | string | null) => {
           >
             <Trash color="white" size={18} />
           </Button>
+          <Button
             className="btn-shopping flex-fill"
             onClick={() => setShowAddListsModal(true)}
           >
@@ -87,6 +89,8 @@ const formatDate = (d?: Date | string | null) => {
       <DeleteProduceModal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} produce={produce} />
 
       <AddToMultipleShoppingListsModal
+        show={showAddListsModal}
+        onHide={() => setShowAddListsModal(false)}
         shoppingLists={shoppingLists}
         item={{ name: produce.name, quantity: Number(produce.quantity), unit: produce.unit ?? null }}
       />
