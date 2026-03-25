@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+<<<<<<< Updated upstream
 
 export async function GET(
   request: Request,
@@ -26,6 +27,9 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+=======
+import { completeShoppingListAndSyncPantry } from '@/lib/shoppingListCompletion';
+>>>>>>> Stashed changes
 
 export async function PUT(
   request: Request,
@@ -51,6 +55,14 @@ export async function PUT(
       );
     }
 
+<<<<<<< Updated upstream
+=======
+    if (body.complete === true) {
+      const completed = await completeShoppingListAndSyncPantry(prisma, id);
+      return NextResponse.json(completed, { status: 200 });
+    }
+
+>>>>>>> Stashed changes
     if (typeof body.name === 'string') {
       const updated = await prisma.shoppingList.update({
         where: { id },
