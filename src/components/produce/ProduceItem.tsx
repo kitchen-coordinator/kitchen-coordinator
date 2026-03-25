@@ -58,9 +58,9 @@ const ProduceItem = ({
           </Button>
         </td>
         <td>
-        <Button className="btn-edit" onClick={() => setShowAddListsModal(true)}>
-          <PlusLg color="white" size={18} />
-        </Button>
+          <Button className="btn-edit" onClick={() => setShowAddListsModal(true)}>
+            <PlusLg color="white" size={18} />
+          </Button>
           {/* <Button
             variant="success"
             size="lg"
