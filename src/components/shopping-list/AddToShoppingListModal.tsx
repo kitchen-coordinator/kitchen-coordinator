@@ -52,13 +52,8 @@ const AddToShoppingListModal = ({
       name: prefillName,
       quantity: 0,
       unit: '',
-<<<<<<< Updated upstream
       price: null,
-      shoppingListId: shoppingLists[0]?.id ?? 0,
-=======
-      price: 0,
       shoppingListId: editableLists[0]?.id ?? 0,
->>>>>>> Stashed changes
     },
   });
 
@@ -105,111 +100,6 @@ const AddToShoppingListModal = ({
 
   const formContent = (
     <Form noValidate onSubmit={handleSubmit(onSubmit)}>
-<<<<<<< Updated upstream
-      <Row className="mb-3">
-        <Col xs={6}>
-          <Form.Group>
-            <Form.Label>Item Name</Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="e.g., Bananas"
-              {...register('name')}
-              className={`${errors.name ? 'is-invalid' : ''}`}
-            />
-            <div className="invalid-feedback">{errors.name?.message}</div>
-          </Form.Group>
-        </Col>
-
-        <Col xs={3}>
-          <Form.Group>
-            <Form.Label>Qty</Form.Label>
-            <Form.Control
-              type="number"
-              min={1}
-              {...register('quantity')}
-              className={`${errors.quantity ? 'is-invalid' : ''}`}
-            />
-            <div className="invalid-feedback">{errors.quantity?.message}</div>
-          </Form.Group>
-        </Col>
-
-        <Col xs={3}>
-          <Form.Group>
-            <Form.Label>Unit</Form.Label>
-            {/* keep RHF field registered even when using a controlled select */}
-            <input type="hidden" {...register('unit')} />
-            <Form.Select
-              value={unitChoice}
-              onChange={(e) => {
-                const { value } = e.target;
-                setUnitChoice(value);
-                setValue('unit', value === 'Other' ? '' : value, { shouldValidate: true });
-              }}
-            >
-              <option value="">—</option>
-              {unitOptions.map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </Form.Select>
-            {unitChoice === 'Other' && (
-              <Form.Control
-                className="mt-2"
-                type="text"
-                placeholder="Enter custom unit"
-                value={unitValue}
-                onChange={(e) => setValue('unit', e.target.value, { shouldValidate: true })}
-              />
-            )}
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Row className="mb-3">
-        <Col xs={5}>
-          <Form.Group>
-            <Form.Label>Price (optional)</Form.Label>
-            <InputGroup>
-              <InputGroup.Text>$</InputGroup.Text>
-              <Form.Control
-                type="number"
-                step="0.01"
-                min="0"
-                inputMode="decimal"
-                placeholder="e.g., 3.99"
-                {...register('price', {
-                  setValueAs: (v) => {
-                    if (v === '' || v === null || typeof v === 'undefined') return null;
-                    const n = Number(v);
-                    return Number.isFinite(n) ? n : null;
-                  },
-                })}
-                className={`${errors.price ? 'is-invalid' : ''}`}
-              />
-            </InputGroup>
-            <div className="invalid-feedback">{errors.price?.message}</div>
-          </Form.Group>
-        </Col>
-
-        <Col xs={7}>
-          <Form.Group>
-            <Form.Label>List</Form.Label>
-            <Form.Select
-              {...register('shoppingListId', { valueAsNumber: true })}
-              defaultValue={shoppingLists[0]?.id ?? ''}
-            >
-              <option value="">Choose a list…</option>
-              {shoppingLists.map((sl) => (
-                <option key={sl.id} value={sl.id}>
-                  {sl.name}
-                </option>
-              ))}
-            </Form.Select>
-            <div className="invalid-feedback">{errors.shoppingListId?.message}</div>
-          </Form.Group>
-        </Col>
-      </Row>
-
-=======
       {editableLists.length === 0 ? (
         <p className="text-muted mb-0">No editable lists available. Create a new list first.</p>
       ) : (
@@ -227,6 +117,7 @@ const AddToShoppingListModal = ({
                 <div className="invalid-feedback">{errors.name?.message}</div>
               </Form.Group>
             </Col>
+
             <Col xs={3}>
               <Form.Group>
                 <Form.Label>Qty</Form.Label>
@@ -239,13 +130,40 @@ const AddToShoppingListModal = ({
                 <div className="invalid-feedback">{errors.quantity?.message}</div>
               </Form.Group>
             </Col>
+
             <Col xs={3}>
               <Form.Group>
                 <Form.Label>Unit</Form.Label>
-                <Form.Control type="text" {...register('unit')} />
+                {/* keep RHF field registered even when using a controlled select */}
+                <input type="hidden" {...register('unit')} />
+                <Form.Select
+                  value={unitChoice}
+                  onChange={(e) => {
+                    const { value } = e.target;
+                    setUnitChoice(value);
+                    setValue('unit', value === 'Other' ? '' : value, { shouldValidate: true });
+                  }}
+                >
+                  <option value="">—</option>
+                  {unitOptions.map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </Form.Select>
+                {unitChoice === 'Other' && (
+                  <Form.Control
+                    className="mt-2"
+                    type="text"
+                    placeholder="Enter custom unit"
+                    value={unitValue}
+                    onChange={(e) => setValue('unit', e.target.value, { shouldValidate: true })}
+                  />
+                )}
               </Form.Group>
             </Col>
           </Row>
+
           <Row className="mb-3">
             <Col xs={5}>
               <Form.Group>
@@ -256,13 +174,22 @@ const AddToShoppingListModal = ({
                     type="number"
                     step="0.01"
                     min="0"
-                    {...register('price', { valueAsNumber: true })}
+                    inputMode="decimal"
+                    placeholder="e.g., 3.99"
+                    {...register('price', {
+                      setValueAs: (v) => {
+                        if (v === '' || v === null || typeof v === 'undefined') return null;
+                        const n = Number(v);
+                        return Number.isFinite(n) ? n : null;
+                      },
+                    })}
                     className={`${errors.price ? 'is-invalid' : ''}`}
                   />
                 </InputGroup>
                 <div className="invalid-feedback">{errors.price?.message}</div>
               </Form.Group>
             </Col>
+
             <Col xs={7}>
               <Form.Group>
                 <Form.Label>List</Form.Label>
@@ -283,7 +210,6 @@ const AddToShoppingListModal = ({
           </Row>
         </>
       )}
->>>>>>> Stashed changes
       <Row className="pt-3">
         <Col>
           <Button type="submit" className="btn-submit" disabled={isSubmitting || editableLists.length === 0}>

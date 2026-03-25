@@ -4,9 +4,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button, Col, Modal, Row, Table } from 'react-bootstrap';
+import { useEffect, useState } from 'react';
 import { BagCheckFill } from 'react-bootstrap-icons';
+import { Button, Col, Modal, Row, Table } from 'react-bootstrap';
 import AddToShoppingListModal from './AddToShoppingListModal';
 import EditShoppingListItemModal from './EditShoppingListItemModal';
 
@@ -29,35 +29,25 @@ interface ShoppingList {
   items?: ShoppingListItem[];
 }
 
-interface ViewShoppingListModalProps {
+type ViewShoppingListModalProps = {
   show: boolean;
   onHide: () => void;
-  shoppingList?: ShoppingList; // optional for safety
-}
+  shoppingList?: ShoppingList;
+};
 
-const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListModalProps) => {
+export default function ViewShoppingListModal({ show, onHide, shoppingList }: ViewShoppingListModalProps) {
   const [items, setItems] = useState<ShoppingListItem[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
+  const [editingItem, setEditingItem] = useState<ShoppingListItem | null>(null);
+
   const [checkedState, setCheckedState] = useState<Record<number, boolean>>({});
-<<<<<<< Updated upstream
   const [pendingChecks, setPendingChecks] = useState<Record<number, boolean>>({});
-  const [editingItem, setEditingItem] = useState<ShoppingListItem | null>(null);
-  const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-=======
-  const [initialCheckedState, setInitialCheckedState] = useState<Record<number, boolean>>({});
-  const [editingItem, setEditingItem] = useState<ShoppingListItem | null>(null);
-  const [isSavingChecks, setIsSavingChecks] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
+
   const listIsCompleted = !!shoppingList?.isCompleted;
-  let closeButtonText = 'Close';
-  if (isSavingChecks) {
-    closeButtonText = 'Saving...';
-  } else if (isClosing) {
-    closeButtonText = 'Closing...';
-  }
->>>>>>> Stashed changes
+  const listId = shoppingList?.id;
 
   const applyItemsToLocalState = (nextItems: ShoppingListItem[]) => {
     setItems(nextItems);
@@ -68,30 +58,20 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
     setCheckedState(purchasedState);
   };
 
-  // Initialize state from passed list data
+  // Initialize state from passed list data (before the fetch finishes).
   useEffect(() => {
     if (shoppingList?.items) {
-<<<<<<< Updated upstream
       applyItemsToLocalState(shoppingList.items);
-=======
-      setItems(shoppingList.items);
-      const purchasedMap = shoppingList.items.reduce((acc, item) => {
-        acc[item.id] = !!(item as ShoppingListItem & { purchased?: boolean }).purchased;
-        return acc;
-      }, {} as Record<number, boolean>);
-      setCheckedState(purchasedMap);
-      setInitialCheckedState(purchasedMap);
->>>>>>> Stashed changes
     }
-  }, [shoppingList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shoppingList?.items]);
 
   // Always fetch latest saved item states when modal opens.
   useEffect(() => {
-    const shoppingListId = shoppingList?.id;
-    if (!show || !shoppingListId) return;
+    if (!show || !listId) return;
 
     setIsLoadingItems(true);
-    fetch(`/api/shopping-list/${shoppingListId}`)
+    fetch(`/api/shopping-list/${listId}`)
       .then(async (response) => {
         if (!response.ok) throw new Error('Failed to load shopping list');
         return response.json();
@@ -102,15 +82,12 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
       .catch((error) => {
         console.error('Failed to refresh shopping list items:', error);
       })
-      .finally(() => {
-        setIsLoadingItems(false);
-      });
-  }, [show, shoppingList?.id]);
+      .finally(() => setIsLoadingItems(false));
+  }, [show, listId]);
 
   const handleRestockChange = async (itemId: number, restockTrigger: string) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, restockTrigger } : item)),
-    );
+    if (listIsCompleted) return;
+    setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, restockTrigger } : item)));
 
     await fetch(`/api/shopping-list-item/${itemId}/restock`, {
       method: 'PATCH',
@@ -120,6 +97,8 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
   };
 
   const handleThresholdChange = async (itemId: number, customThreshold: number) => {
+    if (listIsCompleted) return;
+    if (!Number.isFinite(customThreshold)) return;
     setItems((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, customThreshold } : item)),
     );
@@ -132,94 +111,61 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
   };
 
   const handleDeleteItem = async (itemId: number) => {
+    if (listIsCompleted) return;
+    setDeletingItemId(itemId);
+    setSaveError(null);
+
     try {
-      setDeletingItemId(itemId);
-      await fetch(`/api/shopping-list-item/${itemId}`, { method: 'DELETE' });
+      const response = await fetch(`/api/shopping-list-item/${itemId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete item');
+
       setItems((prev) => prev.filter((i) => i.id !== itemId));
-    } catch (err) {
+      setCheckedState((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
+    } catch (err: any) {
       console.error('Failed to delete item:', err);
+      setSaveError(err?.message || 'Failed to delete item');
     } finally {
       setDeletingItemId(null);
     }
   };
 
-  const toggleCheckbox = (itemId: number) => {
-<<<<<<< Updated upstream
+  const toggleCheckbox = async (itemId: number) => {
+    if (listIsCompleted) return;
     if (isLoadingItems || pendingChecks[itemId]) return;
+
     setSaveError(null);
 
     const nextPurchased = !checkedState[itemId];
     setCheckedState((prev) => ({ ...prev, [itemId]: nextPurchased }));
     setPendingChecks((prev) => ({ ...prev, [itemId]: true }));
 
-    fetch(`/api/shopping-list-item/${itemId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ purchased: nextPurchased }),
-    }).then((response) => {
+    try {
+      const response = await fetch(`/api/shopping-list-item/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ purchased: nextPurchased }),
+      });
+
       if (!response.ok) {
         throw new Error('Failed to save item purchase state.');
       }
-      setItems((prev) => prev.map((item) => (
-        item.id === itemId ? { ...item, purchased: nextPurchased } : item
-      )));
-    }).catch((error) => {
+
+      // Keep local state in sync with what the server persisted.
+      const updated = (await response.json()) as ShoppingListItem;
+      setItems((prev) => prev.map((item) => (item.id === itemId ? updated : item)));
+      setCheckedState((prev) => ({ ...prev, [itemId]: !!updated.purchased }));
+    } catch (error: any) {
       console.error(error);
       setSaveError(error?.message || 'Failed to save checkbox update.');
       setCheckedState((prev) => ({ ...prev, [itemId]: !nextPurchased }));
-    }).finally(() => {
-      setPendingChecks((prev) => ({ ...prev, [itemId]: false }));
-=======
-    const nextValue = !checkedState[itemId];
-    setCheckedState((prev) => ({ ...prev, [itemId]: nextValue }));
-  };
-
-  const persistCheckboxChanges = async () => {
-    const changedItemIds = items
-      .map((item) => item.id)
-      .filter((id) => (checkedState[id] ?? false) !== (initialCheckedState[id] ?? false));
-
-    if (changedItemIds.length === 0) return true;
-
-    setIsSavingChecks(true);
-    try {
-      const responses = await Promise.all(changedItemIds.map((itemId) => fetch(`/api/shopping-list-item/${itemId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ purchased: !!checkedState[itemId] }),
-      })));
-
-      if (responses.some((response) => !response.ok)) {
-        throw new Error('Failed saving one or more purchased states.');
-      }
-
-      setInitialCheckedState({ ...checkedState });
-      setItems((prev) => prev.map((item) => ({ ...item, purchased: !!checkedState[item.id] })));
-      return true;
-    } catch (err) {
-      console.error('Failed to save checkbox updates:', err);
-      return false;
     } finally {
-      setIsSavingChecks(false);
+      setPendingChecks((prev) => ({ ...prev, [itemId]: false }));
     }
   };
-
-  const handleCloseModal = async (): Promise<void> => {
-    if (isClosing) return;
-    setIsClosing(true);
-    onHide();
-    await persistCheckboxChanges();
-    setIsClosing(false);
-  };
-
-  const requestClose = () => {
-    handleCloseModal().catch((err) => {
-      console.error('Failed to close modal:', err);
->>>>>>> Stashed changes
-    });
-  };
-
-  if (!shoppingList) return null;
 
   let bodyContent;
   if (isLoadingItems) {
@@ -230,7 +176,15 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
         </Col>
       </Row>
     );
-  } else if (items.length > 0) {
+  } else if (items.length === 0) {
+    bodyContent = (
+      <Row>
+        <Col className="text-center">
+          <p className="text-muted mb-0">No items in this shopping list.</p>
+        </Col>
+      </Row>
+    );
+  } else {
     bodyContent = (
       <Row>
         <Col>
@@ -256,7 +210,7 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
                       type="checkbox"
                       checked={!!checkedState[item.id]}
                       onChange={() => toggleCheckbox(item.id)}
-                      disabled={isLoadingItems || !!pendingChecks[item.id]}
+                      disabled={listIsCompleted || !!pendingChecks[item.id] || isLoadingItems}
                       aria-label={`Select ${item.name}`}
                     />
                   </td>
@@ -271,6 +225,7 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
                       value={item.restockTrigger || 'empty'}
                       onChange={(e) => handleRestockChange(item.id, e.target.value)}
                       className="form-select form-select-sm"
+                      disabled={listIsCompleted}
                     >
                       <option value="empty">When empty</option>
                       <option value="half">When half gone</option>
@@ -282,11 +237,17 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
                         type="number"
                         min="1"
                         max="100"
-                        value={item.customThreshold || ''}
-                        onChange={(e) =>
-                          handleThresholdChange(item.id, parseFloat(e.target.value))}
+                        value={item.customThreshold ?? ''}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          if (raw === '') return;
+                          const parsed = Number(raw);
+                          if (!Number.isFinite(parsed)) return;
+                          handleThresholdChange(item.id, parsed).catch((err) => console.error(err));
+                        }}
                         className="form-control form-control-sm mt-1"
                         placeholder="% left"
+                        disabled={listIsCompleted}
                       />
                     )}
                   </td>
@@ -295,15 +256,17 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
                       variant="edit"
                       size="sm"
                       onClick={() => setEditingItem(item)}
+                      disabled={listIsCompleted}
                     >
                       Edit
                     </Button>
-
                     <Button
                       variant="danger"
                       size="sm"
-                      onClick={() => handleDeleteItem(item.id)}
-                      disabled={deletingItemId === item.id}
+                      onClick={() => {
+                        handleDeleteItem(item.id).catch((err) => console.error(err));
+                      }}
+                      disabled={deletingItemId === item.id || listIsCompleted}
                     >
                       {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
                     </Button>
@@ -315,167 +278,47 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
         </Col>
       </Row>
     );
-  } else {
-    bodyContent = (
-      <Row>
-        <Col className="text-center">
-          <p className="text-muted mb-0">No items in this shopping list.</p>
-        </Col>
-      </Row>
-    );
   }
+
+  if (!shoppingList) return null;
 
   return (
     <>
-      <Modal show={show} onHide={requestClose} centered size="lg">
+      <Modal show={show} onHide={onHide} centered size="lg">
         <Modal.Header className="justify-content-center">
-          <Modal.Title>{shoppingList?.name ?? 'Shopping List'}</Modal.Title>
+          <Modal.Title>{shoppingList.name ?? 'Shopping List'}</Modal.Title>
         </Modal.Header>
 
         <Modal.Body>
-<<<<<<< Updated upstream
           {saveError && (
             <Row className="mb-2">
               <Col className="text-center text-danger">{saveError}</Col>
-=======
-          {items.length > 0 ? (
-            <Row>
-              <Col>
-                <Table striped bordered hover size="sm" responsive className="text-center">
-                  <thead>
-                    <tr>
-                      <th>
-                        <BagCheckFill color="black" size={18} />
-                      </th>
-                      <th>Item</th>
-                      <th>Quantity</th>
-                      <th>Unit</th>
-                      <th>Price</th>
-                      <th>Restock When</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <input
-                            type="checkbox"
-                            checked={!!checkedState[item.id]}
-                            onChange={() => {
-                              toggleCheckbox(item.id);
-                            }}
-                            disabled={listIsCompleted}
-                            aria-label={`Select ${item.name}`}
-                          />
-                        </td>
-                        <td>
-                          <span style={{ textDecoration: checkedState[item.id] ? 'line-through' : 'none' }}>
-                            {item.name}
-                          </span>
-                        </td>
-                        <td>{item.quantity}</td>
-                        <td>{item.unit || '-'}</td>
-                        <td>{item.price ? `$${Number(item.price).toFixed(2)}` : 'N/A'}</td>
-                        <td>
-                          <select
-                            value={item.restockTrigger || 'empty'}
-                            onChange={(e) => handleRestockChange(item.id, e.target.value)}
-                            className="form-select form-select-sm"
-                            disabled={listIsCompleted}
-                          >
-                            <option value="empty">When empty</option>
-                            <option value="half">When half gone</option>
-                            <option value="custom">Custom % left</option>
-                          </select>
-
-                          {item.restockTrigger === 'custom' && (
-                            <input
-                              type="number"
-                              min="1"
-                              max="100"
-                              value={item.customThreshold || ''}
-                              onChange={(e) =>
-                                handleThresholdChange(item.id, parseFloat(e.target.value))}
-                              className="form-control form-control-sm mt-1"
-                              placeholder="% left"
-                              disabled={listIsCompleted}
-                            />
-                          )}
-                        </td>
-                        <td className="d-flex gap-2 justify-content-center">
-                          <Button
-                            variant="edit"
-                            size="sm"
-                            onClick={() => setEditingItem(item)}
-                            disabled={listIsCompleted}
-                          >
-                            Edit
-                          </Button>
-
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDeleteItem(item.id)}
-                            disabled={deletingItemId === item.id || listIsCompleted}
-                          >
-                            {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Col>
-            </Row>
-          ) : (
-            <Row>
-              <Col className="text-center">
-                <p className="text-muted mb-0">No items in this shopping list.</p>
-              </Col>
->>>>>>> Stashed changes
             </Row>
           )}
           {bodyContent}
+        </Modal.Body>
 
+        <Modal.Body>
           <Row className="pt-4">
             <Col className="text-center">
               <Button
                 variant="success"
                 style={{ backgroundColor: 'var(--fern-green)' }}
                 className="btn-submit"
-<<<<<<< Updated upstream
-                disabled={isLoadingItems || Object.values(pendingChecks).some(Boolean)}
-                onClick={() => {
-                  onHide();
-=======
-                disabled={listIsCompleted || isSavingChecks || isClosing}
-                onClick={async () => {
-                  await handleCloseModal();
->>>>>>> Stashed changes
-                  setShowAddModal(true);
-                }}
+                disabled={listIsCompleted || isLoadingItems || Object.values(pendingChecks).some(Boolean)}
+                onClick={() => setShowAddModal(true)}
               >
                 + Add Item
               </Button>
             </Col>
             <Col className="text-center">
               <Button
-<<<<<<< Updated upstream
                 onClick={onHide}
                 variant="secondary"
                 className="btn-submit"
-                disabled={isLoadingItems || Object.values(pendingChecks).some(Boolean)}
+                disabled={isLoadingItems}
               >
-                {isLoadingItems || Object.values(pendingChecks).some(Boolean) ? 'Saving...' : 'Close'}
-=======
-                onClick={requestClose}
-                variant="secondary"
-                className="btn-submit"
-                disabled={isClosing}
-              >
-                {closeButtonText}
->>>>>>> Stashed changes
+                Close
               </Button>
             </Col>
           </Row>
@@ -489,16 +332,17 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
         sidePanel={false}
         prefillName=""
       />
+
       {editingItem && (
-      <EditShoppingListItemModal
-        show={!!editingItem}
-        onHide={() => setEditingItem(null)}
-        item={editingItem}
-      />
+        <EditShoppingListItemModal
+          show={!!editingItem}
+          onHide={() => setEditingItem(null)}
+          item={editingItem}
+        />
       )}
     </>
   );
-};
+}
 
 ViewShoppingListModal.defaultProps = {
   shoppingList: {
@@ -509,5 +353,3 @@ ViewShoppingListModal.defaultProps = {
     items: [],
   },
 };
-
-export default ViewShoppingListModal;
