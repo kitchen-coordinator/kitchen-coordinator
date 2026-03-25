@@ -148,7 +148,7 @@ export async function addProduce(produce: {
     }
   }
 
-  redirect('/view-pantry');
+  return newProduce;
 }
 
 /**
@@ -264,11 +264,10 @@ export async function editProduce(
  * Deletes a produce by id.
  */
 export async function deleteProduce(id: number) {
-  await prisma.produce.delete({
+  const deleted = await prisma.produce.delete({
     where: { id },
   });
-
-  redirect('/view-pantry');
+  return deleted;
 }
 
 export async function getUserProduceByEmail(owner: string) {

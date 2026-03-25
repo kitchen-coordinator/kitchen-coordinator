@@ -18,6 +18,7 @@ interface ShoppingListItem {
   price?: number | null;
   restockTrigger?: string | null;
   customThreshold?: number | null;
+  purchased?: boolean;
 }
 
 interface ShoppingList {
@@ -37,16 +38,48 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
   const [showAddModal, setShowAddModal] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
   const [checkedState, setCheckedState] = useState<Record<number, boolean>>({});
+  const [pendingChecks, setPendingChecks] = useState<Record<number, boolean>>({});
   const [editingItem, setEditingItem] = useState<ShoppingListItem | null>(null);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Update items when the shopping list changes
+  const applyItemsToLocalState = (nextItems: ShoppingListItem[]) => {
+    setItems(nextItems);
+    const purchasedState = nextItems.reduce((acc, item) => {
+      acc[item.id] = !!item.purchased;
+      return acc;
+    }, {} as Record<number, boolean>);
+    setCheckedState(purchasedState);
+  };
+
+  // Initialize state from passed list data
   useEffect(() => {
     if (shoppingList?.items) {
-      setItems(shoppingList.items);
-      const saved = localStorage.getItem(`checkboxes-${shoppingList.id}`);
-      if (saved) setCheckedState(JSON.parse(saved));
+      applyItemsToLocalState(shoppingList.items);
     }
   }, [shoppingList]);
+
+  // Always fetch latest saved item states when modal opens.
+  useEffect(() => {
+    const shoppingListId = shoppingList?.id;
+    if (!show || !shoppingListId) return;
+
+    setIsLoadingItems(true);
+    fetch(`/api/shopping-list/${shoppingListId}`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Failed to load shopping list');
+        return response.json();
+      })
+      .then((list) => {
+        applyItemsToLocalState(list.items || []);
+      })
+      .catch((error) => {
+        console.error('Failed to refresh shopping list items:', error);
+      })
+      .finally(() => {
+        setIsLoadingItems(false);
+      });
+  }, [show, shoppingList?.id]);
 
   const handleRestockChange = async (itemId: number, restockTrigger: string) => {
     setItems((prev) =>
@@ -85,18 +118,138 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
   };
 
   const toggleCheckbox = (itemId: number) => {
-    setCheckedState(prev => {
-      const updated = { ...prev, [itemId]: !prev[itemId] };
+    if (isLoadingItems || pendingChecks[itemId]) return;
+    setSaveError(null);
 
-      if (shoppingList) {
-        localStorage.setItem(`checkboxes-${shoppingList.id}`, JSON.stringify(updated));
+    const nextPurchased = !checkedState[itemId];
+    setCheckedState((prev) => ({ ...prev, [itemId]: nextPurchased }));
+    setPendingChecks((prev) => ({ ...prev, [itemId]: true }));
+
+    fetch(`/api/shopping-list-item/${itemId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ purchased: nextPurchased }),
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error('Failed to save item purchase state.');
       }
-
-      return updated;
+      setItems((prev) => prev.map((item) => (
+        item.id === itemId ? { ...item, purchased: nextPurchased } : item
+      )));
+    }).catch((error) => {
+      console.error(error);
+      setSaveError(error?.message || 'Failed to save checkbox update.');
+      setCheckedState((prev) => ({ ...prev, [itemId]: !nextPurchased }));
+    }).finally(() => {
+      setPendingChecks((prev) => ({ ...prev, [itemId]: false }));
     });
   };
 
   if (!shoppingList) return null;
+
+  let bodyContent;
+  if (isLoadingItems) {
+    bodyContent = (
+      <Row>
+        <Col className="text-center">
+          <p className="text-muted mb-0">Loading list...</p>
+        </Col>
+      </Row>
+    );
+  } else if (items.length > 0) {
+    bodyContent = (
+      <Row>
+        <Col>
+          <Table striped bordered hover size="sm" responsive className="text-center">
+            <thead>
+              <tr>
+                <th>
+                  <BagCheckFill color="black" size={18} />
+                </th>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th>Price</th>
+                <th>Restock When</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={!!checkedState[item.id]}
+                      onChange={() => toggleCheckbox(item.id)}
+                      disabled={isLoadingItems || !!pendingChecks[item.id]}
+                      aria-label={`Select ${item.name}`}
+                    />
+                  </td>
+                  <td style={{ textDecoration: checkedState[item.id] ? 'line-through' : 'none' }}>
+                    {item.name}
+                  </td>
+                  <td>{item.quantity}</td>
+                  <td>{item.unit || '-'}</td>
+                  <td>{item.price ? `$${Number(item.price).toFixed(2)}` : 'N/A'}</td>
+                  <td>
+                    <select
+                      value={item.restockTrigger || 'empty'}
+                      onChange={(e) => handleRestockChange(item.id, e.target.value)}
+                      className="form-select form-select-sm"
+                    >
+                      <option value="empty">When empty</option>
+                      <option value="half">When half gone</option>
+                      <option value="custom">Custom % left</option>
+                    </select>
+
+                    {item.restockTrigger === 'custom' && (
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={item.customThreshold || ''}
+                        onChange={(e) =>
+                          handleThresholdChange(item.id, parseFloat(e.target.value))}
+                        className="form-control form-control-sm mt-1"
+                        placeholder="% left"
+                      />
+                    )}
+                  </td>
+                  <td className="d-flex gap-2 justify-content-center">
+                    <Button
+                      variant="edit"
+                      size="sm"
+                      onClick={() => setEditingItem(item)}
+                    >
+                      Edit
+                    </Button>
+
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDeleteItem(item.id)}
+                      disabled={deletingItemId === item.id}
+                    >
+                      {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Col>
+      </Row>
+    );
+  } else {
+    bodyContent = (
+      <Row>
+        <Col className="text-center">
+          <p className="text-muted mb-0">No items in this shopping list.</p>
+        </Col>
+      </Row>
+    );
+  }
 
   return (
     <>
@@ -106,93 +259,12 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
         </Modal.Header>
 
         <Modal.Body>
-          {items.length > 0 ? (
-            <Row>
-              <Col>
-                <Table striped bordered hover size="sm" responsive className="text-center">
-                  <thead>
-                    <tr>
-                      <th>
-                        <BagCheckFill color="black" size={18} />
-                      </th>
-                      <th>Item</th>
-                      <th>Quantity</th>
-                      <th>Unit</th>
-                      <th>Price</th>
-                      <th>Restock When</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <input
-                            type="checkbox"
-                            checked={!!checkedState[item.id]}
-                            onChange={() => toggleCheckbox(item.id)}
-                            aria-label={`Select ${item.name}`}
-                          />
-                        </td>
-                        <td>{item.name}</td>
-                        <td>{item.quantity}</td>
-                        <td>{item.unit || '-'}</td>
-                        <td>{item.price ? `$${Number(item.price).toFixed(2)}` : 'N/A'}</td>
-                        <td>
-                          <select
-                            value={item.restockTrigger || 'empty'}
-                            onChange={(e) => handleRestockChange(item.id, e.target.value)}
-                            className="form-select form-select-sm"
-                          >
-                            <option value="empty">When empty</option>
-                            <option value="half">When half gone</option>
-                            <option value="custom">Custom % left</option>
-                          </select>
-
-                          {item.restockTrigger === 'custom' && (
-                            <input
-                              type="number"
-                              min="1"
-                              max="100"
-                              value={item.customThreshold || ''}
-                              onChange={(e) =>
-                                handleThresholdChange(item.id, parseFloat(e.target.value))}
-                              className="form-control form-control-sm mt-1"
-                              placeholder="% left"
-                            />
-                          )}
-                        </td>
-                        <td className="d-flex gap-2 justify-content-center">
-                          <Button
-                            variant="edit"
-                            size="sm"
-                            onClick={() => setEditingItem(item)}
-                          >
-                            Edit
-                          </Button>
-
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDeleteItem(item.id)}
-                            disabled={deletingItemId === item.id}
-                          >
-                            {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Col>
-            </Row>
-          ) : (
-            <Row>
-              <Col className="text-center">
-                <p className="text-muted mb-0">No items in this shopping list.</p>
-              </Col>
+          {saveError && (
+            <Row className="mb-2">
+              <Col className="text-center text-danger">{saveError}</Col>
             </Row>
           )}
+          {bodyContent}
 
           <Row className="pt-4">
             <Col className="text-center">
@@ -200,6 +272,7 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
                 variant="success"
                 style={{ backgroundColor: 'var(--fern-green)' }}
                 className="btn-submit"
+                disabled={isLoadingItems || Object.values(pendingChecks).some(Boolean)}
                 onClick={() => {
                   onHide();
                   setShowAddModal(true);
@@ -209,8 +282,13 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
               </Button>
             </Col>
             <Col className="text-center">
-              <Button onClick={onHide} variant="secondary" className="btn-submit">
-                Close
+              <Button
+                onClick={onHide}
+                variant="secondary"
+                className="btn-submit"
+                disabled={isLoadingItems || Object.values(pendingChecks).some(Boolean)}
+              >
+                {isLoadingItems || Object.values(pendingChecks).some(Boolean) ? 'Saving...' : 'Close'}
               </Button>
             </Col>
           </Row>
