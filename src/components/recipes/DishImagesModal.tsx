@@ -33,8 +33,14 @@ export default function DishImagesModal({ show, onHide, recipeId, recipeTitle }:
       setLoading(true);
       setError(null);
       try {
+        if (!db) {
+          setError('Database is not configured. Please try again later.');
+          setLoading(false);
+          return;
+        }
+
         const q = query(
-          collection(db, 'recipeImages'),
+          collection(db!, 'recipeImages'),
           where('recipeId', '==', recipeId),
         );
         const snapshot = await getDocs(q);

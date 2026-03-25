@@ -26,6 +26,7 @@ export default function ShoppingListCard({ shoppingList }: ShoppingListCardProps
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(shoppingList.name);
   const [tempName, setTempName] = useState(shoppingList.name);
+  const isCompleted = !!shoppingList.isCompleted;
 
   const handleCancel = () => {
     setTempName(name);
@@ -33,7 +34,7 @@ export default function ShoppingListCard({ shoppingList }: ShoppingListCardProps
   };
 
   const handleSave = async () => {
-    if (!tempName.trim()) return;
+    if (!tempName.trim() || isCompleted) return;
 
     await fetch(`/api/shopping-list/${shoppingList.id}`, {
       method: 'PUT',
@@ -75,7 +76,9 @@ export default function ShoppingListCard({ shoppingList }: ShoppingListCardProps
                   position: 'relative',
                   top: '-1px',
                 }}
-                onClick={() => setEditing(true)}
+                onClick={() => {
+                  if (!isCompleted) setEditing(true);
+                }}
               />
             </>
           ) : (
@@ -121,6 +124,13 @@ export default function ShoppingListCard({ shoppingList }: ShoppingListCardProps
             <strong>Total Items:</strong>
             {' '}
             <Badge bg="primary">{totalItems}</Badge>
+          </ListGroup.Item>
+          <ListGroup.Item className="bg-light">
+            <strong>Status:</strong>
+            {' '}
+            <Badge bg={isCompleted ? 'success' : 'secondary'}>
+              {isCompleted ? 'Completed' : 'Open'}
+            </Badge>
           </ListGroup.Item>
           <ListGroup.Item className="bg-light">
             <strong>Estimated Cost:</strong>

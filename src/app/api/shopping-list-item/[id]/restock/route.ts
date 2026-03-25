@@ -5,6 +5,21 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   try {
     const id = Number(params.id);
     const { restockTrigger, customThreshold } = await request.json();
+    const existingItem = await prisma.shoppingListItem.findUnique({
+      where: { id },
+      include: { shoppingList: { select: { isCompleted: true } } },
+    });
+
+    if (!existingItem) {
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+    }
+
+    if (existingItem.shoppingList.isCompleted) {
+      return NextResponse.json(
+        { error: 'Completed shopping lists are locked and cannot be edited.' },
+        { status: 400 },
+      );
+    }
 
     // Build the update object dynamically
     const updateData: any = {};

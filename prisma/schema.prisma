@@ -90,9 +90,11 @@ model Storage {
 model ShoppingList {
   id        Int                @id @default(autoincrement())
   name      String
-  owner     String
-  createdAt DateTime           @default(now())
-  items     ShoppingListItem[]
+  owner     String // email, username, or household name
+  createdAt DateTime @default(now())
+  isCompleted Boolean @default(false)
+  completedAt DateTime?
+  items ShoppingListItem[]
 
   @@unique([name, owner])
 }
@@ -107,6 +109,8 @@ model ShoppingListItem {
   name            String
   unit            String?
   shoppingList    ShoppingList @relation(fields: [shoppingListId], references: [id])
+  purchased       Boolean  @default(false)
+  purchasedAt     DateTime?
 
   @@unique([shoppingListId, name])
 }

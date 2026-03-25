@@ -93,13 +93,13 @@ export async function POST(request: Request) {
 
     // Find or create shopping list for this user
     let shoppingList = await prisma.shoppingList.findFirst({
-      where: { owner: email },
+      where: { owner: email, isCompleted: false },
       orderBy: { createdAt: 'desc' },
     });
 
     if (!shoppingList) {
       shoppingList = await prisma.shoppingList.create({
-        data: { name: 'My Shopping List', owner: email },
+        data: { name: 'My Shopping List', owner: email, isCompleted: false },
       });
     }
 
