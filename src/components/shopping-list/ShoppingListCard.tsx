@@ -128,6 +128,27 @@ export default function ShoppingListCard({ shoppingList }: ShoppingListCardProps
             $
             {totalCost.toFixed(2)}
           </ListGroup.Item>
+          <ListGroup.Item className="bg-light">
+            <strong>Deadline: (Date) </strong>
+            {' '}
+          </ListGroup.Item>
+          <ListGroup.Item className="bg-light">
+            <strong>Location: (Which store) </strong>
+            {' '}
+          </ListGroup.Item>
+          <ListGroup.Item className="bg-light">
+            <strong>Status: (Completed/In Progress/Pending) </strong>
+            {' '}
+          </ListGroup.Item>
+          <ListGroup.Item className="bg-light">
+            <strong>Budget Limit: </strong>
+            {' '}
+            $
+          </ListGroup.Item>
+          <ListGroup.Item className="bg-light">
+            <strong>Progress Bar</strong>
+            {' '}
+          </ListGroup.Item>
         </ListGroup>
       </Card.Body>
 
