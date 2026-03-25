@@ -147,10 +147,6 @@ export default function ShoppingListCard({ shoppingList }: ShoppingListCardProps
             {' '}
           </ListGroup.Item>
           <ListGroup.Item className="bg-light">
-            <strong>Status: (Completed/In Progress/Pending) </strong>
-            {' '}
-          </ListGroup.Item>
-          <ListGroup.Item className="bg-light">
             <strong>Budget Limit: </strong>
             {' '}
             $
