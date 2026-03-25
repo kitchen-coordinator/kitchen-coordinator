@@ -14,10 +14,16 @@ const PANTRY_REFRESH_INTERVAL_MS = 15000;
 interface PantryClientProps {
   initialProduce: any[];
   initialLocations: string[];
+  initialShoppingLists: { id: number; name: string; isCompleted?: boolean }[];
   owner: string;
 }
 
-function PantryClient({ initialProduce, initialLocations, owner }: PantryClientProps) {
+function PantryClient({
+  initialProduce,
+  initialLocations,
+  initialShoppingLists,
+  owner,
+}: PantryClientProps) {
   const router = useRouter();
   const [showAddProduceModal, setShowAddProduceModal] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
@@ -161,7 +167,10 @@ function PantryClient({ initialProduce, initialLocations, owner }: PantryClientP
         {/* Produce list */}
         <Row>
           <Col>
-            <ProduceListWithGrouping initialProduce={filteredProduce} />
+            <ProduceListWithGrouping
+              initialProduce={filteredProduce}
+              shoppingLists={initialShoppingLists}
+            />
           </Col>
         </Row>
       </Container>

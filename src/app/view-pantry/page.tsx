@@ -34,12 +34,19 @@ const ViewPantryPage = async () => {
     orderBy: { name: 'asc' },
   });
 
+  const shoppingLists = await prisma.shoppingList.findMany({
+    where: { owner },
+    select: { id: true, name: true, isCompleted: true },
+    orderBy: { createdAt: 'desc' },
+  });
+
   return (
     <main>
       <Container id="view-pantry" className="py-3">
         <PantryClient
           initialProduce={produce}
           initialLocations={locations.map((loc) => loc.name)}
+          initialShoppingLists={shoppingLists}
           owner={owner}
         />
       </Container>

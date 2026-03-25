@@ -91,55 +91,177 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find or create shopping list for this user
-    let shoppingList = await prisma.shoppingList.findFirst({
-      where: { owner: email, isCompleted: false },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!shoppingList) {
-      shoppingList = await prisma.shoppingList.create({
-        data: { name: 'My Shopping List', owner: email, isCompleted: false },
-      });
-    }
-
-    // Fetch existing items (by name) for this list once
-    const existingItems = await prisma.shoppingListItem.findMany({
-      where: { shoppingListId: shoppingList.id },
-      select: { name: true },
-    });
-
-    const existingNames = new Set(existingItems.map((i) => i.name));
-
-    // Filter out duplicates by name
-    const itemsToInsert = normalizedItems.filter(
-      (item) => !existingNames.has(item.name),
+    // Dedupe by item name (prevents same-name duplicates within the request)
+    const normalizedUniqueItems = Array.from(
+      new Map(normalizedItems.map((i) => [i.name, i] as const)).values(),
     );
 
-    if (itemsToInsert.length === 0) {
-      return NextResponse.json({ success: true, created: [] });
+    // Optional targeting: add to selected list(s) or create a new list name first.
+    let requestedListIdsRaw: unknown[] = [];
+    if (Array.isArray(body.shoppingListIds)) {
+      requestedListIdsRaw = body.shoppingListIds;
+    } else if (body.shoppingListId != null) {
+      requestedListIdsRaw = [body.shoppingListId];
     }
 
-    // Insert all at once, carrying quantity & unit
-    await prisma.shoppingListItem.createMany({
-      data: itemsToInsert.map((item) => ({
-        shoppingListId: shoppingList.id,
-        name: item.name,
-        quantity: item.quantity,
-        unit: item.unit,
-      })),
+    const requestedListIds: number[] = Array.from(
+      new Set(
+        requestedListIdsRaw
+          .map((n: unknown) => Number(n))
+          .filter((n): n is number => Number.isFinite(n)),
+      ),
+    );
+
+    const createShoppingListName = typeof body.createShoppingListName === 'string'
+      ? body.createShoppingListName.trim()
+      : '';
+
+    const hasExplicitTargets = requestedListIds.length > 0 || createShoppingListName.length > 0;
+
+    const listIdsToProcess: number[] = [];
+    let createdListId: number | null = null;
+
+    if (!hasExplicitTargets) {
+      // Backward-compatible behavior: use the latest open list (or create one).
+      let shoppingList = await prisma.shoppingList.findFirst({
+        where: { owner: email, isCompleted: false },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!shoppingList) {
+        shoppingList = await prisma.shoppingList.create({
+          data: { name: 'My Shopping List', owner: email, isCompleted: false },
+        });
+      }
+
+      listIdsToProcess.push(shoppingList.id);
+    } else {
+      // Validate explicitly provided list ids.
+      if (requestedListIds.length > 0) {
+        const found = await prisma.shoppingList.findMany({
+          where: { id: { in: requestedListIds }, owner: email },
+          select: { id: true, isCompleted: true },
+        });
+
+        if (found.length !== requestedListIds.length) {
+          const foundIds = new Set(found.map((l) => l.id));
+          const missingListIds = requestedListIds.filter((id) => !foundIds.has(id));
+          return NextResponse.json(
+            { error: 'One or more selected shopping lists are invalid.', missingListIds },
+            { status: 400 },
+          );
+        }
+
+        const completedListIds = found.filter((l) => l.isCompleted).map((l) => l.id);
+        if (completedListIds.length > 0) {
+          return NextResponse.json(
+            {
+              error: 'Completed shopping lists are locked and cannot be edited.',
+              completedListIds,
+            },
+            { status: 400 },
+          );
+        }
+
+        listIdsToProcess.push(...requestedListIds);
+      }
+
+      // Create shopping list if requested.
+      if (createShoppingListName.length > 0) {
+        const existing = await prisma.shoppingList.findUnique({
+          where: { name_owner: { name: createShoppingListName, owner: email } },
+          select: { id: true, isCompleted: true },
+        });
+
+        if (existing) {
+          if (existing.isCompleted) {
+            return NextResponse.json(
+              {
+                error: 'A completed shopping list with this name exists and cannot be edited.',
+                existingListId: existing.id,
+              },
+              { status: 400 },
+            );
+          }
+
+          return NextResponse.json(
+            {
+              error: 'A shopping list with this name already exists.',
+              existingListId: existing.id,
+            },
+            { status: 409 },
+          );
+        }
+
+        const created = await prisma.shoppingList.create({
+          data: { name: createShoppingListName, owner: email, isCompleted: false },
+          select: { id: true },
+        });
+        createdListId = created.id;
+        listIdsToProcess.push(createdListId);
+      }
+    }
+
+    const uniqueListIdsToProcess = Array.from(new Set(listIdsToProcess));
+
+    if (uniqueListIdsToProcess.length === 0) {
+      return NextResponse.json({ error: 'No shopping lists selected.' }, { status: 400 });
+    }
+
+    // Fetch existing items for all targeted lists in one query.
+    const existingItems = await prisma.shoppingListItem.findMany({
+      where: { shoppingListId: { in: uniqueListIdsToProcess } },
+      select: { shoppingListId: true, name: true },
     });
 
-    // Fetch newly created items to return ids + names
-    const createdItems = await prisma.shoppingListItem.findMany({
-      where: {
-        shoppingListId: shoppingList.id,
-        name: { in: itemsToInsert.map((i) => i.name) },
-      },
-      select: { id: true, name: true },
-    });
+    const existingNamesByListId = new Map<number, Set<string>>();
+    for (const listId of uniqueListIdsToProcess) {
+      existingNamesByListId.set(listId, new Set());
+    }
+    for (const i of existingItems) {
+      existingNamesByListId.get(i.shoppingListId)?.add(i.name);
+    }
 
-    return NextResponse.json({ success: true, created: createdItems });
+    const results = await Promise.all(
+      uniqueListIdsToProcess.map(async (listId) => {
+        const existingNames = existingNamesByListId.get(listId) ?? new Set<string>();
+        const itemsToInsert = normalizedUniqueItems.filter((item) => !existingNames.has(item.name));
+
+        if (itemsToInsert.length === 0) {
+          return { shoppingListId: listId, created: [] as { id: number; name: string }[] };
+        }
+
+        await prisma.shoppingListItem.createMany({
+          data: itemsToInsert.map((item) => ({
+            shoppingListId: listId,
+            name: item.name,
+            quantity: item.quantity,
+            unit: item.unit,
+          })),
+        });
+
+        const createdItems = await prisma.shoppingListItem.findMany({
+          where: {
+            shoppingListId: listId,
+            name: { in: itemsToInsert.map((i) => i.name) },
+          },
+          select: { id: true, name: true },
+        });
+
+        return { shoppingListId: listId, created: createdItems };
+      }),
+    );
+
+    const createdByList = results;
+    const flatCreated = results.flatMap((r) => r.created);
+
+    return NextResponse.json({
+      success: true,
+      createdByList,
+      created: flatCreated, // backward-compatible field for existing clients
+      totalCreated: flatCreated.length,
+      createdListId,
+    });
   } catch (error) {
     console.error('Error adding shopping list items:', error);
     return NextResponse.json(
