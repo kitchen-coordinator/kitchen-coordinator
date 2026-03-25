@@ -6,11 +6,15 @@ import { Card, ListGroup, Image, Button } from 'react-bootstrap/';
 import Link from 'next/link';
 import type { ProduceRelations } from '@/types/ProduceRelations';
 import { useState } from 'react';
-import { PencilSquare, Trash } from 'react-bootstrap-icons';
+import { CartPlus, PencilSquare, Trash } from 'react-bootstrap-icons';
 import EditProduceModal from './EditProduceModal';
 import DeleteProduceModal from './DeleteProduceModal';
+import AddToMultipleShoppingListsModal from '../shopping-list/AddToMultipleShoppingListsModal';
 
-type Props = { produce: ProduceRelations };
+type Props = {
+  produce: ProduceRelations;
+  shoppingLists: { id: number; name: string; isCompleted?: boolean }[];
+};
 
 const formatDate = (d?: Date | string | null) => {
   if (!d) return 'Not Available';
@@ -19,10 +23,10 @@ const formatDate = (d?: Date | string | null) => {
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
-export default function ProduceCard({ produce }: Props) {
   const imageSrc = produce.image || '/no-image.png';
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAddListsModal, setShowAddListsModal] = useState(false);
 
   return (
     <Card className="h-100 mb-3 image-shadow">
@@ -68,6 +72,11 @@ export default function ProduceCard({ produce }: Props) {
           >
             <Trash color="white" size={18} />
           </Button>
+            className="btn-shopping flex-fill"
+            onClick={() => setShowAddListsModal(true)}
+          >
+            <CartPlus color="white" size={18} />
+          </Button>
         </Card.Footer>
       </Card.Body>
 
@@ -76,6 +85,11 @@ export default function ProduceCard({ produce }: Props) {
 
       {/* Modal component for deleting produce item */}
       <DeleteProduceModal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} produce={produce} />
+
+      <AddToMultipleShoppingListsModal
+        shoppingLists={shoppingLists}
+        item={{ name: produce.name, quantity: Number(produce.quantity), unit: produce.unit ?? null }}
+      />
     </Card>
   );
 }

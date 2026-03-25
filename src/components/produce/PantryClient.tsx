@@ -11,10 +11,16 @@ import AddLocationModal from './AddLocationModal';
 interface PantryClientProps {
   initialProduce: any[];
   initialLocations: string[];
+  initialShoppingLists: { id: number; name: string; isCompleted?: boolean }[];
   owner: string;
 }
 
 function PantryClient({ initialProduce, initialLocations, owner }: PantryClientProps) {
+function PantryClient({
+  initialLocations,
+  initialShoppingLists,
+  owner,
+}: PantryClientProps) {
   const [showAddProduceModal, setShowAddProduceModal] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [activeLocation, setActiveLocation] = useState<string>('all');
@@ -126,7 +132,10 @@ function PantryClient({ initialProduce, initialLocations, owner }: PantryClientP
         {/* Produce list */}
         <Row>
           <Col>
-            <ProduceListWithGrouping initialProduce={filteredProduce} />
+            <ProduceListWithGrouping
+              initialProduce={filteredProduce}
+              shoppingLists={initialShoppingLists}
+            />
           </Col>
         </Row>
       </Container>
