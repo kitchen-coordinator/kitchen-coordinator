@@ -1,12 +1,15 @@
 'use client';
 
 import { Button, Col, Container, Row, Nav, Modal, Toast } from 'react-bootstrap';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { PlusCircle, Trash } from 'react-bootstrap-icons';
 import AddProduceModal from './AddProduceModal';
 import ProduceListWithGrouping from './ProduceListWithGrouping';
 import '../../styles/buttons.css';
 import AddLocationModal from './AddLocationModal';
+
+const PANTRY_REFRESH_INTERVAL_MS = 15000;
 
 interface PantryClientProps {
   initialProduce: any[];
@@ -21,6 +24,7 @@ function PantryClient({
   initialShoppingLists,
   owner,
 }: PantryClientProps) {
+  const router = useRouter();
   const [showAddProduceModal, setShowAddProduceModal] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [activeLocation, setActiveLocation] = useState<string>('all');
@@ -31,6 +35,36 @@ function PantryClient({
       new Set(initialLocations.map((l) => l.trim().toLowerCase())),
     ).sort(),
   );
+
+  // Refresh when user returns to this tab/page so inventory never stays stale.
+  useEffect(() => {
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') {
+        router.refresh();
+      }
+    };
+
+    window.addEventListener('focus', refreshOnVisible);
+    document.addEventListener('visibilitychange', refreshOnVisible);
+
+    return () => {
+      window.removeEventListener('focus', refreshOnVisible);
+      document.removeEventListener('visibilitychange', refreshOnVisible);
+    };
+  }, [router]);
+
+  // Keep pantry data in sync while the user stays on this page.
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        router.refresh();
+      }
+    }, PANTRY_REFRESH_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [router]);
 
   // Filter produce based on selected location
   const filteredProduce = useMemo(() => {
@@ -64,6 +98,7 @@ function PantryClient({
       setLocations((prev) => prev.filter((l) => l !== confirmLoc));
       setConfirmLoc(null);
       setToastMessage(`Deleted location: ${confirmLoc}`);
+      router.refresh();
     } catch (err) {
       console.error(err);
       setToastMessage('An error occurred while deleting the location.');

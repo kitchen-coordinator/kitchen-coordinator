@@ -1,5 +1,6 @@
 :root {
   --timberwolf: #DAD7CD; /* Light grayish yellow */
+  --metallic-gold: #D4AF37; /* Gold */
   --sage: #A3B18A;       /* Muted green */
   --fern-green: #588157; /* Deep green */
   --hunter-green: #3A5A40; /* Dark green */
@@ -25,7 +26,7 @@ body {
 }
 
 .navandfooter {
-  background-color: var(--hunter-green);
+  background-color: #547c54;
   color: white;
   padding: 1rem;
 }
@@ -40,7 +41,7 @@ body {
 /* Hover state */
 .navandfooter .nav-link:hover,
 .navandfooter .navbar-brand:hover {
-  color: #d4af37 !important;
+  color: var(--metallic-gold) !important;
 }
 
 /* Active state (links + brand on home) */
@@ -48,8 +49,62 @@ body {
 .navandfooter .nav-item.show .nav-link,
 .navandfooter .nav-link.show,
 .navandfooter .navbar-brand.active {
-  color: #d4af37 !important;
+  color: var(--metallic-gold) !important;
   font-weight: 700 !important;
+}
+
+.navandfooter .navbar-collapse.show .nav-link,
+.navandfooter .navbar-collapse.collapsing .nav-link {
+  padding: 0.75rem 0.5rem 0.75rem 0.5rem;
+  align-items: center; /* Center if adding icons */
+}
+
+/* <--- Custom Toggler Icon ---> */
+.navandfooter .kc-toggler {
+  border: none;
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Remove Bootstrap's default background icon */
+.navandfooter .kc-toggler .navbar-toggler-icon {
+  display: none;
+}
+
+/* <--- Hamburger Lines ---> */
+.navandfooter .kc-bar {
+  width: 1.6rem;
+  height: 2px;
+  background: white;
+  transition: transform 160ms ease, opacity 160ms ease;
+  transform-origin: center;
+}
+
+.navandfooter .kc-toggler:hover .kc-bar{
+  background-color: var(--metallic-gold);
+}
+
+.navandfooter .kc-toggler:not(.collapsed) .kc-bar:nth-child(1) {
+  transform: translateY(0.5rem) rotate(45deg);
+}
+
+.navandfooter .kc-toggler:not(.collapsed) .kc-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.navandfooter .kc-toggler:not(.collapsed) .kc-bar:nth-child(3) {
+  transform: translateY(-0.5rem) rotate(135deg);
+}
+
+.navandfooter .dropdown-menu.show {
+  margin-bottom: 0.5rem;
+}
+
+.navandfooter .dropdown-item:hover,
+.navandfooter .dropdown-item:focus {
+  font-weight: 700;
 }
 
 footer a {
@@ -153,4 +208,83 @@ footer a {
 
 .clickable-card:hover {
   cursor: pointer;
+}
+
+/* testing */
+/* Dashboard cards container */
+#dashboard .dashboard-cards {
+  display: flex;
+  flex-direction: row; /* row layout */
+  flex-wrap: wrap;     /* wrap on smaller screens */
+  justify-content: center;
+  gap: 1rem;           /* spacing between cards */
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Individual card */
+.dashboard-card {
+  flex: 0 0 120px;        /* fixed width for consistent row */
+  /* max-width: 100%;     /* shrink if screen smaller */ 
+  background: var(--hunter-green);
+  color: white;
+  border-radius: 22px;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s;
+}
+
+.dashboard-card a {
+  text-decoration: none;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dashboard-card-icon {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  padding: 0.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* mobile */
+@media(max-width: 640px) {
+  #dashboard .dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(3,1fr); 
+    gap: 0.3rem;
+  }
+  .dashboard-card {
+    width: 100%;
+    padding: 0.25rem 0.2rem;
+    border-radius: 8px;
+    font-size: 0.55rem;
+    min-height: unset;
+  }
+  .dashboard-card-icon {
+    padding: 0.2rem;
+    transform: scale(0.7);
+  }
+  .dashboard-card-label {
+    font-size: 0.7rem;
+    line-height: 1.1;
+  } 
+  .dashboard-card a {
+    gap: 0.15rem;
+  }
+}
+/* desktop */
+@media (min-width: 1024px) {
+  #dashboard .dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+  }
 }
