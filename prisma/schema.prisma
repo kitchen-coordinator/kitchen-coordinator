@@ -52,18 +52,17 @@ model Produce {
   owner            String
   image            String?
   unit             String
-  displayQuantity  Float?
-  displayUnit      String?
   restockThreshold Float?
   customThreshold  Float?
   restockTrigger   String      @default("empty")
   locationId       Int
   storageId        Int
   commonItemId     Int?
-
+  displayQuantity  Float?
+  displayUnit      String?
+  commonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
   location         Location    @relation(fields: [locationId], references: [id])
   storage          Storage     @relation(fields: [storageId], references: [id])
-  commonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
 
   @@unique([name, owner])
 }
@@ -81,13 +80,13 @@ model Location {
 }
 
 model Storage {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   name       String
   locationId Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   produces   Produce[]
-  location   Location @relation(fields: [locationId], references: [id])
+  location   Location  @relation(fields: [locationId], references: [id])
 
   @@unique([name, locationId])
 }
@@ -96,22 +95,24 @@ model CommonItem {
   id                        Int       @id @default(autoincrement())
   name                      String
   owner                     String
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
   displayUnit               String
   normalizedQuantityPerUnit Float
   normalizedUnit            String
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
   produces                  Produce[]
 
   @@unique([name, owner, displayUnit])
 }
 
 model ShoppingList {
-  id        Int                @id @default(autoincrement())
-  name      String
-  owner     String
-  createdAt DateTime           @default(now())
-  items     ShoppingListItem[]
+  id          Int                @id @default(autoincrement())
+  name        String
+  owner       String
+  createdAt   DateTime           @default(now())
+  isCompleted Boolean            @default(false)
+  completedAt DateTime?
+  items       ShoppingListItem[]
 
   @@unique([name, owner])
 }
@@ -125,6 +126,8 @@ model ShoppingListItem {
   restockTrigger  String?
   name            String
   unit            String?
+  purchased       Boolean      @default(false)
+  purchasedAt     DateTime?
   shoppingList    ShoppingList @relation(fields: [shoppingListId], references: [id])
 
   @@unique([shoppingListId, name])
