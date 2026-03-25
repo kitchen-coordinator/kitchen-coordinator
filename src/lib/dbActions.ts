@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { hash, compare } from 'bcrypt';
 import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
+import { completeShoppingListAndSyncPantry } from './shoppingListCompletion';
 
 /**
  * Creates a new user.
@@ -148,7 +149,7 @@ export async function addProduce(produce: {
     }
   }
 
-  redirect('/view-pantry');
+  return newProduce;
 }
 
 /**
@@ -264,11 +265,10 @@ export async function editProduce(
  * Deletes a produce by id.
  */
 export async function deleteProduce(id: number) {
-  await prisma.produce.delete({
+  const deleted = await prisma.produce.delete({
     where: { id },
   });
-
-  redirect('/view-pantry');
+  return deleted;
 }
 
 export async function getUserProduceByEmail(owner: string) {
@@ -324,7 +324,7 @@ export async function addShoppingList(data: { name: string; owner: string }) {
   }
 
   await prisma.shoppingList.create({
-    data: { name, owner },
+    data: { name, owner, isCompleted: false },
   });
 }
 
@@ -332,6 +332,19 @@ export async function addShoppingList(data: { name: string; owner: string }) {
  * Edits an existing shopping list.
  */
 export async function editShoppingList(list: Prisma.ShoppingListUpdateInput & { id: number }) {
+  const existingList = await prisma.shoppingList.findUnique({
+    where: { id: list.id },
+    select: { isCompleted: true },
+  });
+
+  if (!existingList) {
+    throw new Error('Shopping list not found.');
+  }
+
+  if (existingList.isCompleted) {
+    throw new Error('Completed shopping lists are locked and cannot be edited.');
+  }
+
   const updatedList = await prisma.shoppingList.update({
     where: { id: list.id },
     data: {
@@ -369,6 +382,19 @@ export async function addShoppingListItem(data: {
   price?: number;
   shoppingListId: number;
 }) {
+  const list = await prisma.shoppingList.findUnique({
+    where: { id: data.shoppingListId },
+    select: { isCompleted: true },
+  });
+
+  if (!list) {
+    throw new Error('Shopping list not found.');
+  }
+
+  if (list.isCompleted) {
+    throw new Error('Completed shopping lists are locked and cannot be edited.');
+  }
+
   const item = await prisma.shoppingListItem.create({
     data: {
       name: data.name,
@@ -396,6 +422,19 @@ export async function editShoppingListItem(
     customThreshold?: number | null;
   },
 ) {
+  const existingItem = await prisma.shoppingListItem.findUnique({
+    where: { id: item.id },
+    include: { shoppingList: { select: { isCompleted: true } } },
+  });
+
+  if (!existingItem) {
+    throw new Error('Shopping list item not found.');
+  }
+
+  if (existingItem.shoppingList.isCompleted) {
+    throw new Error('Completed shopping lists are locked and cannot be edited.');
+  }
+
   const updatedItem = await prisma.shoppingListItem.update({
     where: { id: item.id },
     data: {
@@ -419,7 +458,24 @@ export async function editShoppingListItem(
  * Deletes a shopping list item.
  */
 export async function deleteShoppingListItem(id: number) {
+  const existingItem = await prisma.shoppingListItem.findUnique({
+    where: { id },
+    include: { shoppingList: { select: { isCompleted: true } } },
+  });
+
+  if (!existingItem) {
+    throw new Error('Shopping list item not found.');
+  }
+
+  if (existingItem.shoppingList.isCompleted) {
+    throw new Error('Completed shopping lists are locked and cannot be edited.');
+  }
+
   await prisma.shoppingListItem.delete({
     where: { id },
   });
+}
+
+export async function completeShoppingList(shoppingListId: number) {
+  return completeShoppingListAndSyncPantry(prisma, shoppingListId);
 }
