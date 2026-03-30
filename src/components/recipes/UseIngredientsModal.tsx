@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Modal, Button, Form, Badge, Spinner, Alert } from 'react-bootstrap';
 import { useRouter } from 'next/navigation';
 
@@ -94,6 +94,16 @@ export default function UseIngredientsModal({ show, onHide, ingredientItems, pan
     return init;
   });
 
+  // Re-sync checkboxes each time the modal opens so stale state never persists
+  useEffect(() => {
+    if (!show) return;
+    const init: Record<string, boolean> = {};
+    rows.forEach((row) => {
+      init[row.ingredient.name.toLowerCase()] = row.defaultChecked;
+    });
+    setChecked(init);
+  }, [show, rows]);
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; variant: 'success' | 'danger' } | null>(null);
 
@@ -108,7 +118,7 @@ export default function UseIngredientsModal({ show, onHide, ingredientItems, pan
   const handleConfirm = async () => {
     const items = actionableRows
       .filter((r) => checked[r.ingredient.name.toLowerCase()])
-      .map((r) => ({ name: r.ingredient.name, deductAmount: r.deductAmount }));
+      .map((r) => ({ name: r.pantryItem!.name, deductAmount: r.deductAmount }));
 
     if (!items.length) {
       setMessage({ text: 'No items selected.', variant: 'danger' });
