@@ -408,7 +408,7 @@ export default function ViewShoppingListModal({
                 : (
                   <button
                     type="button"
-                    onClick={() => setEditingLocation(true)}
+                    onClick={() => setEditingBudget(true)}
                     style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                   >
                     <EditIcon />

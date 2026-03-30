@@ -98,6 +98,9 @@ model ShoppingList {
   createdAt   DateTime           @default(now())
   isCompleted Boolean            @default(false)
   completedAt DateTime?
+  deadline    DateTime?
+  location    String?
+  budgetLimit Decimal?           @db.Decimal(10, 2)
   items       ShoppingListItem[]
 
   @@unique([name, owner])
