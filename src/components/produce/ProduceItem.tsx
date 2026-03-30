@@ -88,6 +88,9 @@ const ProduceItem = ({
           owner,
           image,
           restockThreshold: safeRestock,
+          commonItemId: null,
+          displayQuantity: null,
+          displayUnit: null,
         }}
       />
 
@@ -107,6 +110,9 @@ const ProduceItem = ({
           owner,
           image,
           restockThreshold: safeRestock,
+          commonItemId: null,
+          displayQuantity: null,
+          displayUnit: null,
         }}
       />
 
