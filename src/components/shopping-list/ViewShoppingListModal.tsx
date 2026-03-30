@@ -26,6 +26,9 @@ interface ShoppingList {
   name: string;
   isCompleted?: boolean;
   completedAt?: string | null;
+  deadline?: string | null;
+  location?: string | null;
+  budgetLimit?: number | null;
   items?: ShoppingListItem[];
 }
 
@@ -46,6 +49,12 @@ export default function ViewShoppingListModal({ show, onHide, shoppingList }: Vi
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
 
+  // New fields
+  const [deadline, setDeadline] = useState<string>(shoppingList?.deadline?.slice(0, 10) ?? '');
+  const [location, setLocation] = useState<string>(shoppingList?.location ?? '');
+  const [budgetLimit, setBudgetLimit] = useState<string>(shoppingList?.budgetLimit?.toString() ?? '');
+  const [savingDetails, setSavingDetails] = useState(false);
+
   const listIsCompleted = !!shoppingList?.isCompleted;
   const listId = shoppingList?.id;
 
@@ -63,8 +72,12 @@ export default function ViewShoppingListModal({ show, onHide, shoppingList }: Vi
     if (shoppingList?.items) {
       applyItemsToLocalState(shoppingList.items);
     }
+    // Sync detail fields when shoppingList prop changes
+    setDeadline(shoppingList?.deadline?.slice(0, 10) ?? '');
+    setLocation(shoppingList?.location ?? '');
+    setBudgetLimit(shoppingList?.budgetLimit?.toString() ?? '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shoppingList?.items]);
+  }, [shoppingList]);
 
   // Always fetch latest saved item states when modal opens.
   useEffect(() => {
@@ -78,12 +91,38 @@ export default function ViewShoppingListModal({ show, onHide, shoppingList }: Vi
       })
       .then((list) => {
         applyItemsToLocalState(list.items || []);
+        // Sync detail fields from fresh fetch
+        setDeadline(list.deadline?.slice(0, 10) ?? '');
+        setLocation(list.location ?? '');
+        setBudgetLimit(list.budgetLimit?.toString() ?? '');
       })
       .catch((error) => {
         console.error('Failed to refresh shopping list items:', error);
       })
       .finally(() => setIsLoadingItems(false));
   }, [show, listId]);
+
+  const handleSaveDetails = async () => {
+    if (!listId || listIsCompleted) return;
+    setSavingDetails(true);
+    setSaveError(null);
+    try {
+      const response = await fetch(`/api/shopping-list/${listId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deadline: deadline || null,
+          location: location || null,
+          budgetLimit: budgetLimit ? Number(budgetLimit) : null,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to save details');
+    } catch (err: any) {
+      setSaveError(err?.message || 'Failed to save details');
+    } finally {
+      setSavingDetails(false);
+    }
+  };
 
   const handleRestockChange = async (itemId: number, restockTrigger: string) => {
     if (listIsCompleted) return;
@@ -154,7 +193,6 @@ export default function ViewShoppingListModal({ show, onHide, shoppingList }: Vi
         throw new Error('Failed to save item purchase state.');
       }
 
-      // Keep local state in sync with what the server persisted.
       const updated = (await response.json()) as ShoppingListItem;
       setItems((prev) => prev.map((item) => (item.id === itemId ? updated : item)));
       setCheckedState((prev) => ({ ...prev, [itemId]: !!updated.purchased }));
@@ -295,6 +333,63 @@ export default function ViewShoppingListModal({ show, onHide, shoppingList }: Vi
               <Col className="text-center text-danger">{saveError}</Col>
             </Row>
           )}
+
+          {/* List Details Section */}
+          {!listIsCompleted && (
+            <Row className="mb-3 g-2 align-items-end">
+              <Col xs={12} sm={4}>
+                <label className="form-label mb-1" style={{ fontSize: '0.85rem' }}>
+                  <strong>Deadline</strong>
+                </label>
+                <input
+                  type="date"
+                  className="form-control form-control-sm"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  disabled={listIsCompleted}
+                />
+              </Col>
+              <Col xs={12} sm={4}>
+                <label className="form-label mb-1" style={{ fontSize: '0.85rem' }}>
+                  <strong>Store / Location</strong>
+                </label>
+                <input
+                  type="text"
+                  className="form-control form-control-sm"
+                  placeholder="e.g. Costco"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  disabled={listIsCompleted}
+                />
+              </Col>
+              <Col xs={12} sm={3}>
+                <label className="form-label mb-1" style={{ fontSize: '0.85rem' }}>
+                  <strong>Budget ($)</strong>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="form-control form-control-sm"
+                  placeholder="e.g. 100.00"
+                  value={budgetLimit}
+                  onChange={(e) => setBudgetLimit(e.target.value)}
+                  disabled={listIsCompleted}
+                />
+              </Col>
+              <Col xs={12} sm={1} className="d-flex align-items-end">
+                <Button
+                  size="sm"
+                  className="btn-submit w-100"
+                  onClick={handleSaveDetails}
+                  disabled={savingDetails || listIsCompleted}
+                >
+                  {savingDetails ? '...' : 'Save'}
+                </Button>
+              </Col>
+            </Row>
+          )}
+
           {bodyContent}
         </Modal.Body>
 
@@ -350,6 +445,9 @@ ViewShoppingListModal.defaultProps = {
     name: '',
     isCompleted: false,
     completedAt: null,
+    deadline: null,
+    location: null,
+    budgetLimit: null,
     items: [],
   },
 };

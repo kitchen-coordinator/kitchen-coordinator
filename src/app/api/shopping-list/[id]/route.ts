@@ -57,15 +57,25 @@ export async function PUT(
       return NextResponse.json(completed, { status: 200 });
     }
 
-    if (typeof body.name === 'string') {
-      const updated = await prisma.shoppingList.update({
-        where: { id },
-        data: { name: body.name.trim() },
-      });
-      return NextResponse.json(updated, { status: 200 });
+    // Build update data from any provided fields
+    const updateData: Record<string, any> = {};
+
+    if (typeof body.name === 'string') updateData.name = body.name.trim();
+    if (body.deadline !== undefined) updateData.deadline = body.deadline ? new Date(body.deadline) : null;
+    if (body.location !== undefined) updateData.location = body.location || null;
+    if (body.budgetLimit !== undefined) {
+      updateData.budgetLimit = body.budgetLimit !== null ? Number(body.budgetLimit) : null;
+    }
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No valid update provided' }, { status: 400 });
     }
 
-    return NextResponse.json({ error: 'No valid update provided' }, { status: 400 });
+    const updated = await prisma.shoppingList.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return NextResponse.json(updated, { status: 200 });
   } catch (error: any) {
     console.error('Error updating shopping list:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

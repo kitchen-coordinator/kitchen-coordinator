@@ -44,7 +44,7 @@ model PasswordResetToken {
 }
 
 model Produce {
-  id               Int       @id @default(autoincrement())
+  id               Int         @id @default(autoincrement())
   name             String
   type             String
   quantity         Float
@@ -54,11 +54,15 @@ model Produce {
   unit             String
   restockThreshold Float?
   customThreshold  Float?
-  restockTrigger   String    @default("empty")
+  restockTrigger   String      @default("empty")
   locationId       Int
   storageId        Int
-  location         Location  @relation(fields: [locationId], references: [id])
-  storage          Storage   @relation(fields: [storageId], references: [id])
+  commonItemId     Int?
+  displayQuantity  Float?
+  displayUnit      String?
+  CommonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
+  location         Location    @relation(fields: [locationId], references: [id])
+  storage          Storage     @relation(fields: [storageId], references: [id])
 
   @@unique([name, owner])
 }
@@ -88,13 +92,13 @@ model Storage {
 }
 
 model ShoppingList {
-  id        Int                @id @default(autoincrement())
-  name      String
-  owner     String // email, username, or household name
-  createdAt DateTime @default(now())
-  isCompleted Boolean @default(false)
+  id          Int                @id @default(autoincrement())
+  name        String
+  owner       String
+  createdAt   DateTime           @default(now())
+  isCompleted Boolean            @default(false)
   completedAt DateTime?
-  items ShoppingListItem[]
+  items       ShoppingListItem[]
 
   @@unique([name, owner])
 }
@@ -108,9 +112,9 @@ model ShoppingListItem {
   restockTrigger  String?
   name            String
   unit            String?
-  shoppingList    ShoppingList @relation(fields: [shoppingListId], references: [id])
-  purchased       Boolean  @default(false)
+  purchased       Boolean      @default(false)
   purchasedAt     DateTime?
+  shoppingList    ShoppingList @relation(fields: [shoppingListId], references: [id])
 
   @@unique([shoppingListId, name])
 }
@@ -147,6 +151,20 @@ model RecipeIngredient {
   recipe   Recipe  @relation(fields: [recipeId], references: [id])
 
   @@index([recipeId])
+}
+
+model CommonItem {
+  id                        Int       @id @default(autoincrement())
+  name                      String
+  owner                     String
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime
+  displayUnit               String
+  normalizedQuantityPerUnit Float
+  normalizedUnit            String
+  Produce                   Produce[]
+
+  @@unique([name, owner, displayUnit])
 }
 
 enum Role {
