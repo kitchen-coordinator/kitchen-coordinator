@@ -55,6 +55,12 @@ export default function AddShoppingList({ show, onHide, owner }: Props) {
       await addShoppingList({
         name: data.name.trim(),
         owner: data.owner,
+        deadline: data.deadline || null,
+        location: data.location?.trim() || null,
+        budgetLimit:
+          typeof data.budgetLimit === 'number' && !Number.isNaN(data.budgetLimit)
+            ? data.budgetLimit
+            : null,
       });
 
       swal('Success', 'Shopping list created!', 'success', { timer: 2000 });

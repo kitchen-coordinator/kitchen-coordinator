@@ -163,7 +163,9 @@ export default function ViewShoppingListModal({
 
   useEffect(() => {
     if (shoppingList) {
-      setDeadline(shoppingList.deadline?.slice(0, 10) ?? '');
+      setDeadline(
+        shoppingList.deadline ? shoppingList.deadline.toString().slice(0, 10) : '',
+      );
       setLocation(shoppingList.location ?? '');
       setBudgetLimit(shoppingList.budgetLimit?.toString() ?? '');
     }

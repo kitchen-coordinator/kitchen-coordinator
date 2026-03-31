@@ -123,6 +123,7 @@ const AddToShoppingListModal = ({
                 <Form.Label>Qty</Form.Label>
                 <Form.Control
                   type="number"
+                  placeholder="e.g., 1"
                   min={1}
                   {...register('quantity')}
                   className={`${errors.quantity ? 'is-invalid' : ''}`}
