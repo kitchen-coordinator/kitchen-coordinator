@@ -23,6 +23,7 @@ export default function ShoppingListView({ initialShoppingLists }: ShoppingListV
 
   return (
     <>
+      {/* TODO: Adjust Styling for Search + Buttons Row */}
       {/* Search + Buttons Row */}
       <Row
         className="mb-4 d-flex justify-content-center align-items-center text-center"
@@ -38,6 +39,7 @@ export default function ShoppingListView({ initialShoppingLists }: ShoppingListV
         </Col>
 
         <Col xs="auto" className="mb-2">
+          {/* TODO: Uniform Styling */}
           <Button
             onClick={() => setShow(true)}
             style={{
