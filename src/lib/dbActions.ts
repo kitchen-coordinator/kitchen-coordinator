@@ -307,7 +307,13 @@ export async function addLocation(location: { name: string; owner: string }) {
 /**
  * Adds a new shopping list.
  */
-export async function addShoppingList(data: { name: string; owner: string }) {
+export async function addShoppingList(data: {
+  name: string;
+  owner: string
+  deadline?: string | null;
+  location?: string | null;
+  budgetLimit?: number | null;
+}) {
   const name = data.name.trim();
   const owner = data.owner.trim();
 
@@ -324,7 +330,14 @@ export async function addShoppingList(data: { name: string; owner: string }) {
   }
 
   await prisma.shoppingList.create({
-    data: { name, owner, isCompleted: false },
+    data: {
+      name,
+      owner,
+      isCompleted: false,
+      deadline: data.deadline ? new Date(data.deadline) : null,
+      location: data.location?.trim() || null,
+      budgetLimit: data.budgetLimit ?? null,
+    },
   });
 }
 
@@ -350,6 +363,9 @@ export async function editShoppingList(list: Prisma.ShoppingListUpdateInput & { 
     data: {
       name: list.name,
       owner: list.owner,
+      deadline: list.deadline,
+      location: list.location,
+      budgetLimit: list.budgetLimit,
     },
   });
 
