@@ -1,6 +1,6 @@
 .btn-edit {
     width: 100%;
-    padding: 6px 12px;
+    padding: 4px;
     background-color: var(--hunter-green);
     color: white;
     font-size: 1rem;
@@ -18,7 +18,7 @@
 
 .btn-submit {
     width: 100%;
-    padding: 4px;
+    padding: 12px;
     background-color: var(--fern-green);
     color: white;
     font-size: 1rem;
@@ -64,7 +64,7 @@
 }
 
 .btn-add {
-    padding: 4px;
+    padding: 8px 16px;
     background-color: var(--fern-green);
     color: white;
     font-size: 1rem;
@@ -83,7 +83,7 @@
 
 .btn-delete {
     width: 100%;
-    padding: 6px 12px;
+    padding: 4px;
     background-color: red;
     color: white;
     font-size: 1rem;

@@ -1,0 +1,50 @@
+/* Styling for Shopping-List */
+
+/** 
+1) Identify Resuable Styling
+ 
+*/
+
+/* Styling for Buttons */
+.btnReset {
+    width: 100%;
+    padding: 12px;
+    background-color: #6c757d;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.btnReset:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+}
+
+.btnSubmit {
+    width: 100%;
+    padding: 12px;
+    background-color:  var(--fern-green);
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.btnSubmit:hover {
+    background-color: var(--sage);
+    transform: translateY(-2px);
+}
+
+/* Styling for Cards */
+
+/* Styling for Forms */
+
+
+
