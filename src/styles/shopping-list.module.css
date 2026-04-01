@@ -5,44 +5,33 @@
  
 */
 
-/* Styling for Buttons */
-.btnReset {
-    width: 100%;
-    padding: 12px;
-    background-color: #6c757d;
-    font-size: 1rem;
-    font-weight: bold;
-    border: none;
+/* Styling for Display Cards */
+
+/* Grid Layout for Shopping List Cards */
+.shoppingListCardGridLayout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+/* Individual Grid Tile */
+.shoppingListCardGridTile {
+    padding: 8px;
     border-radius: 8px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    cursor: pointer;
-    text-transform: uppercase;
+    background-color: var(--light-gray, #c8cdd2);
 }
 
-.btnReset:hover {
-    background-color: #5a6268;
-    transform: translateY(-2px);
+/* Label and Values */
+.shoppingListCardGridTileLabel {
+    font-size: 14px;
+    color: var(--dark-gray, #666);
+    margin-bottom: 2px;
 }
 
-.btnSubmit {
-    width: 100%;
-    padding: 12px;
-    background-color:  var(--fern-green);
-    font-size: 1rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    cursor: pointer;
-    text-transform: uppercase;
+.shoppingListCardGridTileValue {
+    font-size: 16px;
+    font-weight: 600;
 }
-
-.btnSubmit:hover {
-    background-color: var(--sage);
-    transform: translateY(-2px);
-}
-
-/* Styling for Cards */
 
 /* Styling for Forms */
 
