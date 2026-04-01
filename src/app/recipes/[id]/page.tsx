@@ -4,10 +4,11 @@ import { CheckCircleFill, XCircleFill } from 'react-bootstrap-icons';
 import { notFound } from 'next/navigation';
 import { getRecipeById } from '@/lib/recipes';
 import { getServerSession } from 'next-auth';
-import { getUserProduceByEmail } from '@/lib/dbActions';
+import { getUserProduceByEmail, getUserProduceWithQuantity } from '@/lib/dbActions';
 import AddToShoppingList from '@/components/recipes/AddToShoppingList';
 import UploadDishButton from '@/components/recipes/UploadDishButton';
 import ViewDishImagesButton from '@/components/recipes/ViewDishImagesButton';
+import UseIngredientsButton from '@/components/recipes/UseIngredientsButton';
 
 type PageProps = { params: { id: string } };
 export const dynamic = 'force-dynamic';
@@ -23,8 +24,12 @@ export default async function RecipeDetailPage({ params }: PageProps) {
   const email = session?.user?.email ?? null;
 
   let pantry: any[] = [];
+  let pantryFull: any[] = [];
   if (email) {
-    pantry = await getUserProduceByEmail(email);
+    [pantry, pantryFull] = await Promise.all([
+      getUserProduceByEmail(email),
+      getUserProduceWithQuantity(email),
+    ]);
   }
 
   // Create a set of pantry item names (lowercase for case-insensitive matching)
@@ -307,6 +312,16 @@ export default async function RecipeDetailPage({ params }: PageProps) {
 
                 {/* Add-to-shopping-list controls (client) */}
                 <AddToShoppingList missingItems={missingItems} />
+
+                {email && (
+                  <div className="mt-3">
+                    <UseIngredientsButton
+                      ingredientItems={ingredientItems}
+                      pantry={pantryFull}
+                      recipeTitle={recipe.title}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

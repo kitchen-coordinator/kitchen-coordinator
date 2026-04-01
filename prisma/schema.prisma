@@ -60,7 +60,7 @@ model Produce {
   commonItemId     Int?
   displayQuantity  Float?
   displayUnit      String?
-  commonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
+  CommonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
   location         Location    @relation(fields: [locationId], references: [id])
   storage          Storage     @relation(fields: [storageId], references: [id])
 
@@ -112,6 +112,9 @@ model ShoppingList {
   createdAt   DateTime           @default(now())
   isCompleted Boolean            @default(false)
   completedAt DateTime?
+  deadline    DateTime?
+  location    String?
+  budgetLimit Decimal?           @db.Decimal(10, 2)
   items       ShoppingListItem[]
 
   @@unique([name, owner])
@@ -165,6 +168,20 @@ model RecipeIngredient {
   recipe   Recipe  @relation(fields: [recipeId], references: [id])
 
   @@index([recipeId])
+}
+
+model CommonItem {
+  id                        Int       @id @default(autoincrement())
+  name                      String
+  owner                     String
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime
+  displayUnit               String
+  normalizedQuantityPerUnit Float
+  normalizedUnit            String
+  Produce                   Produce[]
+
+  @@unique([name, owner, displayUnit])
 }
 
 enum Role {

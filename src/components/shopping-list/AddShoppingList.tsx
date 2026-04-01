@@ -18,6 +18,9 @@ interface Props {
 type FormValues = {
   name: string;
   owner: string;
+  deadline?: string | null;
+  location?: string | null;
+  budgetLimit?: number | null;
 };
 
 export default function AddShoppingList({ show, onHide, owner }: Props) {
@@ -25,24 +28,39 @@ export default function AddShoppingList({ show, onHide, owner }: Props) {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: yupResolver(AddShoppingListSchema),
     defaultValues: {
       name: '',
       owner,
+      deadline: '',
+      location: '',
+      budgetLimit: null,
     },
   });
 
   useEffect(() => {
     if (!show) reset();
   }, [show, reset]);
+
+  // Keep the hidden owner field in sync with session email.
+  useEffect(() => {
+    if (show) setValue('owner', owner ?? '', { shouldValidate: true });
+  }, [owner, setValue, show]);
   const router = useRouter();
   const onSubmit = async (data: FormValues) => {
     try {
       await addShoppingList({
         name: data.name.trim(),
         owner: data.owner,
+        deadline: data.deadline || null,
+        location: data.location?.trim() || null,
+        budgetLimit:
+          typeof data.budgetLimit === 'number' && !Number.isNaN(data.budgetLimit)
+            ? data.budgetLimit
+            : null,
       });
 
       swal('Success', 'Shopping list created!', 'success', { timer: 2000 });
@@ -57,11 +75,14 @@ export default function AddShoppingList({ show, onHide, owner }: Props) {
   return (
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton>
-        <Modal.Title>Create Shopping List</Modal.Title>
+        <Modal.Title>New Shopping List</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
+
+        {/* Form Fields */}
         <Form noValidate onSubmit={handleSubmit(onSubmit)}>
+          {/* List Name */}
           <Form.Group className="mb-3">
             <Form.Label>List Name</Form.Label>
             <Form.Control
@@ -73,9 +94,46 @@ export default function AddShoppingList({ show, onHide, owner }: Props) {
             <div className="invalid-feedback">{errors.name?.message}</div>
           </Form.Group>
 
-          {/* OWNER HIDDEN */}
-          <input type="hidden" {...register('owner')} value={owner} />
+          {/* Deadline */}
+          <Form.Group className="mb-3">
+            <Form.Label>Deadline</Form.Label>
+            <Form.Control
+              type="date"
+              {...register('deadline')}
+              className={`${errors.deadline ? 'is-invalid' : ''}`}
+            />
+            <div className="invalid-feedback">{errors.deadline?.message}</div>
+          </Form.Group>
 
+          {/* Location */}
+          <Form.Group className="mb-3">
+            <Form.Label>Store / Location</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="ex. Walmart"
+              {...register('location')}
+              className={`${errors.location ? 'is-invalid' : ''}`}
+            />
+            <div className="invalid-feedback">{errors.location?.message}</div>
+          </Form.Group>
+
+          {/* Budget */}
+          <Form.Group className="mb-3">
+            <Form.Label>Budget Limit</Form.Label>
+            <Form.Control
+              type="number"
+              step="0.01"
+              placeholder="ex. $50.00"
+              {...register('budgetLimit', { valueAsNumber: true })}
+              className={`${errors.budgetLimit ? 'is-invalid' : ''}`}
+            />
+            <div className="invalid-feedback">{errors.budgetLimit?.message}</div>
+          </Form.Group>
+
+          {/* OWNER HIDDEN */}
+          <input type="hidden" {...register('owner')} />
+
+          {/* Buttons */}
           <Row className="pt-3">
             <Col>
               <Button

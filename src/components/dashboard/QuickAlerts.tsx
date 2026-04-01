@@ -30,7 +30,7 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
       try {
         const [expiringRes, shoppingRes, lowStockRes] = await Promise.all([
           fetch(`/api/expiring?owner=${encodeURIComponent(ownerEmail)}`),
-          fetch(`/api/shopping-lists?owner=${encodeURIComponent(ownerEmail)}`),
+          fetch(`/api/shopping-list?owner=${encodeURIComponent(ownerEmail)}`),
           fetch(`/api/low-stock?owner=${encodeURIComponent(ownerEmail)}`),
         ]);
 

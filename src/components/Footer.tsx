@@ -15,28 +15,25 @@ const Footer = () => {
         <Row className="justify-content-center text-start">
 
           {/* Company Info */}
-          <Col md={4} lg={3} className="mb-4 mb-md-0">
+          <Col md={4} lg={4} className="mb-4 mb-md-0">
             <Link href="/" className="navbar-brand d-flex align-items-center mb-2">
-              <div className="p-1 me-4 rounded" style={{ backgroundColor: 'var(--timberwolf)' }}>
+              <div className="me-4">
                 <Image
                   src={imgSrc}
                   alt="Kitchen Coordinator Logo"
-                  width="50"
-                  height="50"
+                  width="80"
+                  height="80"
                   onError={() => setImgSrc('/fallback-logo.png')}
                 />
               </div>
-              <h5 className="fw-bold mb-0">Kitchen Coordinator</h5>
+              <h5 className="fw-bold mb-0" style={{ fontSize: '1rem' }}>
+                Kitchen Coordinator
+              </h5>
             </Link>
-
-            <p className="footer-text-muted small">
-              Keep track of your pantry, cut down on food waste, and discover recipes with
-              what you already have. Smarter cooking, simplified.
-            </p>
           </Col>
 
           {/* Browse Links */}
-          <Col md={2} className="mb-4 mb-md-0">
+          <Col md={2} lg={2} className="mb-4 mb-md-0">
             <h6 className="fw-bold">Browse</h6>
             <ul className="list-unstyled small footer-links">
               <li className="mb-1">
@@ -52,7 +49,7 @@ const Footer = () => {
           </Col>
 
           {/* Features */}
-          <Col md={2} className="mb-4 mb-md-0">
+          <Col md={2} lg={2} className="mb-4 mb-md-0">
             <h6 className="fw-bold">Features</h6>
             <ul className="list-unstyled small footer-links">
               <li className="mb-1">
