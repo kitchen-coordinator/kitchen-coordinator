@@ -60,7 +60,7 @@ model Produce {
   commonItemId     Int?
   displayQuantity  Float?
   displayUnit      String?
-  CommonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
+  commonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
   location         Location    @relation(fields: [locationId], references: [id])
   storage          Storage     @relation(fields: [storageId], references: [id])
 
@@ -89,6 +89,20 @@ model Storage {
   location   Location  @relation(fields: [locationId], references: [id])
 
   @@unique([name, locationId])
+}
+
+model CommonItem {
+  id                        Int       @id @default(autoincrement())
+  name                      String
+  owner                     String
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  displayUnit               String
+  normalizedQuantityPerUnit Float
+  normalizedUnit            String
+  produces                  Produce[]
+
+  @@unique([name, owner, displayUnit])
 }
 
 model ShoppingList {
@@ -154,20 +168,6 @@ model RecipeIngredient {
   recipe   Recipe  @relation(fields: [recipeId], references: [id])
 
   @@index([recipeId])
-}
-
-model CommonItem {
-  id                        Int       @id @default(autoincrement())
-  name                      String
-  owner                     String
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime
-  displayUnit               String
-  normalizedQuantityPerUnit Float
-  normalizedUnit            String
-  Produce                   Produce[]
-
-  @@unique([name, owner, displayUnit])
 }
 
 enum Role {
