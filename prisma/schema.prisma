@@ -60,7 +60,7 @@ model Produce {
   commonItemId     Int?
   displayQuantity  Float?
   displayUnit      String?
-  CommonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
+  commonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
   location         Location    @relation(fields: [locationId], references: [id])
   storage          Storage     @relation(fields: [storageId], references: [id])
 

@@ -7,9 +7,9 @@ import Link from 'next/link';
 import type { ProduceRelations } from '@/types/ProduceRelations';
 import { useState } from 'react';
 import { CartPlus, PencilSquare, Trash } from 'react-bootstrap-icons';
+import { getPantryDisplayAmount } from '@/lib/displayUnits';
 import EditProduceModal from './EditProduceModal';
 import DeleteProduceModal from './DeleteProduceModal';
-import { getPantryDisplayAmount } from '@/lib/displayUnits';
 import AddToMultipleShoppingListsModal from '../shopping-list/AddToMultipleShoppingListsModal';
 
 type Props = {

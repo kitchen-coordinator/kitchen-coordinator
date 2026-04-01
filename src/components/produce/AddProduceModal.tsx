@@ -284,7 +284,18 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                     <option value="">None (save item as entered)</option>
                     {commonItems.map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.name} (1 {item.displayUnit} = {item.normalizedQuantityPerUnit} {item.normalizedUnit})
+                        {item.name}
+                        {' '}
+                        (1
+                        {' '}
+                        {item.displayUnit}
+                        {' '}
+                        =
+                        {' '}
+                        {item.normalizedQuantityPerUnit}
+                        {' '}
+                        {item.normalizedUnit}
+                        )
                       </option>
                     ))}
                   </Form.Select>
@@ -293,7 +304,11 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                   </Form.Text>
                   {selectedCommonItem && (
                     <Form.Text className="d-block text-muted mt-1">
-                      Enter quantity in <strong>{selectedCommonItem.displayUnit}</strong> so the pantry item can be converted correctly.
+                      Enter quantity in
+                      {' '}
+                      <strong>{selectedCommonItem.displayUnit}</strong>
+                      {' '}
+                      so the pantry item can be converted correctly.
                     </Form.Text>
                   )}
                 </Form.Group>
@@ -545,23 +560,33 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
 
       <ImagePickerModal
         show={showPicker}
-        onHide={() => setShowPicker(false)}
-        onSelectImage={(url: string, alt?: string) => {
+        onClose={() => setShowPicker(false)}
+        onSelect={(url: string, meta?: { alt?: string; credit?: string; source?: string }) => {
           setValue('image', url);
-          setImageAlt(alt || '');
-          setShowPicker(false);
+          setImageAlt(meta?.alt || '');
         }}
       />
 
-      <BarcodeScanner
-        show={showScanner}
-        onHide={() => setShowScanner(false)}
-        onDetected={(result: { name?: string; image?: string }) => {
-          if (result.name) setValue('name', result.name);
-          if (result.image) setValue('image', result.image);
-          setShowScanner(false);
-        }}
-      />
+      {showScanner && (
+        <BarcodeScanner
+          onClose={() => setShowScanner(false)}
+          onDetected={async (code: string) => {
+            try {
+              const response = await fetch(`/api/barcode?code=${encodeURIComponent(code)}`);
+              if (!response.ok) throw new Error('Lookup failed');
+
+              const result = await response.json();
+
+              if (result.name) setValue('name', result.name);
+              if (result.image) setValue('image', result.image);
+            } catch (error) {
+              console.error('Barcode lookup failed:', error);
+            } finally {
+              setShowScanner(false);
+            }
+          }}
+        />
+      )}
     </>
   );
 }

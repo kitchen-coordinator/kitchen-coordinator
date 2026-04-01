@@ -14,10 +14,12 @@ interface CommonItemModalProps {
   show: boolean;
   onHide: () => void;
   owner: string;
+  // eslint-disable-next-line react/require-default-props
   initialValues?: {
     name?: string;
     unit?: string;
   };
+  // eslint-disable-next-line react/require-default-props
   onCreated?: (item: any) => void;
 }
 
