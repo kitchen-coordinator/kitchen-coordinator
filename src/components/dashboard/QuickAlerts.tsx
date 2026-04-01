@@ -69,17 +69,28 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
   const getNextShoppingDate = () => {
     if (shoppingLists.length === 0) return null;
 
-    const sorted = [...shoppingLists].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    // Filter out completed lists and those without deadlines
+    const upcomingLists = shoppingLists.filter(
+      (list) => !list.isCompleted && list.deadline,
     );
+    if (upcomingLists.length === 0) return null;
 
-    const lastShopping = new Date(sorted[0].createdAt);
-    const nextShopping = new Date(lastShopping);
-    nextShopping.setDate(nextShopping.getDate() + 7);
+    // Find the earliest deadline
+    const nextShopping = upcomingLists.reduce((earliest, list) => {
+      const deadline = new Date(list.deadline!);
+      return deadline < earliest ? deadline : earliest;
+    }, new Date(upcomingLists[0].deadline!));
 
     const today = new Date();
+
+    // Strip time for day comparison (otherwise, time differences could skew results)
+    today.setHours(0, 0, 0, 0);
+    nextShopping.setHours(0, 0, 0, 0);
+
+    // Calculate difference in days
     const diffDays = Math.ceil((nextShopping.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
+    // Friendly Date Format
     if (diffDays <= 0) return 'Today';
     if (diffDays === 1) return 'Tomorrow';
     return `${diffDays} days`;
@@ -198,7 +209,7 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
     if (!nextShoppingDate) return 'No shopping lists due yet';
     if (nextShoppingDate === 'Today'
         || nextShoppingDate === 'Tomorrow') {
-      return `Weekly grocery trip scheduled for ${nextShoppingDate.toLowerCase()}`;
+      return `Grocery trip scheduled ${nextShoppingDate.toLowerCase()}`;
     }
     return `Next shopping trip in ${nextShoppingDate}`;
   };
