@@ -37,7 +37,7 @@ const ViewPantryPage = async () => {
 
   const shoppingLists = await prisma.shoppingList.findMany({
     where: { owner },
-    select: { id: true, name: true, isCompleted: true },
+    select: { id: true, name: true },
     orderBy: { createdAt: 'desc' },
   });
 
