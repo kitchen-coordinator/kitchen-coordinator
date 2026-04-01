@@ -2,7 +2,7 @@
 /* eslint-disable no-await-in-loop */
 import { PrismaClient, Role } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { hash } from 'bcrypt';
+import { hash } from 'bcryptjs';
 import * as config from '../config/settings.development.json';
 
 // Use the same adapter-based client config as your app
