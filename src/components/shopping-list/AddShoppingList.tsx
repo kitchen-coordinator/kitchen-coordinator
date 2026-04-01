@@ -72,14 +72,6 @@ export default function AddShoppingList({ show, onHide, owner }: Props) {
     }
   };
 
-  // TODO: Refactor to add the following fields:
-  /**
-  - Deadline
-  - Store/Location
-  - Budget
-  !!! USER WILL ADD ITEMS IN THE OTHER MODAL !!!
-  */
-
   return (
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton>
