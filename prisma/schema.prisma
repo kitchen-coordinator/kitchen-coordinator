@@ -170,20 +170,6 @@ model RecipeIngredient {
   @@index([recipeId])
 }
 
-model CommonItem {
-  id                        Int       @id @default(autoincrement())
-  name                      String
-  owner                     String
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime
-  displayUnit               String
-  normalizedQuantityPerUnit Float
-  normalizedUnit            String
-  Produce                   Produce[]
-
-  @@unique([name, owner, displayUnit])
-}
-
 enum Role {
   USER
   ADMIN
