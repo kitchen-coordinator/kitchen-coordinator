@@ -118,7 +118,7 @@ const AddToShoppingListModal = ({
               </Form.Group>
             </Col>
 
-            <Col xs={3}>
+            <Col xs={6}>
               <Form.Group>
                 <Form.Label>Qty</Form.Label>
                 <Form.Control
@@ -131,36 +131,40 @@ const AddToShoppingListModal = ({
                 <div className="invalid-feedback">{errors.quantity?.message}</div>
               </Form.Group>
             </Col>
+          </Row>
 
-            <Col xs={3}>
+          <Row className="mb-3">
+            <Col xs={12}>
               <Form.Group>
                 <Form.Label>Unit</Form.Label>
                 {/* keep RHF field registered even when using a controlled select */}
                 <input type="hidden" {...register('unit')} />
-                <Form.Select
-                  value={unitChoice}
-                  onChange={(e) => {
-                    const { value } = e.target;
-                    setUnitChoice(value);
-                    setValue('unit', value === 'Other' ? '' : value, { shouldValidate: true });
-                  }}
-                >
-                  <option value="">—</option>
-                  {unitOptions.map((u) => (
-                    <option key={u} value={u}>
-                      {u}
-                    </option>
-                  ))}
-                </Form.Select>
-                {unitChoice === 'Other' && (
-                  <Form.Control
-                    className="mt-2"
-                    type="text"
-                    placeholder="Enter custom unit"
-                    value={unitValue}
-                    onChange={(e) => setValue('unit', e.target.value, { shouldValidate: true })}
-                  />
-                )}
+                <div className="d-flex gap-2">
+                  <Form.Select
+                    value={unitChoice}
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      setUnitChoice(value);
+                      setValue('unit', value === 'Other' ? '' : value, { shouldValidate: true });
+                    }}
+                  >
+                    <option value="">—</option>
+                    {unitOptions.map((u) => (
+                      <option key={u} value={u}>
+                        {u}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  {unitChoice === 'Other' && (
+                    <Form.Control
+                      className="mt-2"
+                      type="text"
+                      placeholder="Enter custom unit"
+                      value={unitValue}
+                      onChange={(e) => setValue('unit', e.target.value, { shouldValidate: true })}
+                    />
+                  )}
+                </div>
               </Form.Group>
             </Col>
           </Row>
