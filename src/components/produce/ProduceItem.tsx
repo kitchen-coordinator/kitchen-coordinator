@@ -21,6 +21,9 @@ const ProduceItem = ({
   owner,
   image,
   restockThreshold = 1,
+  commonItemId,
+  displayQuantity,
+  displayUnit,
   shoppingLists,
 }: ProduceRelations & {
   restockThreshold?: number;
@@ -88,9 +91,9 @@ const ProduceItem = ({
           owner,
           image,
           restockThreshold: safeRestock,
-          commonItemId: null,
-          displayQuantity: null,
-          displayUnit: null,
+          commonItemId,
+          displayQuantity,
+          displayUnit,
         }}
       />
 
@@ -110,9 +113,9 @@ const ProduceItem = ({
           owner,
           image,
           restockThreshold: safeRestock,
-          commonItemId: null,
-          displayQuantity: null,
-          displayUnit: null,
+          commonItemId,
+          displayQuantity,
+          displayUnit,
         }}
       />
 

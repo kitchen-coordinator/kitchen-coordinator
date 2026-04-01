@@ -1,0 +1,32 @@
+/* Styling for Shopping-List */
+
+/* Styling for Display Cards */
+
+/* Grid Layout for Shopping List Cards */
+.shoppingListCardGridLayout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+/* Individual Grid Tile */
+.shoppingListCardGridTile {
+    padding: 8px;
+    border-radius: 8px;
+    background-color: var(--light-gray, #c8cdd2);
+}
+
+/* Label and Values */
+.shoppingListCardGridTileLabel {
+    font-size: 14px;
+    color: var(--dark-gray, #666);
+    margin-bottom: 2px;
+}
+
+.shoppingListCardGridTileValue {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+
+
