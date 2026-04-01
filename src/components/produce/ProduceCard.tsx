@@ -7,6 +7,7 @@ import Link from 'next/link';
 import type { ProduceRelations } from '@/types/ProduceRelations';
 import { useState } from 'react';
 import { CartPlus, PencilSquare, Trash } from 'react-bootstrap-icons';
+import { getPantryDisplayAmount } from '@/lib/displayUnits';
 import EditProduceModal from './EditProduceModal';
 import DeleteProduceModal from './DeleteProduceModal';
 import AddToMultipleShoppingListsModal from '../shopping-list/AddToMultipleShoppingListsModal';
@@ -28,6 +29,8 @@ export default function ProduceCard({ produce, shoppingLists }: Props) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddListsModal, setShowAddListsModal] = useState(false);
+
+  const { quantity: shownQuantity, unit: shownUnit } = getPantryDisplayAmount(produce);
 
   return (
     <Card className="h-100 mb-3 image-shadow">
@@ -54,13 +57,15 @@ export default function ProduceCard({ produce, shoppingLists }: Props) {
             {produce.storage?.name || 'Not Available'} at {produce.location?.name || 'Not Available'}
           </ListGroup.Item>
           <ListGroup.Item>
-            <strong>Quantity:</strong> {typeof produce.quantity === 'number' ? produce.quantity : 'Not Available'}
-            {produce.unit ? ` ${produce.unit}` : ''}
+            <strong>Quantity:</strong>{' '}
+            {typeof shownQuantity === 'number' ? shownQuantity : 'Not Available'}
+            {shownUnit ? ` ${shownUnit}` : ''}
           </ListGroup.Item>
           <ListGroup.Item>
             <strong>Expiration:</strong> {formatDate(produce.expiration)}
           </ListGroup.Item>
         </ListGroup>
+
         <Card.Footer className="d-flex gap-2">
           <Button
             className="btn-edit flex-fill"
@@ -84,11 +89,17 @@ export default function ProduceCard({ produce, shoppingLists }: Props) {
         </Card.Footer>
       </Card.Body>
 
-      {/* Modal component for editing produce item */}
-      <EditProduceModal show={showEditModal} onHide={() => setShowEditModal(false)} produce={produce} />
+      <EditProduceModal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        produce={produce}
+      />
 
-      {/* Modal component for deleting produce item */}
-      <DeleteProduceModal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} produce={produce} />
+      <DeleteProduceModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        produce={produce}
+      />
 
       <AddToMultipleShoppingListsModal
         show={showAddListsModal}
