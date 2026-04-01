@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Modal, Button } from 'react-bootstrap';
+import styles from '@/styles/shopping-list.module.css';
 import AddToShoppingListModal from './AddToShoppingListModal';
 import EditShoppingListItemModal from './EditShoppingListItemModal';
 
@@ -33,12 +34,6 @@ type ViewShoppingListModalProps = {
   shoppingList?: ShoppingList;
 };
 
-const iconStyle: React.CSSProperties = {
-  color: 'var(--bs-secondary)',
-  cursor: 'pointer',
-  flexShrink: 0,
-};
-
 const EditIcon = () => (
   <svg
     width="18"
@@ -47,7 +42,7 @@ const EditIcon = () => (
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
-    style={iconStyle}
+    style={{ color: 'var(--bs-secondary)', cursor: 'pointer', flexShrink: 0 }}
   >
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
@@ -70,55 +65,6 @@ const TrashIcon = () => (
     <path d="M9 6V4h6v2" />
   </svg>
 );
-
-const rowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '14px',
-  padding: '14px 20px',
-  borderBottom: '1px solid #f0f0f0',
-};
-
-const iconBoxStyle: React.CSSProperties = {
-  width: '42px',
-  height: '42px',
-  borderRadius: '10px',
-  background: '#4a7c59',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-};
-
-const saveBtnStyle: React.CSSProperties = {
-  fontSize: '12px',
-  padding: '4px 10px',
-  borderRadius: '6px',
-  border: '1px solid #4a7c59',
-  background: '#4a7c59',
-  color: 'white',
-  cursor: 'pointer',
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: '14px',
-  fontWeight: '500',
-  margin: 0,
-};
-
-const subTextStyle: React.CSSProperties = {
-  fontSize: '13px',
-  color: '#666',
-  margin: '2px 0 0',
-};
-
-const inputStyle: React.CSSProperties = {
-  fontSize: '13px',
-  marginTop: '4px',
-  padding: '4px 8px',
-  borderRadius: '6px',
-  border: '1px solid #ccc',
-};
 
 export default function ViewShoppingListModal({
   show,
@@ -268,7 +214,7 @@ export default function ViewShoppingListModal({
       type="button"
       onClick={handleSaveDetails}
       disabled={savingDetails}
-      style={saveBtnStyle}
+      className={styles.saveBtn}
     >
       {savingDetails ? '...' : 'Save'}
     </button>
@@ -277,31 +223,24 @@ export default function ViewShoppingListModal({
   return (
     <>
       <Modal show={show} onHide={onHide} centered size="lg">
-        <div
-          style={{
-            background: '#4a7c59',
-            padding: '20px 24px',
-            borderRadius: '8px 8px 0 0',
-          }}
-        >
-          <p style={{ fontSize: '18px', fontWeight: '600', margin: 0, color: 'white' }}>
+
+        <div className={styles.modalHeader}>
+          <p className={styles.modalHeaderTitle}>
             {shoppingList.name ?? 'Shopping List'}
           </p>
-          <p style={{ fontSize: '13px', margin: '4px 0 0', color: 'rgba(255,255,255,0.75)' }}>
+          <p className={styles.modalHeaderSubtitle}>
             {`${items.length} items · $${totalCost.toFixed(2)} estimated`}
           </p>
         </div>
 
-        <Modal.Body style={{ padding: 0 }}>
+        <Modal.Body className={styles.modalBody}>
           {saveError && (
-            <p style={{ color: '#dc3545', textAlign: 'center', padding: '8px 20px', margin: 0, fontSize: '13px' }}>
-              {saveError}
-            </p>
+            <p className={styles.saveError}>{saveError}</p>
           )}
 
           {/* Deadline Row */}
-          <div style={rowStyle}>
-            <div style={iconBoxStyle}>
+          <div className={styles.detailRow}>
+            <div className={styles.iconBox}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
@@ -309,17 +248,17 @@ export default function ViewShoppingListModal({
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
             </div>
-            <div style={{ flex: 1 }}>
-              <p style={labelStyle}>Deadline</p>
+            <div className={styles.detailRowContent}>
+              <p className={styles.detailLabel}>Deadline</p>
               {editingDeadline ? (
                 <input
                   type="date"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  style={inputStyle}
+                  className={styles.detailInput}
                 />
               ) : (
-                <p style={subTextStyle}>{deadline || 'Not set'}</p>
+                <p className={styles.detailSubText}>{deadline || 'Not set'}</p>
               )}
             </div>
             {!listIsCompleted && (
@@ -329,7 +268,7 @@ export default function ViewShoppingListModal({
                   <button
                     type="button"
                     onClick={() => setEditingDeadline(true)}
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    className={styles.iconBtn}
                   >
                     <EditIcon />
                   </button>
@@ -338,25 +277,25 @@ export default function ViewShoppingListModal({
           </div>
 
           {/* Location Row */}
-          <div style={rowStyle}>
-            <div style={iconBoxStyle}>
+          <div className={styles.detailRow}>
+            <div className={styles.iconBox}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
             </div>
-            <div style={{ flex: 1 }}>
-              <p style={labelStyle}>Store / Location</p>
+            <div className={styles.detailRowContent}>
+              <p className={styles.detailLabel}>Store / Location</p>
               {editingLocation ? (
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g. Costco"
-                  style={{ ...inputStyle, width: '100%' }}
+                  className={styles.detailInputFull}
                 />
               ) : (
-                <p style={subTextStyle}>{location || 'Not set'}</p>
+                <p className={styles.detailSubText}>{location || 'Not set'}</p>
               )}
             </div>
             {!listIsCompleted && (
@@ -366,7 +305,7 @@ export default function ViewShoppingListModal({
                   <button
                     type="button"
                     onClick={() => setEditingLocation(true)}
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    className={styles.iconBtn}
                   >
                     <EditIcon />
                   </button>
@@ -375,15 +314,15 @@ export default function ViewShoppingListModal({
           </div>
 
           {/* Budget Row */}
-          <div style={rowStyle}>
-            <div style={iconBoxStyle}>
+          <div className={styles.detailRow}>
+            <div className={styles.iconBox}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                 <line x1="12" y1="1" x2="12" y2="23" />
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
             </div>
-            <div style={{ flex: 1 }}>
-              <p style={labelStyle}>Budget</p>
+            <div className={styles.detailRowContent}>
+              <p className={styles.detailLabel}>Budget</p>
               {editingBudget ? (
                 <input
                   type="number"
@@ -398,10 +337,10 @@ export default function ViewShoppingListModal({
                   placeholder="e.g. 100.00"
                   min="0"
                   step="0.01"
-                  style={{ ...inputStyle, width: '120px' }}
+                  className={styles.detailInputBudget}
                 />
               ) : (
-                <p style={subTextStyle}>
+                <p className={styles.detailSubText}>
                   {budgetLimit ? `$${Number(budgetLimit).toFixed(2)}` : 'Not set'}
                 </p>
               )}
@@ -413,7 +352,7 @@ export default function ViewShoppingListModal({
                   <button
                     type="button"
                     onClick={() => setEditingBudget(true)}
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    className={styles.iconBtn}
                   >
                     <EditIcon />
                   </button>
@@ -422,28 +361,16 @@ export default function ViewShoppingListModal({
           </div>
 
           {/* Items Section */}
-          <div style={{ padding: '12px 20px 4px' }}>
-            <p style={{
-              fontSize: '12px',
-              fontWeight: '500',
-              color: '#888',
-              margin: 0,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-            >
-              Items
-            </p>
+          <div className={styles.itemsSectionHeader}>
+            <p className={styles.itemsSectionLabel}>Items</p>
           </div>
 
           {isLoadingItems && (
-            <p style={{ textAlign: 'center', color: '#888', padding: '20px' }}>Loading...</p>
+            <p className={styles.loadingText}>Loading...</p>
           )}
 
           {!isLoadingItems && items.length === 0 && (
-            <p style={{ textAlign: 'center', color: '#888', padding: '20px' }}>
-              No items in this list.
-            </p>
+            <p className={styles.loadingText}>No items in this list.</p>
           )}
 
           {!isLoadingItems && items.map((item) => {
@@ -454,54 +381,31 @@ export default function ViewShoppingListModal({
               .filter(Boolean)
               .join(' · ');
 
-            const itemNameStyle: React.CSSProperties = {
-              fontSize: '14px',
-              fontWeight: '500',
-              margin: 0,
-              textDecoration: checkedState[item.id] ? 'line-through' : 'none',
-              color: checkedState[item.id] ? '#999' : 'inherit',
-            };
-
             return (
-              <div
-                key={item.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '14px',
-                  padding: '12px 20px',
-                  borderBottom: '1px solid #f0f0f0',
-                }}
-              >
+              <div key={item.id} className={styles.itemRow}>
                 <input
                   type="checkbox"
                   checked={!!checkedState[item.id]}
                   onChange={() => toggleCheckbox(item.id)}
                   disabled={listIsCompleted || !!pendingChecks[item.id] || isLoadingItems}
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    flexShrink: 0,
-                    accentColor: '#4a7c59',
-                    cursor: 'pointer',
-                  }}
+                  className={styles.itemCheckbox}
                 />
-                <div style={{ flex: 1 }}>
-                  <p style={itemNameStyle}>{item.name}</p>
-                  <p style={{ fontSize: '12px', color: '#888', margin: '2px 0 0' }}>
-                    {itemSubText}
+                <div className={styles.itemContent}>
+                  <p className={
+                    checkedState[item.id]
+                      ? styles.itemNamePurchased
+                      : styles.itemName
+                  }
+                  >
+                    {item.name}
                   </p>
+                  <p className={styles.itemSubText}>{itemSubText}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => !listIsCompleted && setEditingItem(item)}
                   disabled={listIsCompleted}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    cursor: listIsCompleted ? 'default' : 'pointer',
-                  }}
+                  className={styles.iconBtn}
                 >
                   <EditIcon />
                 </button>
@@ -509,13 +413,8 @@ export default function ViewShoppingListModal({
                   type="button"
                   onClick={() => !listIsCompleted && handleDeleteItem(item.id)}
                   disabled={listIsCompleted || deletingItemId === item.id}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    cursor: listIsCompleted ? 'default' : 'pointer',
-                    opacity: deletingItemId === item.id ? 0.5 : 1,
-                  }}
+                  className={styles.iconBtn}
+                  style={{ opacity: deletingItemId === item.id ? 0.5 : 1 }}
                 >
                   <TrashIcon />
                 </button>
@@ -524,18 +423,11 @@ export default function ViewShoppingListModal({
           })}
         </Modal.Body>
 
-        <Modal.Footer
-          style={{
-            padding: '16px 20px',
-            display: 'flex',
-            gap: '8px',
-            borderTop: '1px solid #f0f0f0',
-          }}
-        >
+        <Modal.Footer className={styles.modalFooter}>
           <Button
             onClick={() => setShowAddModal(true)}
             disabled={listIsCompleted || isLoadingItems}
-            style={{ flex: 1, background: '#4a7c59', border: 'none', fontWeight: '500' }}
+            className={styles.addItemBtn}
           >
             + Add Item
           </Button>
