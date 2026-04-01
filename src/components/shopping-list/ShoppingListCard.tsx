@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { Card, Badge, Form, ProgressBar, Button } from 'react-bootstrap';
-import { Trash } from 'react-bootstrap-icons';
+import { Trash, Check, Exclamation } from 'react-bootstrap-icons';
 import { FaPencilAlt, FaCheck, FaTimes } from 'react-icons/fa';
+import styles from '@/styles/shopping-list.module.css';
 import ViewShoppingListModal from './ViewShoppingListModal';
 import DeleteShoppingListModal from './DeleteShoppingListModal';
 
@@ -58,7 +59,13 @@ export default function ShoppingListCard({ shoppingList }: ShoppingListCardProps
 
   const budgetLimit = shoppingList.budgetLimit ? parseFloat(shoppingList.budgetLimit.toString()) : null;
   const overBudget = budgetLimit !== null && totalCost > budgetLimit;
+  const withinBudget = budgetLimit !== null && totalCost <= budgetLimit;
 
+  const costColor = (() => {
+    if (overBudget) return 'red';
+    if (withinBudget) return 'green';
+    return 'inherit';
+  });
   return (
     <>
       <Card className="h-100 mb-3 image-shadow">
@@ -139,30 +146,63 @@ export default function ShoppingListCard({ shoppingList }: ShoppingListCardProps
           </div>
 
           {/* Metric Tiles */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            <div className="rounded p-2" style={{ background: '#c8cdd2' }}>
-              <div style={{ fontSize: '11px', color: '#666', marginBottom: '2px' }}>Estimated cost</div>
-              <div style={{ fontSize: '16px', fontWeight: '600', color: overBudget ? 'red' : 'inherit' }}>
+          <div className={`${styles.shoppingListCardGridLayout}`}>
+
+            <div className={`${styles.shoppingListCardGridTile} rounded`}>
+              <div className={`${styles.shoppingListCardGridTileLabel}`}>Estimated cost</div>
+              <div
+                className={`${styles.shoppingListCardGridTileValue}`}
+                style={{ color: costColor() }}
+              >
                 $
                 {totalCost.toFixed(2)}
+
+                {/* Show badge for relationship to budget */}
                 {overBudget && (
-                  <Badge bg="danger" className="ms-1" style={{ fontSize: '9px' }}>Over</Badge>
+                  <Badge bg="danger" className="ms-1" style={{ fontSize: '9px' }}>
+                    <Exclamation color="white" size={10} />
+                  </Badge>
+                )}
+                {withinBudget && (
+                  <Badge bg="success" className="ms-1" style={{ fontSize: '9px' }}>
+                    <Check color="white" size={10} />
+                  </Badge>
                 )}
               </div>
             </div>
-            <div className="rounded p-2" style={{ background: '#c8cdd2' }}>
-              <div style={{ fontSize: '11px', color: '#666', marginBottom: '2px' }}>Budget limit</div>
-              <div style={{ fontSize: '16px', fontWeight: '600' }}>
+
+            <div
+              className={`${styles.shoppingListCardGridTile}`}
+              /* Highlight budget tile if budget not set */
+              style={{
+                backgroundColor: budgetLimit !== null
+                  ? 'var(--light-gray, #c8cdd2)'
+                  : 'var(--muted-gold, #D7C28A)',
+              }}
+            >
+              <div
+                className={`${styles.shoppingListCardGridTileLabel}`}
+                style={{
+                  fontWeight: budgetLimit !== null
+                    ? 'inherit'
+                    : '600',
+                }}
+              >
+                Budget Limit
+              </div>
+              <div className={`${styles.shoppingListCardGridTileValue}`}>
                 {budgetLimit !== null ? `$${budgetLimit.toFixed(2)}` : 'Not Set'}
               </div>
             </div>
-            <div className="rounded p-2" style={{ background: '#c8cdd2' }}>
-              <div style={{ fontSize: '11px', color: '#666', marginBottom: '2px' }}>Total items</div>
-              <div style={{ fontSize: '16px', fontWeight: '600' }}>{totalItems}</div>
+
+            <div className={`${styles.shoppingListCardGridTile}`}>
+              <div className={`${styles.shoppingListCardGridTileLabel}`}>Total items</div>
+              <div className={`${styles.shoppingListCardGridTileValue}`}>{totalItems}</div>
             </div>
-            <div className="rounded p-2" style={{ background: '#c8cdd2' }}>
-              <div style={{ fontSize: '11px', color: '#666', marginBottom: '2px' }}>Deadline</div>
-              <div style={{ fontSize: '16px', fontWeight: '600' }}>{formatDate(shoppingList.deadline)}</div>
+
+            <div className={`${styles.shoppingListCardGridTile}`}>
+              <div className={`${styles.shoppingListCardGridTileLabel}`}>Deadline</div>
+              <div className={`${styles.shoppingListCardGridTileValue}`}>{formatDate(shoppingList.deadline)}</div>
             </div>
           </div>
 
@@ -171,16 +211,15 @@ export default function ShoppingListCard({ shoppingList }: ShoppingListCardProps
         {/* Footer Buttons */}
         <Card.Footer className="d-flex gap-2 bg-light">
           <Button
-            className="editbutton flex-grow-1"
+            className="btn-edit flex-grow-1"
             onClick={() => setShowViewModal(true)}
           >
             View / Edit
           </Button>
           <Button
             variant="danger"
-            className="d-flex align-items-center justify-content-center"
+            className="btn-tiny sd-flex align-items-center justify-content-center"
             onClick={() => setShowDeleteModal(true)}
-            style={{ width: '40px', height: '40px', padding: 0 }}
           >
             <Trash color="white" size={18} />
           </Button>
