@@ -222,7 +222,7 @@ export default function ViewShoppingListModal({
 
   return (
     <>
-      <Modal show={show} onHide={onHide} centered size="lg">
+      <Modal show={show} onHide={onHide} centered>
 
         <div className={styles.modalHeader}>
           <p className={styles.modalHeaderTitle}>

@@ -114,7 +114,7 @@
 }
 
 .modalBody {
-  padding: 0;
+  padding: 0 !important;
 }
 
 .saveError {
@@ -263,7 +263,7 @@
 }
 
 .modalFooter {
-  padding: 16px 20px;
+  padding: 16px 20px !important;
   display: flex;
   gap: 8px;
   border-top: 1px solid #f0f0f0;
