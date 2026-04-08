@@ -1,0 +1,278 @@
+/* Styling for Shopping-List */
+
+/* Styling for Display Cards */
+
+/* Grid Layout for Shopping List Cards */
+.shoppingListCardGridLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* Individual Grid Tile */
+.shoppingListCardGridTile {
+  padding: 8px;
+  border-radius: 8px;
+  background-color: var(--light-gray, #c8cdd2);
+}
+
+/* Label and Values */
+.shoppingListCardGridTileLabel {
+  font-size: 14px;
+  color: var(--dark-gray, #666);
+  margin-bottom: 2px;
+}
+
+.shoppingListCardGridTileValue {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Card Header */
+.shoppingListCardHeader {
+  height: 52px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.shoppingListCardTitle {
+  gap: 6px;
+}
+
+/* Pencil Edit Icon */
+.shoppingListEditIcon {
+  cursor: pointer;
+  font-size: 0.85rem;
+  position: relative;
+  top: -1px;
+}
+
+/* Inline Name Edit */
+.shoppingListNameEditWrapper {
+  gap: 6px;
+}
+
+.shoppingListNameInput {
+  height: 28px;
+  padding: 2px 6px;
+}
+
+.shoppingListCheckIcon {
+  cursor: pointer;
+  color: green;
+  position: relative;
+  top: -1px;
+}
+
+.shoppingListTimesIcon {
+  cursor: pointer;
+  color: red;
+  position: relative;
+  top: -1px;
+}
+
+/* Date Created */
+.shoppingListDateCreated {
+  font-size: 0.85rem;
+}
+
+/* Progress Bar */
+.shoppingListProgressLabel {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.shoppingListProgressValue {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.shoppingListProgressBar {
+  height: 8px;
+  border-radius: 999px;
+}
+
+/*  View Shopping List Modal  */
+
+.modalHeader {
+  background: #4a7c59;
+  padding: 20px 24px;
+  border-radius: 8px 8px 0 0;
+}
+
+.modalHeaderTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: white;
+}
+
+.modalHeaderSubtitle {
+  font-size: 13px;
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.modalBody {
+  padding: 0;
+}
+
+.saveError {
+  color: #dc3545;
+  text-align: center;
+  padding: 8px 20px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.detailRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.iconBox {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #4a7c59;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.detailRowContent {
+  flex: 1;
+}
+
+.detailLabel {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.detailSubText {
+  font-size: 13px;
+  color: #666;
+  margin: 2px 0 0;
+}
+
+.detailInput {
+  font-size: 13px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.detailInputFull {
+  font-size: 13px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 100%;
+}
+
+.detailInputBudget {
+  font-size: 13px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 120px;
+}
+
+.saveBtn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #4a7c59;
+  background: #4a7c59;
+  color: white;
+  cursor: pointer;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.itemsSectionHeader {
+  padding: 12px 20px 4px;
+}
+
+.itemsSectionLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.loadingText {
+  text-align: center;
+  color: #888;
+  padding: 20px;
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.itemCheckbox {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #4a7c59;
+  cursor: pointer;
+}
+
+.itemContent {
+  flex: 1;
+}
+
+.itemName {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.itemNamePurchased {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+  text-decoration: line-through;
+  color: #999;
+}
+
+.itemSubText {
+  font-size: 12px;
+  color: #888;
+  margin: 2px 0 0;
+}
+
+.modalFooter {
+  padding: 16px 20px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.addItemBtn {
+  flex: 1;
+  background: #4a7c59 !important;
+  border: none !important;
+  font-weight: 500;
+}
+
