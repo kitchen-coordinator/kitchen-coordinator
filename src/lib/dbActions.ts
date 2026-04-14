@@ -1,6 +1,7 @@
 'use server';
 
 import { getUnitCategory, normalizeUnit } from '@/lib/units';
+import { parseFractionInput } from '@/lib/fractions';
 import { Prisma } from '@prisma/client';
 import { hash, compare } from 'bcrypt';
 import { redirect } from 'next/navigation';
@@ -128,15 +129,19 @@ export async function addProduce(produce: {
   type: string;
   location: string;
   storage: string;
-  quantity: number;
+  quantity: number | string;
   unit: string;
   expiration: string | Date | null;
   owner: string;
   image: string | null;
-  restockThreshold?: number;
+  restockThreshold?: number | string;
   commonItemId?: number | null;
 }) {
-  const quantityInput = Number(produce.quantity);
+  const quantityInput = parseFractionInput(produce.quantity);
+
+  const parsedRestockThreshold = produce.restockThreshold == null || produce.restockThreshold === ''
+    ? undefined
+    : parseFractionInput(produce.restockThreshold);
 
   const location = await prisma.location.upsert({
     where: { name_owner: { name: produce.location, owner: produce.owner } },
@@ -154,7 +159,7 @@ export async function addProduce(produce: {
     owner: produce.owner,
     quantity: quantityInput,
     unit: produce.unit,
-    restockThreshold: produce.restockThreshold,
+    restockThreshold: parsedRestockThreshold,
     commonItemId: produce.commonItemId,
   });
 
@@ -237,17 +242,23 @@ export async function editProduce(
   }
 
   const getNumeric = (v: unknown): number | undefined => {
-    if (typeof v === 'number') return v;
+    if (typeof v === 'number' || typeof v === 'string') {
+      return parseFractionInput(v);
+    }
+
     if (v && typeof v === 'object' && 'set' in (v as Record<string, unknown>)) {
       const s = (v as { set?: unknown }).set;
-      if (typeof s === 'number') return s;
+      if (typeof s === 'number' || typeof s === 'string') {
+        return parseFractionInput(s);
+      }
     }
+
     return undefined;
   };
 
   const quantityInput = getNumeric(produce.quantity);
   if (quantityInput === undefined) {
-    throw new Error('Quantity must be a number');
+    throw new Error('Quantity must be a valid number, fraction, or mixed number');
   }
 
   const restockInput = getNumeric(produce.restockThreshold);
@@ -574,13 +585,13 @@ export async function addCommonItem(data: {
   owner: string;
   name: string;
   displayUnit: string;
-  normalizedQuantityPerUnit: number;
+  normalizedQuantityPerUnit: number | string;
   normalizedUnit: string;
 }) {
   const owner = data.owner.trim();
   const name = data.name.trim();
   const displayUnit = normalizeDisplayUnit(data.displayUnit);
-  const normalizedQuantityPerUnit = Number(data.normalizedQuantityPerUnit);
+  const normalizedQuantityPerUnit = parseFractionInput(data.normalizedQuantityPerUnit);
   const normalizedUnit = normalizeUnit(data.normalizedUnit);
 
   if (!owner) throw new Error('Owner is required.');
