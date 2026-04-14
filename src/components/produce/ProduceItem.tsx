@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Button } from 'react-bootstrap';
 import { PencilSquare, Trash, PlusLg } from 'react-bootstrap-icons';
 import { ProduceRelations } from '@/types/ProduceRelations';
+import { formatQuantityForDisplay } from '@/lib/fractions';
+import { getPantryDisplayAmount } from '@/lib/displayUnits';
 import EditProduceModal from './EditProduceModal';
 import '../../styles/buttons.css';
 import DeleteProduceModal from './DeleteProduceModal';
@@ -40,6 +42,13 @@ const ProduceItem = ({
 
   const safeRestock = restockThreshold ?? 1;
 
+  const display = getPantryDisplayAmount({
+    quantity,
+    unit,
+    displayQuantity,
+    displayUnit,
+  });
+
   return (
     <>
       <tr>
@@ -50,10 +59,10 @@ const ProduceItem = ({
           {(typeof location === 'object' ? location?.name : location) || 'N/A'}
         </td>
         <td>
-          {quantity.toString()}
-          {unit ? ` ${unit}` : ''}
+          {formatQuantityForDisplay(display.quantity)}
+          {display.unit ? ` ${display.unit}` : ''}
         </td>
-        <td>{safeRestock}</td>
+        <td>{formatQuantityForDisplay(safeRestock)}</td>
         <td>{expiration ? new Date(expiration).toISOString().split('T')[0] : 'N/A'}</td>
         <td>
           <Button className="btn-edit" onClick={() => setShowEditModal(true)}>
@@ -69,18 +78,9 @@ const ProduceItem = ({
           <Button className="btn-edit" onClick={() => setShowAddListsModal(true)}>
             <PlusLg color="white" size={18} />
           </Button>
-          {/* <Button
-            variant="success"
-            size="lg"
-            className="ms-auto btn-submit"
-            onClick={() => setShowAddListsModal(true)}
-          >
-            +
-          </Button> */}
         </td>
       </tr>
 
-      {/* Edit modal */}
       <EditProduceModal
         show={showEditModal}
         onHide={() => setShowEditModal(false)}
@@ -107,7 +107,6 @@ const ProduceItem = ({
         }}
       />
 
-      {/* Delete modal */}
       <DeleteProduceModal
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
