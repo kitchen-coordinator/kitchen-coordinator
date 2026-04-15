@@ -20,6 +20,11 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { AddProduceSchema } from '@/lib/validationSchemas';
 import { addProduce } from '@/lib/dbActions';
 import { useRouter } from 'next/navigation';
+import {
+  COMMON_FRACTION_SUGGESTIONS,
+  formatQuantityForDisplay,
+  parseFractionInput,
+} from '@/lib/fractions';
 import ImagePickerModal from '@/components/images/ImagePickerModal';
 import BarcodeScanner from './BarcodeScanner';
 import CommonItemModal from './CommonItemModal';
@@ -31,12 +36,12 @@ type ProduceValues = {
   type: string;
   location: string;
   storage: string;
-  quantity: number;
+  quantity: string;
   unit: string;
   expiration: string | null;
   owner: string;
   image: string;
-  restockThreshold: number | null;
+  restockThreshold: string | null;
   commonItemId: number | null;
 };
 
@@ -76,14 +81,22 @@ function mapProduceToFormValues(produce?: AddProduceModalProps['produce']) {
     type: produce?.type ?? '',
     location: produce?.location ?? '',
     storage: produce?.storage ?? '',
-    quantity: produce?.displayQuantity ?? produce?.quantity ?? undefined,
+    quantity:
+      produce?.displayQuantity != null
+        ? formatQuantityForDisplay(produce.displayQuantity)
+        : produce?.quantity != null
+          ? formatQuantityForDisplay(produce.quantity)
+          : '',
     unit: produce?.displayUnit ?? produce?.unit ?? '',
     expiration: produce?.expiration
       ? new Date(produce.expiration).toISOString().split('T')[0]
       : null,
     owner: produce?.owner ?? '',
     image: produce?.image ?? '',
-    restockThreshold: produce?.restockThreshold ?? null,
+    restockThreshold:
+      produce?.restockThreshold != null
+        ? formatQuantityForDisplay(produce.restockThreshold)
+        : null,
     commonItemId: produce?.commonItemId ?? null,
   };
 }
@@ -208,20 +221,22 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
 
   const onSubmit: SubmitHandler<ProduceValues> = async (data) => {
     try {
+      const parsedQuantity = parseFractionInput(data.quantity);
+      const parsedThreshold = data.restockThreshold == null || data.restockThreshold === ''
+        ? undefined
+        : parseFractionInput(data.restockThreshold);
+
       await addProduce({
         name: data.name,
         type: data.type,
         location: data.location,
         storage: data.storage,
-        quantity: Number(data.quantity),
+        quantity: parsedQuantity,
         unit: data.unit,
         expiration: data.expiration,
         owner: data.owner,
         image: data.image || null,
-        restockThreshold:
-          data.restockThreshold == null || Number.isNaN(Number(data.restockThreshold))
-            ? undefined
-            : Number(data.restockThreshold),
+        restockThreshold: parsedThreshold,
         commonItemId: data.commonItemId ? Number(data.commonItemId) : null,
       });
 
@@ -292,7 +307,7 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                         {' '}
                         =
                         {' '}
-                        {item.normalizedQuantityPerUnit}
+                        {formatQuantityForDisplay(item.normalizedQuantityPerUnit)}
                         {' '}
                         {item.normalizedUnit}
                         )
@@ -353,14 +368,18 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                 <Form.Group>
                   <Form.Label>Quantity</Form.Label>
                   <Form.Control
-                    type="number"
-                    step="0.125"
-                    {...register('quantity', { valueAsNumber: true })}
+                    type="text"
+                    list="fraction-suggestions"
+                    placeholder="e.g. 1/2, 1 1/2, 2"
+                    {...register('quantity')}
                     isInvalid={!!errors.quantity}
                   />
                   <Form.Control.Feedback type="invalid">
                     {errors.quantity?.message}
                   </Form.Control.Feedback>
+                  <Form.Text className="text-muted">
+                    Fractions and mixed numbers are allowed.
+                  </Form.Text>
                 </Form.Group>
               </Col>
 
@@ -426,9 +445,10 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                 <Form.Group>
                   <Form.Label>Restock Threshold</Form.Label>
                   <Form.Control
-                    type="number"
-                    step="0.125"
-                    {...register('restockThreshold', { valueAsNumber: true })}
+                    type="text"
+                    list="fraction-suggestions"
+                    placeholder="e.g. 1/4, 1/2, 1 1/2"
+                    {...register('restockThreshold')}
                     isInvalid={!!errors.restockThreshold}
                   />
                   <Form.Control.Feedback type="invalid">
@@ -442,6 +462,13 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                 </Form.Group>
               </Col>
             </Row>
+
+            <datalist id="fraction-suggestions">
+              {COMMON_FRACTION_SUGGESTIONS.map((value) => (
+                // eslint-disable-next-line jsx-a11y/control-has-associated-label
+                <option key={value} value={value} />
+              ))}
+            </datalist>
 
             <Row className="mb-3">
               <Col md={6}>

@@ -1,103 +1,139 @@
-/* eslint-disable react/jsx-one-expression-per-line */
-
 'use client';
 
-import { Card, ListGroup, Image, Button } from 'react-bootstrap/';
-import Link from 'next/link';
-import type { ProduceRelations } from '@/types/ProduceRelations';
+import { Card, Button } from 'react-bootstrap';
+import { Trash, PencilSquare, PlusLg } from 'react-bootstrap-icons';
 import { useState } from 'react';
-import { CartPlus, PencilSquare, Trash } from 'react-bootstrap-icons';
+import swal from 'sweetalert';
+import { deleteProduce } from '@/lib/dbActions';
+import { formatQuantityForDisplay } from '@/lib/fractions';
 import { getPantryDisplayAmount } from '@/lib/displayUnits';
+import { ProduceRelations } from '@/types/ProduceRelations';
 import EditProduceModal from './EditProduceModal';
-import DeleteProduceModal from './DeleteProduceModal';
 import AddToMultipleShoppingListsModal from '../shopping-list/AddToMultipleShoppingListsModal';
 
-type Props = {
+interface ProduceCardProps {
   produce: ProduceRelations;
   shoppingLists: { id: number; name: string; isCompleted?: boolean }[];
-};
+}
 
-const formatDate = (d?: Date | string | null) => {
-  if (!d) return 'Not Available';
-  const date = typeof d === 'string' ? new Date(d) : d;
-  if (Number.isNaN(date.getTime())) return 'Not Available';
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
-
-export default function ProduceCard({ produce, shoppingLists }: Props) {
-  const imageSrc = produce.image || '/no-image.png';
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+export default function ProduceCard({ produce, shoppingLists }: ProduceCardProps) {
+  const [showEdit, setShowEdit] = useState(false);
   const [showAddListsModal, setShowAddListsModal] = useState(false);
 
-  const { quantity: shownQuantity, unit: shownUnit } = getPantryDisplayAmount(produce);
+  const display = getPantryDisplayAmount(produce);
+
+  const handleDelete = async () => {
+    const confirmed = await swal({
+      title: 'Are you sure?',
+      text: 'This will permanently delete the item.',
+      icon: 'warning',
+      buttons: ['Cancel', 'Delete'],
+      dangerMode: true,
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await deleteProduce(produce.id);
+      swal('Deleted', 'Item removed successfully.', 'success');
+      window.location.reload();
+    } catch {
+      swal('Error', 'Failed to delete item.', 'error');
+    }
+  };
 
   return (
-    <Card className="h-100 mb-3 image-shadow">
-      <Card.Header>
-        <Link href={`/produce/${produce.id}`} className="link-dark">
-          <Card.Title className="mb-1">{produce.name}</Card.Title>
-        </Link>
-        <Card.Subtitle className="text-muted">{produce.type || 'Type Not Available'}</Card.Subtitle>
-      </Card.Header>
+    <>
+      <Card className="shadow-sm h-100">
+        <Card.Body className="d-flex flex-column">
+          {produce.image && (
+            <Card.Img
+              variant="top"
+              src={produce.image}
+              style={{
+                height: '150px',
+                objectFit: 'cover',
+                borderRadius: '6px',
+                marginBottom: '10px',
+              }}
+            />
+          )}
 
-      <Card.Body>
-        <Image
-          src={imageSrc}
-          alt={produce.name || 'No image'}
-          height="200px"
-          width="100%"
-          className="mb-2 cardimage"
-          style={{ objectFit: 'cover' }}
-        />
+          <Card.Title>{produce.name}</Card.Title>
 
-        <ListGroup variant="flush">
-          <ListGroup.Item>
-            <strong>Location: </strong>
-            {produce.storage?.name || 'Not Available'} at {produce.location?.name || 'Not Available'}
-          </ListGroup.Item>
-          <ListGroup.Item>
-            <strong>Quantity:</strong>{' '}
-            {typeof shownQuantity === 'number' ? shownQuantity : 'Not Available'}
-            {shownUnit ? ` ${shownUnit}` : ''}
-          </ListGroup.Item>
-          <ListGroup.Item>
-            <strong>Expiration:</strong> {formatDate(produce.expiration)}
-          </ListGroup.Item>
-        </ListGroup>
+          <Card.Text>
+            <strong>Quantity:</strong>
+            {' '}
+            {formatQuantityForDisplay(display.quantity)}
+            {display.unit}
+          </Card.Text>
 
-        <Card.Footer className="d-flex gap-2">
-          <Button
-            className="btn-edit flex-fill"
-            onClick={() => setShowEditModal(true)}
-          >
-            <PencilSquare color="white" size={18} />
-          </Button>
-          <Button
-            variant="danger"
-            className="btn-delete flex-fill"
-            onClick={() => setShowDeleteModal(true)}
-          >
-            <Trash color="white" size={18} />
-          </Button>
-          <Button
-            className="btn-shopping flex-fill"
-            onClick={() => setShowAddListsModal(true)}
-          >
-            <CartPlus color="white" size={18} />
-          </Button>
-        </Card.Footer>
-      </Card.Body>
+          <Card.Text>
+            <strong>Type:</strong>
+            {produce.type}
+          </Card.Text>
+
+          <Card.Text>
+            <strong>Location:</strong>
+            {produce.location?.name || '—'}
+          </Card.Text>
+
+          <Card.Text>
+            <strong>Storage:</strong>
+            {produce.storage?.name || '—'}
+          </Card.Text>
+
+          <Card.Text>
+            <strong>Expiration:</strong>
+            {' '}
+            {produce.expiration
+              ? new Date(produce.expiration).toLocaleDateString()
+              : '—'}
+          </Card.Text>
+
+          {produce.restockThreshold != null && (
+            <Card.Text>
+              <strong>Restock At:</strong>
+              {' '}
+              {formatQuantityForDisplay(produce.restockThreshold)}
+              {display.unit}
+            </Card.Text>
+          )}
+
+          <div className="mt-auto d-flex justify-content-between gap-2">
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={() => setShowEdit(true)}
+            >
+              <PencilSquare />
+              Edit
+            </Button>
+
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              onClick={() => setShowAddListsModal(true)}
+            >
+              <PlusLg />
+              Add
+            </Button>
+
+            <Button
+              variant="outline-danger"
+              size="sm"
+              onClick={handleDelete}
+            >
+              <Trash />
+              Delete
+            </Button>
+          </div>
+        </Card.Body>
+      </Card>
 
       <EditProduceModal
-        show={showEditModal}
-        onHide={() => setShowEditModal(false)}
-        produce={produce}
-      />
-
-      <DeleteProduceModal
-        show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
+        show={showEdit}
+        onHide={() => setShowEdit(false)}
         produce={produce}
       />
 
@@ -105,8 +141,12 @@ export default function ProduceCard({ produce, shoppingLists }: Props) {
         show={showAddListsModal}
         onHide={() => setShowAddListsModal(false)}
         shoppingLists={shoppingLists}
-        item={{ name: produce.name, quantity: Number(produce.quantity), unit: produce.unit ?? null }}
+        item={{
+          name: produce.name,
+          quantity: Number(produce.quantity),
+          unit: produce.unit ?? null,
+        }}
       />
-    </Card>
+    </>
   );
 }

@@ -4,11 +4,20 @@ import { useEffect, useMemo } from 'react';
 import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
-import type { InferType } from 'yup';
 import swal from 'sweetalert';
 import { CommonItemSchema } from '@/lib/validationSchemas';
+import {
+  COMMON_FRACTION_SUGGESTIONS,
+  parseFractionInput,
+} from '@/lib/fractions';
 
-type CommonItemFormValues = InferType<typeof CommonItemSchema>;
+type CommonItemFormValues = {
+  owner: string;
+  name: string;
+  displayUnit: string;
+  normalizedQuantityPerUnit: string;
+  normalizedUnit: string;
+};
 
 interface CommonItemModalProps {
   show: boolean;
@@ -21,6 +30,19 @@ interface CommonItemModalProps {
   };
   // eslint-disable-next-line react/require-default-props
   onCreated?: (item: any) => void;
+}
+
+function getDefaultValues(
+  owner: string,
+  initialValues?: { name?: string; unit?: string },
+): CommonItemFormValues {
+  return {
+    owner,
+    name: initialValues?.name ?? '',
+    displayUnit: initialValues?.unit ?? '',
+    normalizedQuantityPerUnit: '1',
+    normalizedUnit: 'cup',
+  };
 }
 
 export default function CommonItemModal({
@@ -41,36 +63,18 @@ export default function CommonItemModal({
     reset,
     formState: { errors, isSubmitting },
   } = useForm<CommonItemFormValues>({
-    resolver: yupResolver(CommonItemSchema),
-    defaultValues: {
-      owner,
-      name: initialValues?.name ?? '',
-      displayUnit: initialValues?.unit ?? '',
-      normalizedQuantityPerUnit: 1,
-      normalizedUnit: 'cup',
-    },
+    resolver: yupResolver(CommonItemSchema) as any,
+    defaultValues: getDefaultValues(owner, initialValues),
   });
 
   useEffect(() => {
     if (show) {
-      reset({
-        owner,
-        name: initialValues?.name ?? '',
-        displayUnit: initialValues?.unit ?? '',
-        normalizedQuantityPerUnit: 1,
-        normalizedUnit: 'cup',
-      });
+      reset(getDefaultValues(owner, initialValues));
     }
   }, [show, owner, initialValues, reset]);
 
   const closeAndReset = () => {
-    reset({
-      owner,
-      name: initialValues?.name ?? '',
-      displayUnit: initialValues?.unit ?? '',
-      normalizedQuantityPerUnit: 1,
-      normalizedUnit: 'cup',
-    });
+    reset(getDefaultValues(owner, initialValues));
     onHide();
   };
 
@@ -80,7 +84,7 @@ export default function CommonItemModal({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...data,
-        normalizedQuantityPerUnit: Number(data.normalizedQuantityPerUnit),
+        normalizedQuantityPerUnit: parseFractionInput(data.normalizedQuantityPerUnit),
       }),
     });
 
@@ -138,14 +142,18 @@ export default function CommonItemModal({
               <Form.Group>
                 <Form.Label>Normalized Quantity per 1 Unit</Form.Label>
                 <Form.Control
-                  type="number"
-                  step="0.01"
-                  {...register('normalizedQuantityPerUnit', { valueAsNumber: true })}
+                  type="text"
+                  list="fraction-suggestions"
+                  placeholder="e.g. 1/2, 1 1/2, 16"
+                  {...register('normalizedQuantityPerUnit')}
                   isInvalid={!!errors.normalizedQuantityPerUnit}
                 />
                 <Form.Control.Feedback type="invalid">
                   {errors.normalizedQuantityPerUnit?.message}
                 </Form.Control.Feedback>
+                <Form.Text className="text-muted">
+                  Fractions and mixed numbers are allowed.
+                </Form.Text>
               </Form.Group>
             </Col>
 
@@ -166,8 +174,15 @@ export default function CommonItemModal({
             </Col>
           </Row>
 
+          <datalist id="fraction-suggestions">
+            {COMMON_FRACTION_SUGGESTIONS.map((value) => (
+              // eslint-disable-next-line jsx-a11y/control-has-associated-label
+              <option key={value} value={value} />
+            ))}
+          </datalist>
+
           <Form.Text className="text-muted">
-            Example: 1 can = 2.3 cups, or 1 bag = 16 oz.
+            Example: 1 can = 2 1/3 cups, or 1 bag = 16 oz.
           </Form.Text>
 
           <div className="d-flex justify-content-end gap-2 mt-3">

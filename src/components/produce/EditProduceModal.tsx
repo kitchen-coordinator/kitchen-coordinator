@@ -23,6 +23,11 @@ import ImagePickerModal from '@/components/images/ImagePickerModal';
 import '../../styles/buttons.css';
 import { ProduceRelations } from '@/types/ProduceRelations';
 import { getPantryDisplayAmount } from '@/lib/displayUnits';
+import {
+  COMMON_FRACTION_SUGGESTIONS,
+  formatQuantityForDisplay,
+  parseFractionInput,
+} from '@/lib/fractions';
 
 function mapProduceToFormValues(produce: ProduceRelations) {
   const display = getPantryDisplayAmount(produce);
@@ -31,11 +36,14 @@ function mapProduceToFormValues(produce: ProduceRelations) {
     id: produce.id,
     name: produce.name,
     type: produce.type,
-    quantity: display.quantity,
+    quantity: formatQuantityForDisplay(display.quantity),
     unit: display.unit,
     owner: produce.owner,
     image: produce.image ?? '',
-    restockThreshold: produce.restockThreshold ?? null,
+    restockThreshold:
+      produce.restockThreshold != null
+        ? formatQuantityForDisplay(produce.restockThreshold)
+        : null,
     commonItemId: produce.commonItemId ?? null,
     expiration: produce.expiration
       ? new Date(produce.expiration).toISOString().split('T')[0]
@@ -48,6 +56,8 @@ function mapProduceToFormValues(produce: ProduceRelations) {
 type ProduceValues =
   Omit<InferType<typeof EditProduceSchema>, 'expiration'> & {
     expiration: string | null;
+    quantity: string;
+    restockThreshold: string | null;
   };
 
 interface EditProduceModalProps {
@@ -228,11 +238,13 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
     try {
       await editProduce({
         ...data,
+        quantity: parseFractionInput(data.quantity),
         expiration: data.expiration ? new Date(data.expiration) : null,
         image: data.image === '' ? null : data.image,
-        restockThreshold: data.restockThreshold
-          ? Number(data.restockThreshold)
-          : 0,
+        restockThreshold:
+          data.restockThreshold == null || data.restockThreshold === ''
+            ? null
+            : parseFractionInput(data.restockThreshold),
         commonItemId: data.commonItemId ?? null,
       });
 
@@ -240,7 +252,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
       handleClose();
       router.refresh();
     } catch (err) {
-      swal('Error', 'Failed to update item', 'error');
+      swal('Error', err instanceof Error ? err.message : 'Failed to update item', 'error');
     }
   };
 
@@ -405,13 +417,18 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
             setEditingField={setEditingField}
             icon={<Stack color="white" size={20} />}
           >
-            <Form.Control
-              type="number"
-              step={0.125}
-              {...register('quantity')}
-              placeholder="e.g., 1"
-              isInvalid={!!errors.quantity}
-            />
+            <>
+              <Form.Control
+                type="text"
+                list="fraction-suggestions"
+                {...register('quantity')}
+                placeholder="e.g., 1/2, 1 1/2, 2"
+                isInvalid={!!errors.quantity}
+              />
+              <Form.Text className="text-muted">
+                Fractions and mixed numbers are allowed.
+              </Form.Text>
+            </>
           </FieldRow>
 
           <FieldRow
@@ -449,18 +466,23 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
           <FieldRow
             fieldKey="restockThreshold"
             label="Restock Threshold"
-            displayValue={String(watchedValues.restockThreshold ?? '—')}
+            displayValue={watchedValues.restockThreshold ?? '—'}
             editingField={editingField}
             setEditingField={setEditingField}
             icon={<ArrowRepeat color="white" size={20} />}
           >
-            <Form.Control
-              type="number"
-              step={0.5}
-              {...register('restockThreshold')}
-              placeholder="e.g., 0.5"
-              isInvalid={!!errors.restockThreshold}
-            />
+            <>
+              <Form.Control
+                type="text"
+                list="fraction-suggestions"
+                {...register('restockThreshold')}
+                placeholder="e.g., 1/4, 1/2, 1 1/2"
+                isInvalid={!!errors.restockThreshold}
+              />
+              <Form.Text className="text-muted">
+                Optional. Fractions and mixed numbers are allowed.
+              </Form.Text>
+            </>
           </FieldRow>
 
           <FieldRow
@@ -477,6 +499,13 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
               isInvalid={!!errors.expiration}
             />
           </FieldRow>
+
+          <datalist id="fraction-suggestions">
+            {COMMON_FRACTION_SUGGESTIONS.map((value) => (
+              // eslint-disable-next-line jsx-a11y/control-has-associated-label
+              <option key={value} value={value} />
+            ))}
+          </datalist>
 
           <div className="d-flex gap-2 mt-4">
             <Button type="submit" className="btn-submit flex-fill">
