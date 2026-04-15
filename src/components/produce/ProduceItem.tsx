@@ -65,16 +65,6 @@ const ProduceItem = ({
         <td>{formatQuantityForDisplay(safeRestock)}</td>
         <td>{expiration ? new Date(expiration).toISOString().split('T')[0] : 'N/A'}</td>
         <td>
-          <Button className="btn-edit" onClick={() => setShowEditModal(true)}>
-            <PencilSquare color="white" size={18} />
-          </Button>
-        </td>
-        <td>
-          <Button variant="danger" className="btn-delete" onClick={() => setShowDeleteModal(true)}>
-            <Trash color="white" size={18} />
-          </Button>
-        </td>
-        <td>
           <Button className="btn-edit" onClick={() => setShowAddListsModal(true)}>
             <PlusLg color="white" size={18} />
           </Button>

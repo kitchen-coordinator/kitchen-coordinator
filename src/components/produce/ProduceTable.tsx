@@ -45,8 +45,6 @@ const ProduceTable = ({
             <th>Quantity</th>
             <th>Restock</th>
             <th>Expiration</th>
-            <th>Edit</th>
-            <th>Delete</th>
             <th>Add to Shopping List</th>
           </tr>
         </thead>
