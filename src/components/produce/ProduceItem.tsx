@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-one-expression-per-line */
 import { useState } from 'react';
 import { Button } from 'react-bootstrap';
-import { PencilSquare, Trash, PlusLg } from 'react-bootstrap-icons';
+import { PlusLg } from 'react-bootstrap-icons';
 import { ProduceRelations } from '@/types/ProduceRelations';
 import { formatQuantityForDisplay } from '@/lib/fractions';
 import { getPantryDisplayAmount } from '@/lib/displayUnits';
