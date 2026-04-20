@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import bcrypt, { hash } from 'bcrypt';
+import { compare, hash } from 'bcryptjs';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   }
 
   // Check if new password is same as old
-  const isSamePassword = await bcrypt.compare(newPassword, resetToken.user.password);
+  const isSamePassword = await compare(newPassword, resetToken.user.password);
   if (isSamePassword) {
     return NextResponse.json(
       { message: 'New password must be different from the old password.' },
