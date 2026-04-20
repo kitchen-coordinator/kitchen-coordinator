@@ -12,14 +12,16 @@ type QuickAlertsProps = {
 };
 
 export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlertsProps) {
-  const [expiringItems, setExpiringItems] = useState<any[]>([]);
+  const [expiredItems, setExpiredItems] = useState<any[]>([]);
+  const [expiringWithinWeek, setExpiringWithinWeek] = useState<any[]>([]);
   const [shoppingLists, setShoppingLists] = useState<any[]>([]);
   const [lowStockItems, setLowStockItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!ownerEmail) {
-      setExpiringItems([]);
+      setExpiredItems([]);
+      setExpiringWithinWeek([]);
       setShoppingLists([]);
       setLowStockItems([]);
       return () => {};
@@ -34,7 +36,11 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
           fetch(`/api/low-stock?owner=${encodeURIComponent(ownerEmail)}`),
         ]);
 
-        if (expiringRes.ok) setExpiringItems((await expiringRes.json()).expiringItems || []);
+        if (expiringRes.ok) {
+          const expiringData = await expiringRes.json();
+          setExpiredItems(expiringData.expiredItems || []);
+          setExpiringWithinWeek(expiringData.expiringWithinWeek || []);
+        }
         if (shoppingRes.ok) setShoppingLists((await shoppingRes.json()).shoppingLists || []);
         if (lowStockRes.ok) setLowStockItems((await lowStockRes.json()).lowStockItems || []);
       } catch (err) {
@@ -115,11 +121,32 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
 
   const nextShoppingDate = getNextShoppingDate();
 
-  const formatExpiringText = () => {
-    if (expiringItems.length === 0) return 'No items expiring soon';
-    if (expiringItems.length === 1) return `${expiringItems[0].name} expires soon`;
-    return `${expiringItems[0].name} and ${expiringItems.length - 1} other items`;
+  const formatExpiredText = () => {
+    if (expiredItems.length === 0) return null;
+
+    const first = expiredItems[0].name;
+
+    if (expiredItems.length === 1) {
+      return `${first} has expired`;
+    }
+
+    return `${first} and ${expiredItems.length - 1} other items have expired`;
   };
+
+  const formatExpiringWithinWeekText = () => {
+    if (expiringWithinWeek.length === 0) return null;
+
+    const first = expiringWithinWeek[0].name;
+
+    if (expiringWithinWeek.length === 1) {
+      return `${first} is expiring soon`;
+    }
+
+    return `${first} and ${expiringWithinWeek.length - 1} other items are expiring soon`;
+  };
+
+  const expiredText = formatExpiredText();
+  const expiringText = formatExpiringWithinWeekText();
 
   const formatLowStockText = () => {
     if (lowStockItems.length === 0) return 'All items sufficiently stocked';
@@ -231,15 +258,23 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <div className="d-flex align-items-center">
                       <Clock className="me-2 text-secondary" />
-                      <Card.Subtitle className="fw-semibold text-dark">Expiring Soon</Card.Subtitle>
+                      <Card.Subtitle className="fw-semibold text-dark">Expiring Items</Card.Subtitle>
                     </div>
                     <Badge bg="warning" text="dark">
-                      {expiringItems.length}
+                      {expiringWithinWeek.length + expiredItems.length}
                       {' '}
-                      {expiringItems.length === 1 ? 'item' : 'items'}
+                      {(expiringWithinWeek.length + expiredItems.length) === 1 ? 'item' : 'items'}
                     </Badge>
                   </div>
-                  <Card.Text className="text-muted small mb-0">{formatExpiringText()}</Card.Text>
+                  <Card.Text className="text-muted small mb-0">
+                    {expiredText && (
+                      <div className="text-danger">{expiredText}</div>
+                    )}
+                    {expiringText && (
+                      <div>{expiringText}</div>
+                    )}
+                    {!expiredText && !expiringText && 'No items expiring within the week'}
+                  </Card.Text>
                 </Card.Body>
               </Card>
             </Link>
