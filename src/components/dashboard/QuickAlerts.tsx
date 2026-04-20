@@ -116,9 +116,14 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
   const nextShoppingDate = getNextShoppingDate();
 
   const formatExpiringText = () => {
-    if (expiringItems.length === 0) return 'No items expiring soon';
-    if (expiringItems.length === 1) return `${expiringItems[0].name} expires soon`;
-    return `${expiringItems[0].name} and ${expiringItems.length - 1} other items`;
+    // TODO: Contains Expired Items
+
+    // TODO: Items expiring within the week
+
+    // TODO: Remove old code
+    if (expiringItems.length === 0) return 'No items expiring soon'; // 0 Items
+    // if (expiringItems.length === 1) return `${expiringItems[0].name} expires soon`; // 1 Item
+    return `${expiringItems[0].name} and ${expiringItems.length - 1} other items`; // General Case
   };
 
   const formatLowStockText = () => {
@@ -231,7 +236,7 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <div className="d-flex align-items-center">
                       <Clock className="me-2 text-secondary" />
-                      <Card.Subtitle className="fw-semibold text-dark">Expiring Soon</Card.Subtitle>
+                      <Card.Subtitle className="fw-semibold text-dark">Expiring Items</Card.Subtitle>
                     </div>
                     <Badge bg="warning" text="dark">
                       {expiringItems.length}
