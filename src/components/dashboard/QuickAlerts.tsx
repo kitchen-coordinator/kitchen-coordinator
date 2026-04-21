@@ -72,13 +72,31 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
 
   const recipeCount = availableRecipes.length;
 
+  const getOverdueShoppingLists = () => {
+    if (shoppingLists.length === 0) return null;
+
+    const today = new Date();
+
+    // Filter out completed lists, future shopping lists, and those without deadlines
+    const pastLists = shoppingLists.filter(
+      (list) => !list.isCompleted && list.deadline && new Date(list.deadline) < today,
+    );
+
+    // If there are lists, return how many are past due else null to indicate no alerts needed
+    return pastLists.length > 0 ? pastLists.length : null;
+  };
+
   const getNextShoppingDate = () => {
     if (shoppingLists.length === 0) return null;
 
-    // Filter out completed lists and those without deadlines
+    const today = new Date();
+
+    // Filter out completed lists, old shopping lists, and those without deadlines
     const upcomingLists = shoppingLists.filter(
-      (list) => !list.isCompleted && list.deadline,
+      (list) => !list.isCompleted && list.deadline && new Date(list.deadline) >= today,
     );
+
+    // No upcoming shopping lists, so return null to indicate no alerts needed
     if (upcomingLists.length === 0) return null;
 
     // Find the earliest deadline
@@ -86,8 +104,6 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
       const deadline = new Date(list.deadline!);
       return deadline < earliest ? deadline : earliest;
     }, new Date(upcomingLists[0].deadline!));
-
-    const today = new Date();
 
     // Strip time for day comparison (otherwise, time differences could skew results)
     today.setHours(0, 0, 0, 0);
@@ -119,6 +135,7 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
     );
   }
 
+  const overdueShoppingLists = getOverdueShoppingLists();
   const nextShoppingDate = getNextShoppingDate();
 
   const formatExpiredText = () => {
@@ -145,8 +162,8 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
     return `${first} and ${expiringWithinWeek.length - 1} other items are expiring soon`;
   };
 
-  const expiredText = formatExpiredText();
-  const expiringText = formatExpiringWithinWeekText();
+  const expiredItemsText = formatExpiredText();
+  const expiringItemsText = formatExpiringWithinWeekText();
 
   const formatLowStockText = () => {
     if (lowStockItems.length === 0) return 'All items sufficiently stocked';
@@ -232,13 +249,29 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
     );
   };
 
-  const formatShoppingText = () => {
-    if (!nextShoppingDate) return 'No shopping lists due yet';
+  const formatOverdueShoppingText = () => {
+    if (overdueShoppingLists != null && overdueShoppingLists > 0) {
+      return `${overdueShoppingLists} overdue shopping list${overdueShoppingLists !== 1 ? 's' : ''}`;
+    }
+    return null;
+  };
+
+  const formatUpcomingShoppingText = () => {
+    if (!nextShoppingDate) return 'No upcoming shopping lists';
     if (nextShoppingDate === 'Today'
         || nextShoppingDate === 'Tomorrow') {
       return `Grocery trip scheduled ${nextShoppingDate.toLowerCase()}`;
     }
     return `Next shopping trip in ${nextShoppingDate}`;
+  };
+
+  const overdueShoppingText = formatOverdueShoppingText();
+  const upcomingShoppingText = formatUpcomingShoppingText();
+
+  const formatShoppingBadge = () => {
+    if (overdueShoppingLists != null && overdueShoppingLists > 0) return '!!!';
+    if (nextShoppingDate) return nextShoppingDate;
+    return 'N/A';
   };
 
   return (
@@ -267,13 +300,13 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
                     </Badge>
                   </div>
                   <Card.Text className="text-muted small mb-0">
-                    {expiredText && (
-                      <div className="text-danger">{expiredText}</div>
+                    {expiredItemsText && (
+                      <div className="text-danger">{expiredItemsText}</div>
                     )}
-                    {expiringText && (
-                      <div>{expiringText}</div>
+                    {expiringItemsText && (
+                      <div>{expiringItemsText}</div>
                     )}
-                    {!expiredText && !expiringText && 'No items expiring within the week'}
+                    {!expiredItemsText && !expiringItemsText && 'No items expiring within the week'}
                   </Card.Text>
                 </Card.Body>
               </Card>
@@ -335,10 +368,18 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
                       <Card.Subtitle className="fw-semibold text-dark">Shopping List Due</Card.Subtitle>
                     </div>
                     <Badge bg="info" text="dark">
-                      {nextShoppingDate || 'N/A'}
+                      {formatShoppingBadge()}
                     </Badge>
                   </div>
-                  <Card.Text className="text-muted small mb-0">{formatShoppingText()}</Card.Text>
+                  <Card.Text className="text-muted small mb-0">
+                    {overdueShoppingText && (
+                      <div className="text-danger">{overdueShoppingText}</div>
+                    )}
+                    {upcomingShoppingText && (
+                      <div>{upcomingShoppingText}</div>
+                    )}
+                    {!overdueShoppingText && !upcomingShoppingText && 'No upcoming shopping lists'}
+                  </Card.Text>
                 </Card.Body>
               </Card>
             </Link>
