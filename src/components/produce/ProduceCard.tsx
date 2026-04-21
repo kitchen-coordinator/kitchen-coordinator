@@ -5,8 +5,7 @@ import { Trash, PencilSquare, PlusLg } from 'react-bootstrap-icons';
 import { useState } from 'react';
 import swal from 'sweetalert';
 import { deleteProduce } from '@/lib/dbActions';
-import { formatQuantityForDisplay } from '@/lib/fractions';
-import { getPantryDisplayAmount } from '@/lib/displayUnits';
+import { formatDisplayAmount, getPantryDisplayAmount } from '@/lib/displayUnits';
 import { ProduceRelations } from '@/types/ProduceRelations';
 import EditProduceModal from './EditProduceModal';
 import AddToMultipleShoppingListsModal from '../shopping-list/AddToMultipleShoppingListsModal';
@@ -64,8 +63,7 @@ export default function ProduceCard({ produce, shoppingLists }: ProduceCardProps
           <Card.Text>
             <strong>Quantity:</strong>
             {' '}
-            {formatQuantityForDisplay(display.quantity)}
-            {display.unit}
+            {formatDisplayAmount(display)}
           </Card.Text>
 
           <Card.Text>
@@ -86,44 +84,29 @@ export default function ProduceCard({ produce, shoppingLists }: ProduceCardProps
           <Card.Text>
             <strong>Expiration:</strong>
             {' '}
-            {produce.expiration
-              ? new Date(produce.expiration).toLocaleDateString()
-              : '—'}
+            {produce.expiration ? new Date(produce.expiration).toLocaleDateString() : '—'}
           </Card.Text>
 
           {produce.restockThreshold != null && (
             <Card.Text>
               <strong>Restock At:</strong>
               {' '}
-              {formatQuantityForDisplay(produce.restockThreshold)}
-              {display.unit}
+              {formatDisplayAmount({ quantity: produce.restockThreshold, unit: display.unit })}
             </Card.Text>
           )}
 
           <div className="mt-auto d-flex justify-content-between gap-2">
-            <Button
-              variant="outline-primary"
-              size="sm"
-              onClick={() => setShowEdit(true)}
-            >
+            <Button variant="outline-primary" size="sm" onClick={() => setShowEdit(true)}>
               <PencilSquare />
               Edit
             </Button>
 
-            <Button
-              variant="outline-secondary"
-              size="sm"
-              onClick={() => setShowAddListsModal(true)}
-            >
+            <Button variant="outline-secondary" size="sm" onClick={() => setShowAddListsModal(true)}>
               <PlusLg />
               Add
             </Button>
 
-            <Button
-              variant="outline-danger"
-              size="sm"
-              onClick={handleDelete}
-            >
+            <Button variant="outline-danger" size="sm" onClick={handleDelete}>
               <Trash />
               Delete
             </Button>
@@ -131,11 +114,7 @@ export default function ProduceCard({ produce, shoppingLists }: ProduceCardProps
         </Card.Body>
       </Card>
 
-      <EditProduceModal
-        show={showEdit}
-        onHide={() => setShowEdit(false)}
-        produce={produce}
-      />
+      <EditProduceModal show={showEdit} onHide={() => setShowEdit(false)} produce={produce} />
 
       <AddToMultipleShoppingListsModal
         show={showAddListsModal}
