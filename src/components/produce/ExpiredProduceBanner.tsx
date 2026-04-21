@@ -1,22 +1,31 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Card, Row, Col, Spinner, Badge } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import { Card, Spinner, Row, Col, Button } from 'react-bootstrap';
 
 type ExpiredItemsBannerProps = {
   ownerEmail: string;
   produce: any[];
+  onHideForNow?: () => void;
+  onCleanUp?: (itemIds: string[]) => void;
 };
 
-export default function ExpiredItemsBanner({ ownerEmail, produce }: ExpiredItemsBannerProps) {
+export default function ExpiredItemsBanner({
+  ownerEmail,
+  produce,
+  onHideForNow,
+  onCleanUp,
+}: ExpiredItemsBannerProps) {
   const [expiredItems, setExpiredItems] = useState<any[]>([]);
   const [expiringWithinWeek, setExpiringWithinWeek] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hiddenForNow, setHiddenForNow] = useState(false);
 
   useEffect(() => {
     if (!ownerEmail) {
       setExpiredItems([]);
       setExpiringWithinWeek([]);
+      setLoading(false);
       return () => {};
     }
 
@@ -53,11 +62,60 @@ export default function ExpiredItemsBanner({ ownerEmail, produce }: ExpiredItems
           </div>
           <div className="text-muted">
             <Spinner animation="border" size="sm" className="me-2" />
-            Loading alerts...
           </div>
         </Card.Body>
       </Card>
-
     );
   }
+
+  // Handle User Dismissal
+  const handleHideForNow = () => {
+    setHiddenForNow(true);
+    onHideForNow?.();
+  };
+
+  const handleCleanUp = () => {
+    const itemIds = expiredItems.map((item) => item.id);
+    onCleanUp?.(itemIds);
+  };
+
+  // Render nothing if user has dismissed or if there are no expired/expiring items
+  if (hiddenForNow || (expiredItems.length === 0 && expiringWithinWeek.length === 0)) {
+    return null;
+  }
+
+  return (
+    <Card className="mb-4 shadow-sm border-light">
+      <Card.Body>
+        <Row className="align-items-center">
+          <Col>
+            <h5>
+              You have
+              {expiredItems.length}
+              expired item
+              {expiredItems.length !== 1 ? 's' : ''}
+            </h5>
+            <p>
+              These items have passed their expiration date and may no longer be safe
+              or at their best quality.
+            </p>
+          </Col>
+
+          <Col xs="auto">
+            <Button variant="outline-secondary" onClick={handleHideForNow}>
+              Hide for now
+            </Button>
+          </Col>
+        </Row>
+      </Card.Body>
+    </Card>
+  );
+
+  // Case 1: Nothing expired or expiring soon
+
+  // Case 2: Some items expired but nothing expiring soon
+
+  // Case 3: Some items expiring soon but nothing expired
+
+  // Case 4: Some items expired and some expiring soon
 }

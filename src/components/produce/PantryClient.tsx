@@ -1,11 +1,12 @@
 'use client';
 
 import { Button, Col, Container, Row, Nav, Modal, Toast } from 'react-bootstrap';
-import { useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PlusCircle, Trash } from 'react-bootstrap-icons';
 import AddProduceModal from './AddProduceModal';
 import ProduceListWithGrouping from './ProduceListWithGrouping';
+import ExpiredProduceBanner from './ExpiredProduceBanner';
 import '../../styles/buttons.css';
 import AddLocationModal from './AddLocationModal';
 
@@ -25,6 +26,7 @@ function PantryClient({
   owner,
 }: PantryClientProps) {
   const router = useRouter();
+  const [showExpiredItemsBanner, setShowExpiredItemsBanner] = useState(true);
   const [showAddProduceModal, setShowAddProduceModal] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [activeLocation, setActiveLocation] = useState<string>('all');
