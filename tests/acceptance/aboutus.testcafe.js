@@ -5,8 +5,8 @@ fixture('About Us Page')
 
 test('About Us page loads', async t => {
     // Check for main heading
-    const mainHeading = Selector('h1').withText('About Pantry Pal');
-    await t.expect(mainHeading.exists).ok('Expected main heading "About Pantry Pal"');
+    const mainHeading = Selector('h1').withText('About Kitchen Coordinator');
+    await t.expect(mainHeading.exists).ok('Expected main heading "About Kitchen Coordinator"');
 
     // Check for a secondary heading
     const subHeading = Selector('h2').withText('Why We Built It');
