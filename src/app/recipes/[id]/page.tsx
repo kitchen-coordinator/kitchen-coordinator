@@ -22,12 +22,8 @@ export default async function RecipeDetailPage({ params }: PageProps) {
   const email = session?.user?.email ?? null;
 
   let pantry: any[] = [];
-  let pantryFull: any[] = [];
   if (email) {
-    [pantry, pantryFull] = await Promise.all([
-      getUserProduceByEmail(email),
-      getUserProduceWithQuantity(email),
-    ]);
+    pantry = await getUserProduceByEmail(email);
   }
 
   // Create a set of pantry item names (lowercase for case-insensitive matching)

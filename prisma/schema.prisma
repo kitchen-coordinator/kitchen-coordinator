@@ -9,6 +9,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id                     Int                     @id @default(autoincrement())
   email                  String                  @unique
@@ -170,9 +175,4 @@ model RecipeIngredient {
   recipe   Recipe  @relation(fields: [recipeId], references: [id])
 
   @@index([recipeId])
-}
-
-enum Role {
-  USER
-  ADMIN
 }
