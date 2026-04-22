@@ -79,6 +79,47 @@ export default function ExpiredItemsBanner({
     return null;
   }
 
+  const formatAlertText = () => {
+    const today = new Date();
+    let alertText = '';
+
+    // Case 1: Nothing to Report
+    if (expiredItems.length === 0 && expiringWithinWeek.length === 0) {
+      return null;
+    }
+
+    // Case 2: Exists expired items (priority over expiring soon)
+    if (expiredItems.length > 0) {
+      const oldestExpired = expiredItems[0];
+      const oldestExpiredDate = new Date(oldestExpired.expiration);
+      const oldestExpiredLocation = typeof
+      oldestExpired.location === 'object' ? oldestExpired.location?.name : oldestExpired.location;
+
+      const diffTime = Math.abs(today.getTime() - oldestExpiredDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (!oldestExpiredLocation) {
+        // No location info available
+        alertText = `Yikes! You have an item that expired ${diffDays} days ago!`;
+      } else if (diffDays <= 1) {
+        // (1) Expired today or yesterday
+        alertText = `We've got some cleaning to do at ${oldestExpiredLocation}!`;
+      } else if (diffDays <= 7) {
+        // (2) Expired within the last week
+        alertText = `Uh Oh... Something at ${oldestExpiredLocation} is past it's prime!`;
+      } else {
+        // (3) Expired for over a week
+        alertText = `You've had expired items for ${diffDays} days now...
+         It's time to clean out ${oldestExpiredLocation}!`;
+      }
+      return alertText;
+    }
+    // Case 3: Exists expiring items
+    alertText = `Heads up! You have ${expiringWithinWeek.length} item
+    ${expiringWithinWeek.length > 1 ? 's' : ''} expiring within the week!`;
+    return alertText;
+  };
+
   const formatExpiredItems = () => {
     if (expiredItems.length <= 0) return null;
     return (
@@ -109,7 +150,10 @@ export default function ExpiredItemsBanner({
 
   return (
     <Card className="mb-4 shadow-sm border-light">
-      <Card.Body>
+      <Card.Title>
+        {formatAlertText()}
+      </Card.Title>
+      <Card.Body className="text-muted">
         <Row className="align-items-center">
           <Col>
             {expiredItemsSection}
@@ -127,12 +171,4 @@ export default function ExpiredItemsBanner({
       </Card.Body>
     </Card>
   );
-
-  // Case 1: Nothing expired or expiring soon
-
-  // Case 2: Some items expired but nothing expiring soon
-
-  // Case 3: Some items expiring soon but nothing expired
-
-  // Case 4: Some items expired and some expiring soon
 }
