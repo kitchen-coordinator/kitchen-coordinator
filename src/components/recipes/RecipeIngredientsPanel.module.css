@@ -1,0 +1,64 @@
+.card {
+  background-color: whitesmoke;
+}
+
+.title {
+  color: var(--brunswick-green);
+}
+
+.portionControls {
+  width: 100%;
+  max-width: 360px;
+}
+
+.portionLabel {
+  font-size: 0.9rem;
+  color: var(--brunswick-green);
+  font-weight: 700;
+}
+
+.portionValue {
+  min-width: 2.5rem;
+  text-align: right;
+  font-weight: 800;
+  color: var(--hunter-green);
+}
+
+.slider {
+  flex: 1;
+}
+
+.stepBtn {
+  min-width: 2.25rem;
+  font-weight: 800;
+}
+
+.scaleHint {
+  margin-top: 0.35rem;
+}
+
+.list {
+  padding-left: 1.25rem;
+  line-height: 2;
+  color: #495057;
+  margin-bottom: 0;
+}
+
+.listItem {
+  margin-bottom: 0.5rem;
+}
+
+.iconHave {
+  color: #28a745;
+}
+
+.iconMissing {
+  color: #dc3545;
+}
+
+@media (max-width: 576px) {
+  .portionControls {
+    max-width: 100%;
+  }
+}
+

@@ -1,5 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  engineType    = "binary"
 }
 
 datasource db {
@@ -13,26 +15,25 @@ enum Role {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
-  password      String
-  role          Role     @default(USER)
-  emailVerified Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
+  id                     Int                     @id @default(autoincrement())
+  email                  String                  @unique
+  password               String
+  role                   Role                    @default(USER)
+  emailVerified          Boolean                 @default(false)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
   emailVerificationCodes EmailVerificationCode[]
   passwordResetTokens    PasswordResetToken[]
 }
 
 model EmailVerificationCode {
   id        Int      @id @default(autoincrement())
-  code      String // store as string so you can handle leading zeros
+  code      String
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
   expiresAt DateTime
   createdAt DateTime @default(now())
   used      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
@@ -41,103 +42,123 @@ model PasswordResetToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
 
 model Produce {
-  id               Int       @id @default(autoincrement())
+  id               Int         @id @default(autoincrement())
   name             String
   type             String
-  locationId       Int
-  storageId        Int
-  location         Location @relation(fields: [locationId], references: [id])
-  storage          Storage  @relation(fields: [storageId], references: [id])
   quantity         Float
-  unit             String
   expiration       DateTime?
   owner            String
   image            String?
+  unit             String
   restockThreshold Float?
-  restockTrigger   String   @default("empty")
   customThreshold  Float?
+  restockTrigger   String      @default("empty")
+  locationId       Int
+  storageId        Int
+  commonItemId     Int?
+  displayQuantity  Float?
+  displayUnit      String?
+  commonItem       CommonItem? @relation(fields: [commonItemId], references: [id])
+  location         Location    @relation(fields: [locationId], references: [id])
+  storage          Storage     @relation(fields: [storageId], references: [id])
 
   @@unique([name, owner])
 }
 
 model Location {
-  id         Int        @id @default(autoincrement())
-  name       String
-  owner      String
-  storages   Storage[]
-  produces   Produce[]
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id        Int       @id @default(autoincrement())
+  name      String
+  owner     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  produces  Produce[]
+  storages  Storage[]
 
   @@unique([name, owner])
 }
 
 model Storage {
-  id          Int        @id @default(autoincrement())
-  name        String
-  locationId  Int
-  location    Location   @relation(fields: [locationId], references: [id])
-  produces    Produce[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id         Int       @id @default(autoincrement())
+  name       String
+  locationId Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  produces   Produce[]
+  location   Location  @relation(fields: [locationId], references: [id])
 
   @@unique([name, locationId])
 }
 
-model ShoppingList {
-  id        Int      @id @default(autoincrement())
-  name      String
-  owner     String // email, username, or household name
-  createdAt DateTime @default(now())
+model CommonItem {
+  id                        Int       @id @default(autoincrement())
+  name                      String
+  owner                     String
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  displayUnit               String
+  normalizedQuantityPerUnit Float
+  normalizedUnit            String
+  produces                  Produce[]
 
-  items ShoppingListItem[]
+  @@unique([name, owner, displayUnit])
+}
+
+model ShoppingList {
+  id          Int                @id @default(autoincrement())
+  name        String
+  owner       String
+  createdAt   DateTime           @default(now())
+  isCompleted Boolean            @default(false)
+  completedAt DateTime?
+  deadline    DateTime?
+  location    String?
+  budgetLimit Decimal?           @db.Decimal(10, 2)
+  items       ShoppingListItem[]
 
   @@unique([name, owner])
 }
 
 model ShoppingListItem {
-  id              Int      @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   shoppingListId  Int
-  name            String // name of the item (not linked to pantry)
   quantity        Float
-  unit            String?
-  price           Decimal? @db.Decimal(10, 2)
-  restockTrigger  String?
+  price           Decimal?     @db.Decimal(10, 2)
   customThreshold Float?
-
-  shoppingList ShoppingList @relation(fields: [shoppingListId], references: [id])
+  restockTrigger  String?
+  name            String
+  unit            String?
+  purchased       Boolean      @default(false)
+  purchasedAt     DateTime?
+  shoppingList    ShoppingList @relation(fields: [shoppingListId], references: [id])
 
   @@unique([shoppingListId, name])
 }
 
 model Recipe {
-  id              Int       @id @default(autoincrement())
+  id              Int                @id @default(autoincrement())
   title           String
   description     String?
   imageUrl        String?
   cuisine         String
-  dietary         String[]   // e.g., ["Vegan","Gluten-Free"]
-  ingredientItems RecipeIngredient[]
+  dietary         String[]
   owner           String?
-
-  // Add these fields (nullable to match existing rows)
-  instructions    String?    @db.Text
-  servings        Int?
-  prepMinutes     Int?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
   cookMinutes     Int?
+  instructions    String?
+  prepMinutes     Int?
+  servings        Int?
   sourceUrl       String?
-
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  ingredientItems RecipeIngredient[]
 
   @@unique([title, owner], name: "title_owner")
   @@index([title])
@@ -145,14 +166,13 @@ model Recipe {
 }
 
 model RecipeIngredient {
-  id        Int      @id @default(autoincrement())
-  recipeId  Int
-  recipe    Recipe   @relation(fields: [recipeId], references: [id])
-
-  name      String
-  quantity  Float?
-  unit      String?
-  order     Int?
+  id       Int     @id @default(autoincrement())
+  recipeId Int
+  name     String
+  quantity Float?
+  unit     String?
+  order    Int?
+  recipe   Recipe  @relation(fields: [recipeId], references: [id])
 
   @@index([recipeId])
 }

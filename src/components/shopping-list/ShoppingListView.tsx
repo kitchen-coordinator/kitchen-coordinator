@@ -28,22 +28,21 @@ export default function ShoppingListView({ initialShoppingLists }: ShoppingListV
         className="mb-4 d-flex justify-content-center align-items-center text-center"
         style={{ minHeight: '60px' }}
       >
-        <Col xs={12} md={6} lg={4} className="mb-2">
+        <Col xs={12} md={6} lg={4} className="m-2">
           <Form.Control
             type="text"
             placeholder="Search shopping lists..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ padding: '12px', fontSize: '1rem' }}
           />
         </Col>
 
-        <Col xs="auto" className="mb-2">
+        <Col xs="auto" className="m-2">
           <Button
             onClick={() => setShow(true)}
             style={{
               backgroundColor: 'var(--fern-green)',
-              height: '34px',
-              padding: '4px 12px',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -60,13 +59,11 @@ export default function ShoppingListView({ initialShoppingLists }: ShoppingListV
           />
         </Col>
 
-        <Col xs="auto" className="mb-2">
+        <Col xs="auto" className="m-2">
           <Button
             onClick={() => setShowCreateList(true)}
             style={{
               backgroundColor: 'var(--fern-green)',
-              height: '34px',
-              padding: '4px 12px',
               display: 'flex',
               alignItems: 'center',
             }}

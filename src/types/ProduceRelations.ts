@@ -1,10 +1,11 @@
 // src/types/ProduceRelations.ts
-import { Produce, Location, Storage } from '@prisma/client';
 
-export type ProduceRelations = Omit<
-Produce,
-'locationId' | 'storageId' | 'restockTrigger' | 'customThreshold'
-> & {
-  location: Location;
-  storage: Storage;
-};
+import { Prisma } from '@prisma/client';
+
+export type ProduceRelations = Prisma.ProduceGetPayload<{
+  include: {
+    location: true;
+    storage: true;
+    commonItem: true;
+  };
+}>;
