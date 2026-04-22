@@ -2,9 +2,14 @@
   "name": "nextjs-application-template-1",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "next dev",
     "dev-https": "next dev --experimental-https",
+    "postinstall": "prisma generate",
+    "migrate:produce-base": "ts-node scripts/migrate-produce-to-base.ts",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
@@ -19,14 +24,11 @@
   "dependencies": {
     "@hookform/resolvers": "^3.6.0",
     "@ngneat/falso": "^7.2.0",
-    "@prisma/adapter-pg": "^7.1.0",
-    "@prisma/client": "^7.0.1",
-    "@prisma/config": "^7.0.1",
+    "@prisma/client": "^6.19.3",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
-    "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
-    "bootstrap": "^5.3.3",
+    "bootstrap": "^5.3.8",
     "cookie": "^1.0.2",
     "firebase": "^12.6.0",
     "framer-motion": "^12.23.12",
@@ -37,7 +39,7 @@
     "nodemailer": "^7.0.7",
     "pg": "^8.16.3",
     "react": "^18",
-    "react-bootstrap": "^2.10.4",
+    "react-bootstrap": "^2.10.10",
     "react-bootstrap-icons": "^1.11.4",
     "react-dom": "^18",
     "react-hook-form": "^7.52.0",
@@ -49,7 +51,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",
-    "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.18.6",
     "@types/nodemailer": "^7.0.1",
@@ -63,9 +64,12 @@
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.3.1",
     "prettier-eslint": "^16.3.0",
-    "prisma": "^7.0.1",
+    "prisma": "^6.19.3",
     "testcafe": "^3.7.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

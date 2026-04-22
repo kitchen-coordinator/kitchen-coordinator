@@ -22,14 +22,18 @@ export default async function RecipeDetailPage({ params }: PageProps) {
   const email = session?.user?.email ?? null;
 
   let pantry: any[] = [];
+  let pantryFull: any[] = [];
   if (email) {
-    pantry = await getUserProduceByEmail(email);
+    [pantry, pantryFull] = await Promise.all([
+      getUserProduceByEmail(email),
+      getUserProduceWithQuantity(email),
+    ]);
   }
 
   // Create a set of pantry item names (lowercase for case-insensitive matching)
   const pantryNames = new Set(pantry.map((p) => p.name.toLowerCase()));
 
-  const displayOwner = recipe.owner?.includes('admin@foo.com') ? ['Pantry Pals Team'] : recipe.owner;
+  const displayOwner = recipe.owner?.includes('admin@foo.com') ? ['Kitchen Coordinator Team'] : recipe.owner;
 
   // Only use ingredientItems from the relation
   const ingredientItems = recipe.ingredientItems ?? [];
