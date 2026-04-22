@@ -3,12 +3,17 @@ import { Container, Row, Col, Image, Badge, Button } from 'react-bootstrap';
 import { notFound } from 'next/navigation';
 import { getRecipeById } from '@/lib/recipes';
 import { getServerSession } from 'next-auth';
+<<<<<<< Updated upstream
 import { getUserProduceByEmail } from '@/lib/dbActions';
 import AddToShoppingList from '@/components/recipes/AddToShoppingList';
 import UploadDishButton from '@/components/recipes/UploadDishButton';
 import ViewDishImagesButton from '@/components/recipes/ViewDishImagesButton';
+=======
 import { getUserProduceByEmail, getUserProduceWithQuantity } from '@/lib/dbActions';
+import UploadDishButton from '@/components/recipes/UploadDishButton';
+import ViewDishImagesButton from '@/components/recipes/ViewDishImagesButton';
 import RecipeIngredientsPanel from '@/components/recipes/RecipeIngredientsPanel';
+>>>>>>> Stashed changes
 
 type PageProps = { params: { id: string } };
 export const dynamic = 'force-dynamic';
