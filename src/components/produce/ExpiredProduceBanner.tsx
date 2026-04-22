@@ -105,23 +105,25 @@ export default function ExpiredItemsBanner({
       const oldestExpiredDate = new Date(oldestExpired.expiration);
       const oldestExpiredLocation = typeof
       oldestExpired.location === 'object' ? oldestExpired.location?.name : oldestExpired.location;
+      const oldestExpiredStorage = typeof
+      oldestExpired.storage === 'object' ? oldestExpired.storage?.name : oldestExpired.storage;
 
       const diffTime = Math.abs(today.getTime() - oldestExpiredDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      if (!oldestExpiredLocation) {
+      if (!(oldestExpiredStorage && oldestExpiredLocation)) {
         // No location info available
         alertText = `Yikes! You have an item that expired ${diffDays} days ago!`;
       } else if (diffDays <= 1) {
         // (1) Expired today or yesterday
-        alertText = `We've got some cleaning to do at ${oldestExpiredLocation}!`;
+        alertText = `We've got some cleaning to do in the ${oldestExpiredStorage} at ${oldestExpiredLocation}!`;
       } else if (diffDays <= 7) {
         // (2) Expired within the last week
-        alertText = `Uh Oh... Something at ${oldestExpiredLocation} is past it's prime!`;
+        alertText = `Uh Oh... Something in the ${oldestExpiredStorage} at ${oldestExpiredLocation} is past it's prime!`;
       } else {
         // (3) Expired for over a week
         alertText = `You've had expired items for ${diffDays} days now...
-         It's time to clean out ${oldestExpiredLocation}!`;
+         Time to clean out the ${oldestExpiredStorage} at ${oldestExpiredLocation}!`;
       }
       return alertText;
     }
@@ -133,26 +135,26 @@ export default function ExpiredItemsBanner({
 
   const formatExpiredItems = () => {
     if (expiredItems.length <= 0) return null;
-    return (
-      <div>
-        <h5>
-          {`${expiredItems.length} item
-          ${expiredItems.length !== 1 ? 's are' : ' is'} expired!`}
-        </h5>
-      </div>
-    );
+
+    const first = expiredItems[0].name;
+
+    if (expiredItems.length === 1) {
+      return `${first} has expired.`;
+    }
+
+    return `${first} and ${expiredItems.length - 1} other items have expired.`;
   };
 
   const formatExpiringSoonItems = () => {
-    if (expiringWithinWeek.length <= 0) return null;
-    return (
-      <div>
-        <h5>
-          {`${expiringWithinWeek.length} item
-          ${expiringWithinWeek.length !== 1 ? 's are' : ' is'} expiring soon!`}
-        </h5>
-      </div>
-    );
+    if (expiringWithinWeek.length === 0) return null;
+
+    const first = expiringWithinWeek[0].name;
+
+    if (expiringWithinWeek.length === 1) {
+      return `${first} is expiring soon.`;
+    }
+
+    return `${first} and ${expiringWithinWeek.length - 1} other items are expiring soon.`;
   };
 
   // For clearer render
@@ -175,15 +177,15 @@ export default function ExpiredItemsBanner({
       />
       <Col>
         <Alert.Heading style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-        {formatAlertText()}
+          {formatAlertText()}
         </Alert.Heading>
         <Row>
           <Col className="mt-2">
             <p className="mb-2">
-            {expiredItemsSection}
+              {expiredItemsSection}
             </p>
             <p className="mb-2">
-            {expiringSoonSection}
+              {expiringSoonSection}
             </p>
           </Col>
           <Col className="mt-auto d-flex justify-content-end">
