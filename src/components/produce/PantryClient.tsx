@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { PlusCircle, Trash } from 'react-bootstrap-icons';
 import AddProduceModal from './AddProduceModal';
 import ProduceListWithGrouping from './ProduceListWithGrouping';
+import ExpiredProduceBanner from './ExpiredProduceBanner';
 import '../../styles/buttons.css';
 import AddLocationModal from './AddLocationModal';
 
@@ -124,6 +125,7 @@ function PantryClient({
   return (
     <main>
       <Container id="view-pantry" className="py-3">
+        <ExpiredProduceBanner ownerEmail={owner} produce={initialProduce} />
         <Row className="mb-3">
           <Col className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h1>Your Pantry at a Glance</h1>
