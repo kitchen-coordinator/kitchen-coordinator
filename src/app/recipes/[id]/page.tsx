@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Container, Row, Col, Image, Badge, Button } from 'react-bootstrap';
-import { CheckCircleFill, XCircleFill } from 'react-bootstrap-icons';
 import { notFound } from 'next/navigation';
 import { getRecipeById } from '@/lib/recipes';
 import { getServerSession } from 'next-auth';
@@ -8,6 +7,8 @@ import { getUserProduceByEmail } from '@/lib/dbActions';
 import AddToShoppingList from '@/components/recipes/AddToShoppingList';
 import UploadDishButton from '@/components/recipes/UploadDishButton';
 import ViewDishImagesButton from '@/components/recipes/ViewDishImagesButton';
+import { getUserProduceByEmail, getUserProduceWithQuantity } from '@/lib/dbActions';
+import RecipeIngredientsPanel from '@/components/recipes/RecipeIngredientsPanel';
 
 type PageProps = { params: { id: string } };
 export const dynamic = 'force-dynamic';
@@ -35,8 +36,21 @@ export default async function RecipeDetailPage({ params }: PageProps) {
   // Only use ingredientItems from the relation
   const ingredientItems = recipe.ingredientItems ?? [];
 
+  const ingredientItemsDisplay = ingredientItems.map((item) => ({
+    ...item,
+    hasItem: pantryNames.has(item.name.toLowerCase()),
+  }));
+
   // Missing item names (for AddToShoppingList)
-  const missingItems = ingredientItems.filter((item) => !pantryNames.has(item.name.toLowerCase()));
+  const missingItems = ingredientItems
+    .filter((item) => !pantryNames.has(item.name.toLowerCase()))
+    .map((item) => ({
+      name: item.name,
+      quantity: item.quantity ?? null,
+      unit: item.unit ?? null,
+    }));
+
+  const baseServings = recipe.servings && recipe.servings > 0 ? recipe.servings : 1;
 
   return (
     <main style={{ backgroundColor: '#f8f9fa' }}>
@@ -263,6 +277,7 @@ export default async function RecipeDetailPage({ params }: PageProps) {
             )}
 
             {/* Ingredients */}
+<<<<<<< Updated upstream
             <div className="card border-0 shadow-sm mb-4">
               <div className="card-body">
                 <h5 className="mb-3 fw-bold" style={{ color: '#2c3e50' }}>
@@ -309,6 +324,16 @@ export default async function RecipeDetailPage({ params }: PageProps) {
                 <AddToShoppingList missingItems={missingItems} />
               </div>
             </div>
+=======
+            <RecipeIngredientsPanel
+              baseServings={baseServings}
+              ingredientItems={ingredientItemsDisplay}
+              missingItems={missingItems}
+              pantryFull={pantryFull}
+              recipeTitle={recipe.title}
+              showUseIngredients={!!email}
+            />
+>>>>>>> Stashed changes
 
             {/* Instructions */}
             {recipe.instructions?.trim() && (
