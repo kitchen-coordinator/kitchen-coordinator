@@ -84,32 +84,43 @@ export default function ExpiredItemsBanner({
     return (
       <div>
         <h5>
-          {`You have ${expiredItems.length} expired item
-          ${expiredItems.length !== 1 ? 's' : ''}`}
+          {`${expiredItems.length} item
+          ${expiredItems.length !== 1 ? 's are' : ' is'} expired!`}
         </h5>
-        <p>
-          These items have passed their expiration date and may no longer be safe
-          or at their best quality.
-        </p>
+      </div>
+    );
+  };
+
+  const formatExpiringSoonItems = () => {
+    if (expiringWithinWeek.length <= 0) return null;
+    return (
+      <div>
+        <h5>
+          {`${expiringWithinWeek.length} item
+          ${expiringWithinWeek.length !== 1 ? 's are' : ' is'} expiring soon!`}
+        </h5>
       </div>
     );
   };
 
   // For clearer render
   const expiredItemsSection = formatExpiredItems();
+  const expiringSoonSection = formatExpiringSoonItems();
 
-  console.log('Expired Items:', expiredItems);
   return (
     <Card className="mb-4 shadow-sm border-light">
       <Card.Body>
         <Row className="align-items-center">
           <Col>
             {expiredItemsSection}
+            {expiringSoonSection}
           </Col>
-
-          <Col xs="auto">
-            <Button variant="outline-secondary" onClick={handleHideForNow}>
-              Hide for now
+          <Col xs="3" className="text-end">
+            <Button
+              variant="outline-secondary"
+              onClick={handleHideForNow}
+            >
+              Remind Me Later!
             </Button>
           </Col>
         </Row>
