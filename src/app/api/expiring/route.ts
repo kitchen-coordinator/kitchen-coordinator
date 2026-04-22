@@ -24,6 +24,7 @@ export async function GET(req: Request) {
       expiration: { not: null, lte: nextWeek },
     },
     orderBy: { expiration: 'asc' },
+    include: { location: true, storage: true },
   });
 
   // Filter: < Today
