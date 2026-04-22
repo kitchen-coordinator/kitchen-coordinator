@@ -60,7 +60,7 @@ const ProduceTable = ({
             ))
           ) : (
             <tr>
-              <td colSpan={9} className="text-center">
+              <td colSpan={7} className="text-center">
                 No items found
               </td>
             </tr>

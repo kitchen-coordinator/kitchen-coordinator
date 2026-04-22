@@ -1,14 +1,18 @@
 .btn-edit {
-    width: 100%;
-    padding: 4px;
+    padding: 8px 16px;
     background-color: var(--hunter-green);
     color: white;
     font-size: 1rem;
-    font-weight: 400;
+    font-weight: bold;
     border: none;
     border-radius: 8px;
     transition: background-color 0.3s ease, transform 0.2s ease;
     cursor: pointer;
+    text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .btn-edit:hover {
@@ -48,7 +52,8 @@
 .btn-reset {
     width: 100%;
     padding: 12px;
-    background-color: #6c757d;
+    background-color: red;
+    color: white;
     font-size: 1rem;
     font-weight: bold;
     border: none;
@@ -59,7 +64,7 @@
 }
 
 .btn-reset:hover {
-    background-color: #5a6268;
+    background-color: darkred;
     transform: translateY(-2px);
 }
 
@@ -74,6 +79,10 @@
     transition: background-color 0.3s ease, transform 0.2s ease;
     cursor: pointer;
     text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .btn-add:hover {
@@ -82,16 +91,20 @@
 }
 
 .btn-delete {
-    width: 100%;
-    padding: 4px;
+    padding: 8px 16px;
     background-color: red;
     color: white;
     font-size: 1rem;
-    font-weight: 400;
+    font-weight: bold;
     border: none;
     border-radius: 8px;
     transition: background-color 0.3s ease, transform 0.2s ease;
     cursor: pointer;
+    text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .btn-delete:hover {
