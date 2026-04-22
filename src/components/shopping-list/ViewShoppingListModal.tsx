@@ -1,12 +1,15 @@
-/* eslint-disable react/jsx-one-expression-per-line */
-/* eslint-disable function-paren-newline */
-/* eslint-disable implicit-arrow-linebreak */
-
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button, Col, Modal, Row, Table } from 'react-bootstrap';
-import { BagCheckFill } from 'react-bootstrap-icons';
+import { useEffect, useState } from 'react';
+import { Modal, Button } from 'react-bootstrap';
+import {
+  PencilSquare,
+  Trash,
+  Calendar,
+  GeoAlt,
+  CurrencyDollar,
+} from 'react-bootstrap-icons';
+import styles from '@/styles/shopping-list.module.css';
 import AddToShoppingListModal from './AddToShoppingListModal';
 import EditShoppingListItemModal from './EditShoppingListItemModal';
 
@@ -18,203 +21,388 @@ interface ShoppingListItem {
   price?: number | null;
   restockTrigger?: string | null;
   customThreshold?: number | null;
+  purchased?: boolean;
 }
 
 interface ShoppingList {
   id: number;
   name: string;
+  isCompleted?: boolean;
+  completedAt?: string | null;
+  deadline?: string | null;
+  location?: string | null;
+  budgetLimit?: number | null;
   items?: ShoppingListItem[];
 }
 
-interface ViewShoppingListModalProps {
+type ViewShoppingListModalProps = {
   show: boolean;
   onHide: () => void;
-  shoppingList?: ShoppingList; // optional for safety
-}
+  shoppingList?: ShoppingList;
+};
 
-const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListModalProps) => {
+export default function ViewShoppingListModal({
+  show,
+  onHide,
+  shoppingList,
+}: ViewShoppingListModalProps) {
   const [items, setItems] = useState<ShoppingListItem[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
-  const [checkedState, setCheckedState] = useState<Record<number, boolean>>({});
   const [editingItem, setEditingItem] = useState<ShoppingListItem | null>(null);
+  const [checkedState, setCheckedState] = useState<Record<number, boolean>>({});
+  const [pendingChecks, setPendingChecks] = useState<Record<number, boolean>>({});
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [deadline, setDeadline] = useState('');
+  const [location, setLocation] = useState('');
+  const [budgetLimit, setBudgetLimit] = useState('');
+  const [editingDeadline, setEditingDeadline] = useState(false);
+  const [editingLocation, setEditingLocation] = useState(false);
+  const [editingBudget, setEditingBudget] = useState(false);
+  const [savingDetails, setSavingDetails] = useState(false);
 
-  // Update items when the shopping list changes
+  const listIsCompleted = !!shoppingList?.isCompleted;
+  const listId = shoppingList?.id;
+
+  const totalCost = items.reduce((sum, item) => {
+    const price = item.price ? parseFloat(item.price.toString()) : 0;
+    return sum + price * item.quantity;
+  }, 0);
+
+  const applyItemsToLocalState = (nextItems: ShoppingListItem[]) => {
+    setItems(nextItems);
+    const purchasedState = nextItems.reduce(
+      (acc, item) => {
+        acc[item.id] = !!item.purchased;
+        return acc;
+      },
+      {} as Record<number, boolean>,
+    );
+    setCheckedState(purchasedState);
+  };
+
   useEffect(() => {
+    if (shoppingList) {
+      setDeadline(
+        shoppingList.deadline
+          ? new Date(shoppingList.deadline).toISOString().slice(0, 10)
+          : '',
+      );
+      setLocation(shoppingList.location ?? '');
+      setBudgetLimit(shoppingList.budgetLimit?.toString() ?? '');
+    }
     if (shoppingList?.items) {
-      setItems(shoppingList.items);
-      const saved = localStorage.getItem(`checkboxes-${shoppingList.id}`);
-      if (saved) setCheckedState(JSON.parse(saved));
+      applyItemsToLocalState(shoppingList.items);
     }
   }, [shoppingList]);
 
-  const handleRestockChange = async (itemId: number, restockTrigger: string) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, restockTrigger } : item)),
-    );
+  useEffect(() => {
+    if (!show || !listId) return;
+    setIsLoadingItems(true);
+    fetch(`/api/shopping-list/${listId}`)
+      .then((r) => r.json())
+      .then((list) => {
+        applyItemsToLocalState(list.items || []);
+        setDeadline(list.deadline?.slice(0, 10) ?? '');
+        setLocation(list.location ?? '');
+        setBudgetLimit(list.budgetLimit?.toString() ?? '');
+      })
+      .catch(console.error)
+      .finally(() => setIsLoadingItems(false));
+  }, [show, listId]);
 
-    await fetch(`/api/shopping-list-item/${itemId}/restock`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ restockTrigger }),
-    });
-  };
-
-  const handleThresholdChange = async (itemId: number, customThreshold: number) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, customThreshold } : item)),
-    );
-
-    await fetch(`/api/shopping-list-item/${itemId}/restock`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customThreshold }),
-    });
+  const handleSaveDetails = async () => {
+    if (!listId || listIsCompleted) return;
+    setSavingDetails(true);
+    setSaveError(null);
+    try {
+      const res = await fetch(`/api/shopping-list/${listId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deadline: deadline || null,
+          location: location || null,
+          budgetLimit: budgetLimit ? Number(budgetLimit) : null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to save details');
+      setEditingDeadline(false);
+      setEditingLocation(false);
+      setEditingBudget(false);
+    } catch (err: any) {
+      setSaveError(err?.message || 'Failed to save details');
+    } finally {
+      setSavingDetails(false);
+    }
   };
 
   const handleDeleteItem = async (itemId: number) => {
+    if (listIsCompleted) return;
+    setDeletingItemId(itemId);
     try {
-      setDeletingItemId(itemId);
-      await fetch(`/api/shopping-list-item/${itemId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/shopping-list-item/${itemId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete item');
       setItems((prev) => prev.filter((i) => i.id !== itemId));
-    } catch (err) {
-      console.error('Failed to delete item:', err);
+      setCheckedState((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
+    } catch (err: any) {
+      setSaveError(err?.message || 'Failed to delete item');
     } finally {
       setDeletingItemId(null);
     }
   };
 
-  const toggleCheckbox = (itemId: number) => {
-    setCheckedState(prev => {
-      const updated = { ...prev, [itemId]: !prev[itemId] };
-
-      if (shoppingList) {
-        localStorage.setItem(`checkboxes-${shoppingList.id}`, JSON.stringify(updated));
-      }
-
-      return updated;
-    });
+  const toggleCheckbox = async (itemId: number) => {
+    if (listIsCompleted || isLoadingItems || pendingChecks[itemId]) return;
+    setSaveError(null);
+    const nextPurchased = !checkedState[itemId];
+    setCheckedState((prev) => ({ ...prev, [itemId]: nextPurchased }));
+    setPendingChecks((prev) => ({ ...prev, [itemId]: true }));
+    try {
+      const res = await fetch(`/api/shopping-list-item/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ purchased: nextPurchased }),
+      });
+      if (!res.ok) throw new Error('Failed to save item purchase state.');
+      const updated = await res.json() as ShoppingListItem;
+      setItems((prev) => prev.map((item) => (item.id === itemId ? updated : item)));
+      setCheckedState((prev) => ({ ...prev, [itemId]: !!updated.purchased }));
+    } catch (error: any) {
+      setSaveError(error?.message || 'Failed to save checkbox update.');
+      setCheckedState((prev) => ({ ...prev, [itemId]: !nextPurchased }));
+    } finally {
+      setPendingChecks((prev) => ({ ...prev, [itemId]: false }));
+    }
   };
 
   if (!shoppingList) return null;
 
+  const renderSaveBtn = () => (
+    <button
+      type="button"
+      onClick={handleSaveDetails}
+      disabled={savingDetails}
+      className={styles.saveBtn}
+    >
+      {savingDetails ? '...' : 'Save'}
+    </button>
+  );
+
   return (
     <>
-      <Modal show={show} onHide={onHide} centered size="lg">
-        <Modal.Header className="justify-content-center">
-          <Modal.Title>{shoppingList?.name ?? 'Shopping List'}</Modal.Title>
-        </Modal.Header>
+      <Modal show={show} onHide={onHide} centered>
 
-        <Modal.Body>
-          {items.length > 0 ? (
-            <Row>
-              <Col>
-                <Table striped bordered hover size="sm" responsive className="text-center">
-                  <thead>
-                    <tr>
-                      <th>
-                        <BagCheckFill color="black" size={18} />
-                      </th>
-                      <th>Item</th>
-                      <th>Quantity</th>
-                      <th>Unit</th>
-                      <th>Price</th>
-                      <th>Restock When</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <input
-                            type="checkbox"
-                            checked={!!checkedState[item.id]}
-                            onChange={() => toggleCheckbox(item.id)}
-                            aria-label={`Select ${item.name}`}
-                          />
-                        </td>
-                        <td>{item.name}</td>
-                        <td>{item.quantity}</td>
-                        <td>{item.unit || '-'}</td>
-                        <td>{item.price ? `$${Number(item.price).toFixed(2)}` : 'N/A'}</td>
-                        <td>
-                          <select
-                            value={item.restockTrigger || 'empty'}
-                            onChange={(e) => handleRestockChange(item.id, e.target.value)}
-                            className="form-select form-select-sm"
-                          >
-                            <option value="empty">When empty</option>
-                            <option value="half">When half gone</option>
-                            <option value="custom">Custom % left</option>
-                          </select>
+        <div className={styles.modalHeader}>
+          <p className={styles.modalHeaderTitle}>
+            {shoppingList.name ?? 'Shopping List'}
+          </p>
+          <p className={styles.modalHeaderSubtitle}>
+            {`${items.length} items · $${totalCost.toFixed(2)} estimated`}
+          </p>
+        </div>
 
-                          {item.restockTrigger === 'custom' && (
-                            <input
-                              type="number"
-                              min="1"
-                              max="100"
-                              value={item.customThreshold || ''}
-                              onChange={(e) =>
-                                handleThresholdChange(item.id, parseFloat(e.target.value))}
-                              className="form-control form-control-sm mt-1"
-                              placeholder="% left"
-                            />
-                          )}
-                        </td>
-                        <td className="d-flex gap-2 justify-content-center">
-                          <Button
-                            variant="edit"
-                            size="sm"
-                            onClick={() => setEditingItem(item)}
-                          >
-                            Edit
-                          </Button>
-
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDeleteItem(item.id)}
-                            disabled={deletingItemId === item.id}
-                          >
-                            {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Col>
-            </Row>
-          ) : (
-            <Row>
-              <Col className="text-center">
-                <p className="text-muted mb-0">No items in this shopping list.</p>
-              </Col>
-            </Row>
+        <Modal.Body className={styles.modalBody}>
+          {saveError && (
+            <p className={styles.saveError}>{saveError}</p>
           )}
 
-          <Row className="pt-4">
-            <Col className="text-center">
-              <Button
-                variant="success"
-                style={{ backgroundColor: 'var(--fern-green)' }}
-                className="btn-submit"
-                onClick={() => {
-                  onHide();
-                  setShowAddModal(true);
-                }}
-              >
-                + Add Item
-              </Button>
-            </Col>
-            <Col className="text-center">
-              <Button onClick={onHide} variant="secondary" className="btn-submit">
-                Close
-              </Button>
-            </Col>
-          </Row>
+          {/* Deadline Row */}
+          <div className={styles.detailRow}>
+            <div className={styles.iconBox}>
+              <Calendar size={20} color="white" />
+            </div>
+            <div className={styles.detailRowContent}>
+              <p className={styles.detailLabel}>Deadline</p>
+              {editingDeadline ? (
+                <input
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  className={styles.detailInput}
+                />
+              ) : (
+                <p className={styles.detailSubText}>{deadline || 'Not set'}</p>
+              )}
+            </div>
+            {!listIsCompleted && (
+              editingDeadline
+                ? renderSaveBtn()
+                : (
+                  <button
+                    type="button"
+                    onClick={() => setEditingDeadline(true)}
+                    className={styles.iconBtn}
+                  >
+                    <PencilSquare size={18} color="var(--bs-secondary)" />
+                  </button>
+                )
+            )}
+          </div>
+
+          {/* Location Row */}
+          <div className={styles.detailRow}>
+            <div className={styles.iconBox}>
+              <GeoAlt size={20} color="white" />
+            </div>
+            <div className={styles.detailRowContent}>
+              <p className={styles.detailLabel}>Store / Location</p>
+              {editingLocation ? (
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. Costco"
+                  className={styles.detailInputFull}
+                />
+              ) : (
+                <p className={styles.detailSubText}>{location || 'Not set'}</p>
+              )}
+            </div>
+            {!listIsCompleted && (
+              editingLocation
+                ? renderSaveBtn()
+                : (
+                  <button
+                    type="button"
+                    onClick={() => setEditingLocation(true)}
+                    className={styles.iconBtn}
+                  >
+                    <PencilSquare size={18} color="var(--bs-secondary)" />
+                  </button>
+                )
+            )}
+          </div>
+
+          {/* Budget Row */}
+          <div className={styles.detailRow}>
+            <div className={styles.iconBox}>
+              <CurrencyDollar size={20} color="white" />
+            </div>
+            <div className={styles.detailRowContent}>
+              <p className={styles.detailLabel}>Budget</p>
+              {editingBudget ? (
+                <input
+                  type="number"
+                  value={budgetLimit}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (val >= 0) setBudgetLimit(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-') e.preventDefault();
+                  }}
+                  placeholder="e.g. 100.00"
+                  min="0"
+                  step="0.01"
+                  className={styles.detailInputBudget}
+                />
+              ) : (
+                <p className={styles.detailSubText}>
+                  {budgetLimit ? `$${Number(budgetLimit).toFixed(2)}` : 'Not set'}
+                </p>
+              )}
+            </div>
+            {!listIsCompleted && (
+              editingBudget
+                ? renderSaveBtn()
+                : (
+                  <button
+                    type="button"
+                    onClick={() => setEditingBudget(true)}
+                    className={styles.iconBtn}
+                  >
+                    <PencilSquare size={18} color="var(--bs-secondary)" />
+                  </button>
+                )
+            )}
+          </div>
+
+          {/* Items Section */}
+          <div className={styles.itemsSectionHeader}>
+            <p className={styles.itemsSectionLabel}>Items</p>
+          </div>
+
+          {isLoadingItems && (
+            <p className={styles.loadingText}>Loading...</p>
+          )}
+
+          {!isLoadingItems && items.length === 0 && (
+            <p className={styles.loadingText}>No items in this list.</p>
+          )}
+
+          {!isLoadingItems && items.map((item) => {
+            const itemSubText = [
+              `${item.quantity}${item.unit ? ` ${item.unit}` : ''}`,
+              item.price ? `$${Number(item.price).toFixed(2)}` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ');
+
+            return (
+              <div key={item.id} className={styles.itemRow}>
+                <input
+                  type="checkbox"
+                  checked={!!checkedState[item.id]}
+                  onChange={() => toggleCheckbox(item.id)}
+                  disabled={listIsCompleted || !!pendingChecks[item.id] || isLoadingItems}
+                  className={styles.itemCheckbox}
+                />
+                <div className={styles.itemContent}>
+                  <p className={
+                    checkedState[item.id]
+                      ? styles.itemNamePurchased
+                      : styles.itemName
+                  }
+                  >
+                    {item.name}
+                  </p>
+                  <p className={styles.itemSubText}>{itemSubText}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => !listIsCompleted && setEditingItem(item)}
+                  disabled={listIsCompleted}
+                  className={styles.iconBtn}
+                >
+                  <PencilSquare size={18} color="var(--bs-secondary)" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => !listIsCompleted && handleDeleteItem(item.id)}
+                  disabled={listIsCompleted || deletingItemId === item.id}
+                  className={styles.iconBtn}
+                  style={{ opacity: deletingItemId === item.id ? 0.5 : 1 }}
+                >
+                  <Trash size={18} color="#dc3545" />
+                </button>
+              </div>
+            );
+          })}
         </Modal.Body>
+
+        <Modal.Footer className={styles.modalFooter}>
+          <Button
+            onClick={() => setShowAddModal(true)}
+            disabled={listIsCompleted || isLoadingItems}
+            className={styles.addItemBtn}
+          >
+            + Add Item
+          </Button>
+          <Button
+            onClick={onHide}
+            variant="secondary"
+            disabled={isLoadingItems}
+          >
+            Close
+          </Button>
+        </Modal.Footer>
       </Modal>
 
       <AddToShoppingListModal
@@ -224,23 +412,27 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
         sidePanel={false}
         prefillName=""
       />
+
       {editingItem && (
-      <EditShoppingListItemModal
-        show={!!editingItem}
-        onHide={() => setEditingItem(null)}
-        item={editingItem}
-      />
+        <EditShoppingListItemModal
+          show={!!editingItem}
+          onHide={() => setEditingItem(null)}
+          item={editingItem}
+        />
       )}
     </>
   );
-};
+}
 
 ViewShoppingListModal.defaultProps = {
   shoppingList: {
     id: 0,
     name: '',
+    isCompleted: false,
+    completedAt: null,
+    deadline: null,
+    location: null,
+    budgetLimit: null,
     items: [],
   },
 };
-
-export default ViewShoppingListModal;

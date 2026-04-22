@@ -7,6 +7,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import swal from 'sweetalert';
 import { AddLocationSchema } from '@/lib/validationSchemas';
 import { addLocation } from '@/lib/dbActions';
+import { useRouter } from 'next/navigation';
 import '../../styles/buttons.css';
 
 type LocationValues = {
@@ -21,6 +22,7 @@ interface AddLocationModalProps {
 }
 
 export default function AddLocationModal({ show, onHide, owner }: AddLocationModalProps) {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -45,7 +47,7 @@ export default function AddLocationModal({ show, onHide, owner }: AddLocationMod
       await addLocation(data);
       await swal('Success', 'Location added successfully!', 'success', { timer: 1800 });
       handleClose();
-      window.location.reload();
+      router.refresh();
     } catch (err) {
       console.error(err);
       await swal('Error', 'Failed to add location.', 'error');
