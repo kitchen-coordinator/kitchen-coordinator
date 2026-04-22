@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { CheckCircleFill, XCircleFill } from 'react-bootstrap-icons';
 import AddToShoppingList, { type MissingItem } from '@/components/recipes/AddToShoppingList';
-import UseIngredientsButton from '@/components/recipes/UseIngredientsButton';
 import styles from './RecipeIngredientsPanel.module.css';
 
 export type IngredientItemDisplay = {
@@ -15,20 +14,10 @@ export type IngredientItemDisplay = {
   hasItem: boolean;
 };
 
-export type PantryItem = {
-  id: number;
-  name: string;
-  quantity: number;
-  unit: string;
-};
-
 type Props = {
   baseServings: number; // caller-normalized to >= 1
   ingredientItems: IngredientItemDisplay[];
   missingItems: MissingItem[];
-  pantryFull: PantryItem[];
-  recipeTitle: string;
-  showUseIngredients: boolean;
 };
 
 function roundToDisplay(n: number) {
@@ -54,9 +43,6 @@ export default function RecipeIngredientsPanel({
   baseServings,
   ingredientItems,
   missingItems,
-  pantryFull,
-  recipeTitle,
-  showUseIngredients,
 }: Props) {
   const [servings, setServings] = useState<number>(baseServings);
 
@@ -79,17 +65,6 @@ export default function RecipeIngredientsPanel({
       return { ...item, quantity: item.quantity * scale };
     }),
     [missingItems, scale],
-  );
-
-  // Pass scaled quantities into "Use Ingredients" flow too
-  const scaledUseItems = useMemo(
-    () => ingredientItems.map((item) => ({
-      id: item.id ?? null,
-      name: item.name,
-      quantity: item.quantity == null ? null : item.quantity * scale,
-      unit: item.unit ?? null,
-    })),
-    [ingredientItems, scale],
   );
 
   return (
@@ -163,14 +138,7 @@ export default function RecipeIngredientsPanel({
         </ul>
 
         <AddToShoppingList missingItems={scaledMissingItems} />
-
-        {showUseIngredients && (
-          <div className="mt-3">
-            <UseIngredientsButton ingredientItems={scaledUseItems} pantry={pantryFull} recipeTitle={recipeTitle} />
-          </div>
-        )}
       </div>
     </div>
   );
 }
-
