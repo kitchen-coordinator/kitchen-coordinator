@@ -17,23 +17,31 @@ export async function GET(req: Request) {
   const nextWeek = new Date();
   nextWeek.setDate(today.getDate() + 7);
 
-  // Fetch Items
-  const expireItems = await prisma.produce.findMany({
+  // Fetch Items and include location/storage names for easier frontend display
+  const rawExpireItems = await prisma.produce.findMany({
     where: {
       owner: ownerEmail,
       expiration: { not: null, lte: nextWeek },
     },
     orderBy: { expiration: 'asc' },
+    include: { location: true, storage: true },
   });
+
+  // Map location/storage to just their names for easier handling in frontend
+  const expireItems = rawExpireItems.map((item) => ({
+    ...item,
+    location: item.location.name ?? null,
+    storage: item.storage.name ?? null,
+  }));
 
   // Filter: < Today
   const expiredItems = expireItems.filter(
-    (item) => item.expiration && item.expiration < today,
+    (item) => item.expiration && new Date(item.expiration) < today,
   );
 
   // Filter: Today -> Next Week
   const expiringWithinWeek = expireItems.filter(
-    (item) => item.expiration && item.expiration >= today && item.expiration <= nextWeek,
+    (item) => item.expiration && new Date(item.expiration) >= today && new Date(item.expiration) <= nextWeek,
   );
 
   return NextResponse.json({ expiredItems, expiringWithinWeek });
