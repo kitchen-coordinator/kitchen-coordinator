@@ -1,25 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, Spinner, Row, Col, Button } from 'react-bootstrap';
 
 type ExpiredItemsBannerProps = {
   ownerEmail: string;
   produce: any[];
-  onHideForNow?: () => void;
-  onCleanUp?: (itemIds: string[]) => void;
 };
 
 export default function ExpiredItemsBanner({
   ownerEmail,
   produce,
-  onHideForNow,
-  onCleanUp,
 }: ExpiredItemsBannerProps) {
   const [expiredItems, setExpiredItems] = useState<any[]>([]);
   const [expiringWithinWeek, setExpiringWithinWeek] = useState<any[]>([]);
+  const firstLoad = useRef(false);
   const [loading, setLoading] = useState(true);
-  const [hiddenForNow, setHiddenForNow] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     if (!ownerEmail) {
@@ -30,7 +27,10 @@ export default function ExpiredItemsBanner({
     }
 
     const fetchExpiringItems = async () => {
-      setLoading(true);
+      if (!firstLoad.current) {
+        setLoading(true);
+      }
+
       try {
         const expRes = await fetch(`/api/expiring?owner=${encodeURIComponent(ownerEmail)}`);
 
@@ -43,6 +43,7 @@ export default function ExpiredItemsBanner({
         console.error('Error fetching expiring items:', err);
       } finally {
         setLoading(false);
+        firstLoad.current = true;
       }
     };
 
@@ -51,7 +52,7 @@ export default function ExpiredItemsBanner({
     return () => {
       clearInterval(interval);
     };
-  }, [ownerEmail]);
+  }, [ownerEmail, produce]);
 
   if (loading) {
     return (
@@ -70,35 +71,40 @@ export default function ExpiredItemsBanner({
 
   // Handle User Dismissal
   const handleHideForNow = () => {
-    setHiddenForNow(true);
-    onHideForNow?.();
-  };
-
-  const handleCleanUp = () => {
-    const itemIds = expiredItems.map((item) => item.id);
-    onCleanUp?.(itemIds);
+    setHidden(true);
   };
 
   // Render nothing if user has dismissed or if there are no expired/expiring items
-  if (hiddenForNow || (expiredItems.length === 0 && expiringWithinWeek.length === 0)) {
+  if (hidden || (expiredItems.length === 0 && expiringWithinWeek.length === 0)) {
     return null;
   }
 
+  const formatExpiredItems = () => {
+    if (expiredItems.length <= 0) return null;
+    return (
+      <div>
+        <h5>
+          {`You have ${expiredItems.length} expired item
+          ${expiredItems.length !== 1 ? 's' : ''}`}
+        </h5>
+        <p>
+          These items have passed their expiration date and may no longer be safe
+          or at their best quality.
+        </p>
+      </div>
+    );
+  };
+
+  // For clearer render
+  const expiredItemsSection = formatExpiredItems();
+
+  console.log('Expired Items:', expiredItems);
   return (
     <Card className="mb-4 shadow-sm border-light">
       <Card.Body>
         <Row className="align-items-center">
           <Col>
-            <h5>
-              You have
-              {expiredItems.length}
-              expired item
-              {expiredItems.length !== 1 ? 's' : ''}
-            </h5>
-            <p>
-              These items have passed their expiration date and may no longer be safe
-              or at their best quality.
-            </p>
+            {expiredItemsSection}
           </Col>
 
           <Col xs="auto">

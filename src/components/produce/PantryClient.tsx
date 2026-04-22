@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Col, Container, Row, Nav, Modal, Toast } from 'react-bootstrap';
-import { use, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PlusCircle, Trash } from 'react-bootstrap-icons';
 import AddProduceModal from './AddProduceModal';
@@ -26,7 +26,6 @@ function PantryClient({
   owner,
 }: PantryClientProps) {
   const router = useRouter();
-  const [showExpiredItemsBanner, setShowExpiredItemsBanner] = useState(true);
   const [showAddProduceModal, setShowAddProduceModal] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
   const [activeLocation, setActiveLocation] = useState<string>('all');
@@ -126,6 +125,7 @@ function PantryClient({
   return (
     <main>
       <Container id="view-pantry" className="py-3">
+        <ExpiredProduceBanner ownerEmail={owner} produce={initialProduce} />
         <Row className="mb-3">
           <Col className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h1>Your Pantry at a Glance</h1>
