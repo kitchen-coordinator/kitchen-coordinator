@@ -193,7 +193,7 @@ const About = () => (
               Learn More
             </h2>
             <a
-              href="https://pantry-pals.github.io/"
+              href="https://kitchen-coordinator.github.io/"
               style={{
                 color: 'var(--brunswick-green)',
                 fontSize: '1.1rem',
@@ -201,7 +201,7 @@ const About = () => (
               }}
             >
               Click to learn more about our development
-              process and our team
+              process and our teams
             </a>
           </Col>
         </Row>

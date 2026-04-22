@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Modal, Button, Form, Badge, Spinner, Alert } from 'react-bootstrap';
 import { useRouter } from 'next/navigation';
+import { formatDisplayAmount, tryConvertAmount, validateUnitConversion } from '@/lib/displayUnits';
 
 export type RecipeIngredientItem = {
   id?: number | null;
@@ -36,8 +37,6 @@ type Props = {
   recipeTitle: string;
 };
 
-const normalizeUnit = (unit: string | null | undefined) => (unit ?? '').trim().toLowerCase();
-
 function computeRows(ingredientItems: RecipeIngredientItem[], pantry: PantryItem[]): IngredientRow[] {
   const pantryMap = new Map(pantry.map((p) => [p.name.toLowerCase(), p]));
 
@@ -52,15 +51,19 @@ function computeRows(ingredientItems: RecipeIngredientItem[], pantry: PantryItem
       return { ingredient, pantryItem: null, status: 'missing', defaultChecked: false, deductAmount: 0 };
     }
 
-    const recipeUnit = normalizeUnit(ingredient.unit);
-    const pantryUnit = normalizeUnit(pantryItem.unit);
+    const validation = validateUnitConversion(ingredient.quantity, ingredient.unit ?? '', pantryItem.unit);
 
-    if (recipeUnit !== pantryUnit) {
+    if (!validation.valid) {
       return { ingredient, pantryItem, status: 'mismatch', defaultChecked: false, deductAmount: 0 };
     }
 
-    const deductAmount = Math.min(ingredient.quantity, pantryItem.quantity);
-    const status: IngredientStatus = pantryItem.quantity >= ingredient.quantity ? 'ready' : 'low';
+    const pantryComparableNeeded = tryConvertAmount(ingredient.quantity, ingredient.unit, pantryItem.unit);
+    if (pantryComparableNeeded == null) {
+      return { ingredient, pantryItem, status: 'mismatch', defaultChecked: false, deductAmount: 0 };
+    }
+
+    const deductAmount = Math.min(pantryComparableNeeded, pantryItem.quantity);
+    const status: IngredientStatus = pantryItem.quantity >= pantryComparableNeeded ? 'ready' : 'low';
 
     return { ingredient, pantryItem, status, defaultChecked: true, deductAmount };
   });
@@ -94,7 +97,6 @@ export default function UseIngredientsModal({ show, onHide, ingredientItems, pan
     return init;
   });
 
-  // Re-sync checkboxes each time the modal opens so stale state never persists
   useEffect(() => {
     if (!show) return;
     const init: Record<string, boolean> = {};
@@ -166,7 +168,7 @@ export default function UseIngredientsModal({ show, onHide, ingredientItems, pan
         )}
 
         <p className="text-muted mb-3" style={{ fontSize: '0.9rem' }}>
-          Select ingredients to deduct from your pantry. Only items with matching units can be auto-deducted.
+          Select ingredients to remove from your pantry. Mass and volume units will be converted automatically.
         </p>
 
         <div className="table-responsive">
@@ -186,11 +188,17 @@ export default function UseIngredientsModal({ show, onHide, ingredientItems, pan
                 const isActionable = row.status === 'ready' || row.status === 'low';
 
                 const neededLabel = row.ingredient.quantity != null
-                  ? `${row.ingredient.quantity}${row.ingredient.unit ? ` ${row.ingredient.unit}` : ''}`
+                  ? formatDisplayAmount({
+                    quantity: row.ingredient.quantity,
+                    unit: row.ingredient.unit ?? '',
+                  })
                   : '—';
 
                 const pantryLabel = row.pantryItem
-                  ? `${row.pantryItem.quantity} ${row.pantryItem.unit}`
+                  ? formatDisplayAmount({
+                    quantity: row.pantryItem.quantity,
+                    unit: row.pantryItem.unit,
+                  })
                   : '—';
 
                 return (

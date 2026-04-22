@@ -45,6 +45,21 @@ function PantryClient({
     ).sort(),
   );
 
+  const emptyProduce = useMemo(() => ({
+    id: 0,
+    name: '',
+    type: '',
+    location: '',
+    storage: '',
+    quantity: undefined as number | undefined,
+    unit: '',
+    expiration: null as Date | null,
+    image: null as string | null,
+    owner,
+    restockThreshold: 0,
+  }), [owner]);
+
+  // Refresh when user returns to this tab/page so inventory never stays stale.
   useEffect(() => {
     const refreshOnVisible = () => {
       if (document.visibilityState === 'visible') router.refresh();
@@ -195,17 +210,7 @@ function PantryClient({
       <AddProduceModal
         show={showAddProduceModal}
         onHide={() => setShowAddProduceModal(false)}
-        produce={{ id: 0,
-          name: '',
-          type: '',
-          location: '',
-          storage: '',
-          quantity: undefined,
-          unit: '',
-          expiration: null,
-          image: null,
-          owner,
-          restockThreshold: 0 }}
+        produce={emptyProduce}
       />
 
       {/* Add Location Modal */}

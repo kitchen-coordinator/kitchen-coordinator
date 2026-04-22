@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { Button } from 'react-bootstrap';
 import { PlusLg } from 'react-bootstrap-icons';
 import { ProduceRelations } from '@/types/ProduceRelations';
-import { formatQuantityForDisplay } from '@/lib/fractions';
-import { getPantryDisplayAmount } from '@/lib/displayUnits';
+import { formatDisplayAmount, formatDisplayQuantity, getPantryDisplayAmount } from '@/lib/displayUnits';
 import EditProduceModal from './EditProduceModal';
 import '../../styles/buttons.css';
 import DeleteProduceModal from './DeleteProduceModal';
@@ -58,11 +57,8 @@ const ProduceItem = ({
           {(typeof storage === 'object' ? storage?.name : storage) || 'N/A'} at{' '}
           {(typeof location === 'object' ? location?.name : location) || 'N/A'}
         </td>
-        <td>
-          {formatQuantityForDisplay(display.quantity)}
-          {display.unit ? ` ${display.unit}` : ''}
-        </td>
-        <td>{formatQuantityForDisplay(safeRestock)}</td>
+        <td>{formatDisplayAmount(display)}</td>
+        <td>{formatDisplayQuantity(safeRestock, display.unit)}</td>
         <td>{expiration ? new Date(expiration).toISOString().split('T')[0] : 'N/A'}</td>
         <td>
           <Button className="btn-edit" onClick={() => setShowAddListsModal(true)}>

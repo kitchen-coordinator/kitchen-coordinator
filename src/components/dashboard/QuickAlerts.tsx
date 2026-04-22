@@ -12,14 +12,16 @@ type QuickAlertsProps = {
 };
 
 export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlertsProps) {
-  const [expiringItems, setExpiringItems] = useState<any[]>([]);
+  const [expiredItems, setExpiredItems] = useState<any[]>([]);
+  const [expiringWithinWeek, setExpiringWithinWeek] = useState<any[]>([]);
   const [shoppingLists, setShoppingLists] = useState<any[]>([]);
   const [lowStockItems, setLowStockItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!ownerEmail) {
-      setExpiringItems([]);
+      setExpiredItems([]);
+      setExpiringWithinWeek([]);
       setShoppingLists([]);
       setLowStockItems([]);
       return () => {};
@@ -34,7 +36,11 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
           fetch(`/api/low-stock?owner=${encodeURIComponent(ownerEmail)}`),
         ]);
 
-        if (expiringRes.ok) setExpiringItems((await expiringRes.json()).expiringItems || []);
+        if (expiringRes.ok) {
+          const expiringData = await expiringRes.json();
+          setExpiredItems(expiringData.expiredItems || []);
+          setExpiringWithinWeek(expiringData.expiringWithinWeek || []);
+        }
         if (shoppingRes.ok) setShoppingLists((await shoppingRes.json()).shoppingLists || []);
         if (lowStockRes.ok) setLowStockItems((await lowStockRes.json()).lowStockItems || []);
       } catch (err) {
@@ -66,13 +72,31 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
 
   const recipeCount = availableRecipes.length;
 
+  const getOverdueShoppingLists = () => {
+    if (shoppingLists.length === 0) return null;
+
+    const today = new Date();
+
+    // Filter out completed lists, future shopping lists, and those without deadlines
+    const pastLists = shoppingLists.filter(
+      (list) => !list.isCompleted && list.deadline && new Date(list.deadline) < today,
+    );
+
+    // If there are lists, return how many are past due else null to indicate no alerts needed
+    return pastLists.length > 0 ? pastLists.length : null;
+  };
+
   const getNextShoppingDate = () => {
     if (shoppingLists.length === 0) return null;
 
-    // Filter out completed lists and those without deadlines
+    const today = new Date();
+
+    // Filter out completed lists, old shopping lists, and those without deadlines
     const upcomingLists = shoppingLists.filter(
-      (list) => !list.isCompleted && list.deadline,
+      (list) => !list.isCompleted && list.deadline && new Date(list.deadline) >= today,
     );
+
+    // No upcoming shopping lists, so return null to indicate no alerts needed
     if (upcomingLists.length === 0) return null;
 
     // Find the earliest deadline
@@ -80,8 +104,6 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
       const deadline = new Date(list.deadline!);
       return deadline < earliest ? deadline : earliest;
     }, new Date(upcomingLists[0].deadline!));
-
-    const today = new Date();
 
     // Strip time for day comparison (otherwise, time differences could skew results)
     today.setHours(0, 0, 0, 0);
@@ -113,13 +135,35 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
     );
   }
 
+  const overdueShoppingLists = getOverdueShoppingLists();
   const nextShoppingDate = getNextShoppingDate();
 
-  const formatExpiringText = () => {
-    if (expiringItems.length === 0) return 'No items expiring soon';
-    if (expiringItems.length === 1) return `${expiringItems[0].name} expires soon`;
-    return `${expiringItems[0].name} and ${expiringItems.length - 1} other items`;
+  const formatExpiredText = () => {
+    if (expiredItems.length === 0) return null;
+
+    const first = expiredItems[0].name;
+
+    if (expiredItems.length === 1) {
+      return `${first} has expired`;
+    }
+
+    return `${first} and ${expiredItems.length - 1} other items have expired`;
   };
+
+  const formatExpiringWithinWeekText = () => {
+    if (expiringWithinWeek.length === 0) return null;
+
+    const first = expiringWithinWeek[0].name;
+
+    if (expiringWithinWeek.length === 1) {
+      return `${first} is expiring soon`;
+    }
+
+    return `${first} and ${expiringWithinWeek.length - 1} other items are expiring soon`;
+  };
+
+  const expiredItemsText = formatExpiredText();
+  const expiringItemsText = formatExpiringWithinWeekText();
 
   const formatLowStockText = () => {
     if (lowStockItems.length === 0) return 'All items sufficiently stocked';
@@ -205,13 +249,29 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
     );
   };
 
-  const formatShoppingText = () => {
-    if (!nextShoppingDate) return 'No shopping lists due yet';
+  const formatOverdueShoppingText = () => {
+    if (overdueShoppingLists != null && overdueShoppingLists > 0) {
+      return `${overdueShoppingLists} overdue shopping list${overdueShoppingLists !== 1 ? 's' : ''}`;
+    }
+    return null;
+  };
+
+  const formatUpcomingShoppingText = () => {
+    if (!nextShoppingDate) return 'No upcoming shopping lists';
     if (nextShoppingDate === 'Today'
         || nextShoppingDate === 'Tomorrow') {
       return `Grocery trip scheduled ${nextShoppingDate.toLowerCase()}`;
     }
     return `Next shopping trip in ${nextShoppingDate}`;
+  };
+
+  const overdueShoppingText = formatOverdueShoppingText();
+  const upcomingShoppingText = formatUpcomingShoppingText();
+
+  const formatShoppingBadge = () => {
+    if (overdueShoppingLists != null && overdueShoppingLists > 0) return '!!!';
+    if (nextShoppingDate) return nextShoppingDate;
+    return 'N/A';
   };
 
   return (
@@ -231,15 +291,23 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <div className="d-flex align-items-center">
                       <Clock className="me-2 text-secondary" />
-                      <Card.Subtitle className="fw-semibold text-dark">Expiring Soon</Card.Subtitle>
+                      <Card.Subtitle className="fw-semibold text-dark">Expiring Items</Card.Subtitle>
                     </div>
                     <Badge bg="warning" text="dark">
-                      {expiringItems.length}
+                      {expiringWithinWeek.length + expiredItems.length}
                       {' '}
-                      {expiringItems.length === 1 ? 'item' : 'items'}
+                      {(expiringWithinWeek.length + expiredItems.length) === 1 ? 'item' : 'items'}
                     </Badge>
                   </div>
-                  <Card.Text className="text-muted small mb-0">{formatExpiringText()}</Card.Text>
+                  <Card.Text className="text-muted small mb-0">
+                    {expiredItemsText && (
+                      <div className="text-danger">{expiredItemsText}</div>
+                    )}
+                    {expiringItemsText && (
+                      <div>{expiringItemsText}</div>
+                    )}
+                    {!expiredItemsText && !expiringItemsText && 'No items expiring within the week'}
+                  </Card.Text>
                 </Card.Body>
               </Card>
             </Link>
@@ -300,10 +368,18 @@ export default function QuickAlerts({ ownerEmail, recipes, produce }: QuickAlert
                       <Card.Subtitle className="fw-semibold text-dark">Shopping List Due</Card.Subtitle>
                     </div>
                     <Badge bg="info" text="dark">
-                      {nextShoppingDate || 'N/A'}
+                      {formatShoppingBadge()}
                     </Badge>
                   </div>
-                  <Card.Text className="text-muted small mb-0">{formatShoppingText()}</Card.Text>
+                  <Card.Text className="text-muted small mb-0">
+                    {overdueShoppingText && (
+                      <div className="text-danger">{overdueShoppingText}</div>
+                    )}
+                    {upcomingShoppingText && (
+                      <div>{upcomingShoppingText}</div>
+                    )}
+                    {!overdueShoppingText && !upcomingShoppingText && 'No upcoming shopping lists'}
+                  </Card.Text>
                 </Card.Body>
               </Card>
             </Link>
