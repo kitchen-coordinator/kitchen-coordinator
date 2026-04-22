@@ -3,7 +3,7 @@
 import { getUnitCategory, normalizeUnit } from '@/lib/units';
 import { parseFractionInput } from '@/lib/fractions';
 import { Prisma } from '@prisma/client';
-import { hash, compare } from 'bcrypt';
+import { hash, compare } from 'bcryptjs';
 import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
 import { completeShoppingListAndSyncPantry } from './shoppingListCompletion';
