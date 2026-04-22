@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Card, Spinner, Row, Col, Button } from 'react-bootstrap';
+import { Col, Spinner, Button, Alert, Row } from 'react-bootstrap';
+import { ExclamationTriangleFill } from 'react-bootstrap-icons';
 
 type ExpiredItemsBannerProps = {
   ownerEmail: string;
@@ -56,16 +57,26 @@ export default function ExpiredItemsBanner({
 
   if (loading) {
     return (
-      <Card className="mb-4 shadow-sm border-light">
-        <Card.Body>
-          <div className="d-flex align-items-center mb-3">
-            <Card.Title className="mb-0">Hold on while we search your pantries for items that will expire!</Card.Title>
+      <div className="mb-4">
+        <Alert
+          className="d-flex align-items-start gap-3 mb-0"
+          style={{
+            backgroundColor: '#fdf6ec',
+            border: '1px solid #ead9c2',
+            color: '#4f4a42',
+            borderRadius: '8px',
+          }}
+        >
+          <div>
+            <Alert.Heading style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
+              Hold on while we search your pantries for items that will expire!
+            </Alert.Heading>
           </div>
           <div className="text-muted">
             <Spinner animation="border" size="sm" className="me-2" />
           </div>
-        </Card.Body>
-      </Card>
+        </Alert>
+      </div>
     );
   }
 
@@ -149,17 +160,33 @@ export default function ExpiredItemsBanner({
   const expiringSoonSection = formatExpiringSoonItems();
 
   return (
-    <Card className="mb-4 shadow-sm border-light">
-      <Card.Title>
+    <Alert
+      className="d-flex align-items-start gap-3 mb-3"
+      style={{
+        backgroundColor: '#fdf6ec',
+        border: '1px solid #ead9c2',
+        color: '#4f4a42',
+        borderRadius: '8px',
+      }}
+    >
+      <ExclamationTriangleFill
+        size={18}
+        style={{ color: '#d28b18', marginTop: '2px', flexShrink: 0 }}
+      />
+      <Col>
+        <Alert.Heading style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
         {formatAlertText()}
-      </Card.Title>
-      <Card.Body className="text-muted">
-        <Row className="align-items-center">
-          <Col>
+        </Alert.Heading>
+        <Row>
+          <Col className="mt-2">
+            <p className="mb-2">
             {expiredItemsSection}
+            </p>
+            <p className="mb-2">
             {expiringSoonSection}
+            </p>
           </Col>
-          <Col xs="3" className="text-end">
+          <Col className="mt-auto d-flex justify-content-end">
             <Button
               variant="outline-secondary"
               onClick={handleHideForNow}
@@ -168,7 +195,7 @@ export default function ExpiredItemsBanner({
             </Button>
           </Col>
         </Row>
-      </Card.Body>
-    </Card>
+      </Col>
+    </Alert>
   );
 }
