@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { loggedInProtectedPage } from '@/lib/page-protection';
 import authOptions from '@/lib/authOptions';
 import { getRecipes } from '@/lib/recipes';
-import { getUserProduceByEmail } from '@/lib/dbActions';
+import { getUserProduceByEmail } from '@/lib/pantryQueries';
 import DashboardMenu from '../../components/dashboard/DashboardMenu';
 
 export const dynamic = 'force-dynamic';

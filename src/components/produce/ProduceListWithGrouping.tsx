@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { Container } from 'react-bootstrap';
 import type { ProduceRelations } from '@/types/ProduceRelations';
+import { normalizeUnit, toBase } from '@/lib/units';
 import SearchBarControls from './SearchBarControls';
 import ProduceTable from './ProduceTable';
 import ProduceCardGrid from './ProduceCardGrid';
@@ -27,6 +28,16 @@ export type SortType =
 
 function sortProduce(arr: ProduceRelations[], sort: string): ProduceRelations[] {
   const sorted = [...arr];
+  const qtyBaseForSort = (p: ProduceRelations): number => {
+    const q = typeof p.quantity === 'number' ? p.quantity : 0;
+    const u = typeof (p as any).unit === 'string' ? ((p as any).unit as string) : '';
+    if (!u) return q;
+    try {
+      return toBase(q, normalizeUnit(u));
+    } catch {
+      return q;
+    }
+  };
   switch (sort) {
     case 'name-asc':
       sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -38,10 +49,10 @@ function sortProduce(arr: ProduceRelations[], sort: string): ProduceRelations[] 
       sorted.sort((a, b) => toTime(a.expiration) - toTime(b.expiration));
       break;
     case 'qty-desc':
-      sorted.sort((a, b) => (b.quantity ?? 0) - (a.quantity ?? 0));
+      sorted.sort((a, b) => qtyBaseForSort(b) - qtyBaseForSort(a));
       break;
     case 'qty-asc':
-      sorted.sort((a, b) => (a.quantity ?? 0) - (b.quantity ?? 0));
+      sorted.sort((a, b) => qtyBaseForSort(a) - qtyBaseForSort(b));
       break;
     default:
       break;
@@ -49,7 +60,10 @@ function sortProduce(arr: ProduceRelations[], sort: string): ProduceRelations[] 
   return sorted;
 }
 
-const ProduceListWithGrouping: React.FC<{ initialProduce: ProduceRelations[] }> = ({ initialProduce }) => {
+const ProduceListWithGrouping: React.FC<{
+  initialProduce: ProduceRelations[];
+  shoppingLists: { id: number; name: string; isCompleted?: boolean }[];
+}> = ({ initialProduce, shoppingLists }) => {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortType>('');
   const [groupByStorage, setGroupByStorage] = useState(false);
@@ -101,12 +115,24 @@ const ProduceListWithGrouping: React.FC<{ initialProduce: ProduceRelations[] }> 
   const renderContent = () => {
     if (groupByStorage) {
       return view === 'table'
-        ? <GroupedSections groups={grouped} view="table" />
-        : <GroupedSections groups={grouped} view="cards" />;
+        ? (
+          <GroupedSections
+            groups={grouped}
+            view="table"
+            shoppingLists={shoppingLists}
+          />
+        )
+        : (
+          <GroupedSections
+            groups={grouped}
+            view="cards"
+            shoppingLists={shoppingLists}
+          />
+        );
     }
     return view === 'table'
-      ? <ProduceTable rows={filteredSorted} />
-      : <ProduceCardGrid rows={filteredSorted} />;
+      ? <ProduceTable rows={filteredSorted} shoppingLists={shoppingLists} />
+      : <ProduceCardGrid rows={filteredSorted} shoppingLists={shoppingLists} />;
   };
 
   return (

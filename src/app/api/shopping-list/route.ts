@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// POST /api/shopping-list
 export async function POST(req: Request) {
   try {
     const { name, quantity, unit, owner } = await req.json();
@@ -51,5 +52,39 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: 'Failed to add item' }, { status: 500 });
+  }
+}
+
+// GET /api/shopping-list
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const owner = searchParams.get('owner');
+
+  // validate owner parameter
+  if (!owner) {
+    return NextResponse.json(
+      { error: 'Owner parameter is required' },
+      { status: 400 },
+    );
+  }
+
+  // fetch shopping list or throw error if not found
+  try {
+    const shoppingLists = await prisma.shoppingList.findMany({
+      where: {
+        owner,
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    return NextResponse.json({ shoppingLists });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: 'Failed to fetch shopping lists' },
+      { status: 500 },
+    );
   }
 }

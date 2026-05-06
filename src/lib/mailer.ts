@@ -14,18 +14,20 @@ const transporter = nodemailer.createTransport({
 // Verification code
 export async function sendVerificationCode(to: string, code: string) {
   await transporter.sendMail({
-    from: `"Pantry Pal Support" <${process.env.GMAIL_USER}>`,
+    from: `"Kitchen Coordinator Support" <${process.env.GMAIL_USER}>`,
     to,
-    subject: '[Pantry Pal] Your Verification Code',
+    subject: '[Kitchen Coordinator] Your Verification Code',
     html: `
       <p>Hi there!</p>
-      <p>Thanks for signing up for <strong>Pantry Pal</strong>. Use the following code to verify your email:</p>
+      <p>
+        Thanks for signing up for <strong>Kitchen Coordinator</strong>. Use the following code to verify your email:
+      </p>
       <p style="text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0;">
         ${code}
       </p>
       <p>This code will expire in 10 minutes.</p>
       <p>If you did not create an account, you can safely ignore this email.</p>
-      <p>— The Pantry Pal Team</p>
+      <p>— The Kitchen Coordinator Team</p>
     `,
   });
 }
@@ -36,12 +38,12 @@ export async function sendPasswordResetEmail(to: string, token: string) {
   const resetUrl = `${baseUrl}/auth/reset-password?token=${token}`;
 
   await transporter.sendMail({
-    from: `"Pantry Pal Support" <${process.env.GMAIL_USER}>`,
+    from: `"Kitchen Coordinator Support" <${process.env.GMAIL_USER}>`,
     to,
-    subject: '[Pantry Pal] Reset Your Password',
+    subject: '[Kitchen Coordinator] Reset Your Password',
     html: `
       <p>Hi there!</p>
-      <p>We received a request to reset your password for <strong>Pantry Pal</strong>.</p>
+      <p>We received a request to reset your password for <strong>Kitchen Coordinator</strong>.</p>
       <p>Click the button below to set a new password:</p>
       <p style="text-align: center; margin: 20px 0;">
         <a href="${resetUrl}" style="
@@ -55,7 +57,7 @@ export async function sendPasswordResetEmail(to: string, token: string) {
       </p>
       <p>This link will expire in 1 hour.</p>
       <p>If you did not request a password reset, you can safely ignore this email.</p>
-      <p>— The Pantry Pal Team</p>
+      <p>— The Kitchen Coordinator Team</p>
     `,
   });
 }
