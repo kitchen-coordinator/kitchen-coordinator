@@ -25,7 +25,7 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      router.replace('/dashboard');
+      router.replace('/');
     }
   }, [status, router]);
 
@@ -69,7 +69,7 @@ export default function SignInPage() {
 
     const result = await signIn('credentials', {
       redirect: false,
-      callbackUrl: '/dashboard',
+      callbackUrl: '/',
       email,
       password,
     });
@@ -165,7 +165,7 @@ export default function SignInPage() {
       if (signInResult?.error) throw new Error(signInResult.error);
 
       setVerificationSuccess('Email verified! Redirecting...');
-      router.push('/dashboard');
+      router.push('/');
     } catch (err: any) {
       setVerificationError(err.message || 'Verification failed.');
     } finally {
@@ -180,7 +180,9 @@ export default function SignInPage() {
       {!showVerification && (
         <div className={styles.formWrapper}>
           <h1 className={styles.title}>Sign In</h1>
-          <p className={styles.descriptionCentered}>Enter your email and password to access your Pantry Pal account.</p>
+          <p className={styles.descriptionCentered}>
+            Enter your email and password to access your Kitchen Coordinator account.
+          </p>
           <form onSubmit={handleSubmit}>
             <div className={styles.inputGroup}>
               <label className={styles.label}>Email</label>

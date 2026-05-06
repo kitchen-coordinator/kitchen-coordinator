@@ -3,7 +3,7 @@ import Features from '@/components/landing/Features';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Pantry Pals',
+  title: 'Kitchen Coordinator',
   description: 'Manage your pantry, reduce food waste, and cook smarter.',
   icons: '/favicon.ico',
 };

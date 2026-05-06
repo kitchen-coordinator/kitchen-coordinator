@@ -1,7 +1,8 @@
 'use client';
 
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import swal from 'sweetalert';
 
 type EditModalProps = {
   show: boolean;
@@ -22,6 +23,17 @@ export default function EditShoppingListItemModal({
   onHide,
   item,
 }: EditModalProps) {
+  const unitOptions = useMemo(
+    () => ['kg', 'g', 'lb', 'oz', 'pcs', 'ml', 'l', 'Other'],
+    [],
+  );
+
+  const initialUnitChoice = (() => {
+    const u = item.unit?.trim() ?? '';
+    if (!u) return '';
+    return unitOptions.includes(u) ? u : 'Other';
+  })();
+
   const [form, setForm] = useState({
     name: item.name,
     quantity: item.quantity,
@@ -31,6 +43,8 @@ export default function EditShoppingListItemModal({
     customThreshold: item.customThreshold ?? '',
   });
 
+  const [unitChoice, setUnitChoice] = useState<string>(initialUnitChoice);
+
   // FIXED — works for all React-Bootstrap inputs
   const handleChange = (e: React.ChangeEvent<any>) => {
     const { name, value } = e.target;
@@ -38,13 +52,34 @@ export default function EditShoppingListItemModal({
   };
 
   const handleSave = async () => {
+    const name = String(form.name ?? '').trim();
+    const quantityNum = Number(form.quantity);
+    const priceNumRaw = form.price === '' || form.price === null || typeof form.price === 'undefined'
+      ? null
+      : Number(form.price);
+
+    if (!name) {
+      await swal('Error', 'Item name is required.', 'error');
+      return;
+    }
+    if (!Number.isFinite(quantityNum) || quantityNum <= 0) {
+      await swal('Error', 'Quantity must be greater than 0.', 'error');
+      return;
+    }
+    if (priceNumRaw !== null && (!Number.isFinite(priceNumRaw) || priceNumRaw < 0)) {
+      await swal('Error', 'Price must be a valid non-negative number (or left blank).', 'error');
+      return;
+    }
+
     await fetch(`/api/shopping-list-item/${item.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...form,
-        quantity: Number(form.quantity),
-        price: form.price ? Number(form.price) : null,
+        name,
+        quantity: quantityNum,
+        unit: String(form.unit ?? '').trim() || null,
+        price: priceNumRaw,
         customThreshold:
           form.restockTrigger === 'custom'
             ? Number(form.customThreshold)
@@ -88,11 +123,28 @@ export default function EditShoppingListItemModal({
 
             <Col>
               <Form.Label>Unit</Form.Label>
-              <Form.Control
-                name="unit"
-                value={form.unit}
-                onChange={handleChange}
-              />
+              <Form.Select
+                value={unitChoice}
+                onChange={(e) => {
+                  const { value } = e.target;
+                  setUnitChoice(value);
+                  setForm((prev) => ({ ...prev, unit: value === 'Other' ? '' : value }));
+                }}
+              >
+                <option value="">—</option>
+                {unitOptions.map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </Form.Select>
+              {unitChoice === 'Other' && (
+                <Form.Control
+                  className="mt-2"
+                  name="unit"
+                  placeholder="Enter custom unit"
+                  value={form.unit}
+                  onChange={handleChange}
+                />
+              )}
             </Col>
           </Row>
 
@@ -103,6 +155,8 @@ export default function EditShoppingListItemModal({
               name="price"
               type="number"
               step="0.01"
+              min="0"
+              placeholder="(optional)"
               value={form.price}
               onChange={handleChange}
             />

@@ -5,7 +5,13 @@ import type { ProduceRelations } from '@/types/ProduceRelations';
 import { useEffect, useState } from 'react';
 import ProduceItem from './ProduceItem';
 
-const ProduceTable = ({ rows }: { rows: ProduceRelations[] }) => {
+const ProduceTable = ({
+  rows,
+  shoppingLists,
+}: {
+  rows: ProduceRelations[];
+  shoppingLists: { id: number; name: string; isCompleted?: boolean }[];
+}) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -39,17 +45,22 @@ const ProduceTable = ({ rows }: { rows: ProduceRelations[] }) => {
             <th>Quantity</th>
             <th>Restock</th>
             <th>Expiration</th>
-            <th>Edit</th>
-            <th>Delete</th>
             <th>Add to Shopping List</th>
           </tr>
         </thead>
         <tbody>
           {rows.length ? (
-            rows.map((p) => <ProduceItem key={p.id} {...p} restockThreshold={p.restockThreshold ?? 1} />)
+            rows.map((p) => (
+              <ProduceItem
+                key={p.id}
+                {...p}
+                restockThreshold={p.restockThreshold ?? 1}
+                shoppingLists={shoppingLists}
+              />
+            ))
           ) : (
             <tr>
-              <td colSpan={9} className="text-center">
+              <td colSpan={7} className="text-center">
                 No items found
               </td>
             </tr>
