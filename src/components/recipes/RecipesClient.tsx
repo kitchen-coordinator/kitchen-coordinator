@@ -69,7 +69,7 @@ export default function RecipesClient({
       if (!currentUserEmail) return false;
       if (isAdmin) return true;
 
-      const owner = ownerRaw ?? 'Pantry Pals Team';
+      const owner = ownerRaw ?? 'Kitchen Coordinator Team';
 
       if (Array.isArray(owner)) {
         return owner.includes(currentUserEmail);
@@ -132,7 +132,7 @@ export default function RecipesClient({
       <Row xs={1} md={2} lg={3} className="g-4">
         {recipesToShow.length > 0 ? (
           recipesToShow.map((r) => {
-            const owner = r.owner ?? 'Pantry Pals Team';
+            const owner = r.owner ?? 'Kitchen Coordinator Team';
             const canEdit = canEditRecipe(owner);
 
             return (

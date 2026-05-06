@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { syncShoppingItemPurchaseToPantry } from '@/lib/pantrySync';
 
 export async function DELETE(
   request: Request,
@@ -7,39 +9,21 @@ export async function DELETE(
 ) {
   try {
     const id = Number(params.id);
-    const item = await prisma.shoppingListItem.findUnique({ where: { id } });
+    const item = await prisma.shoppingListItem.findUnique({
+      where: { id },
+      include: { shoppingList: { select: { isCompleted: true } } },
+    });
     if (!item) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
-    // Ensure pantry location exists for this user
-    const location = await prisma.location.upsert({
-      where: { name_owner: { name: 'Default Pantry', owner: item.shoppingListId.toString() } },
-      update: {},
-      create: { name: 'Default Pantry', owner: item.shoppingListId.toString() },
-    });
+    if (item.shoppingList.isCompleted) {
+      return NextResponse.json(
+        { error: 'Completed shopping lists are locked and cannot be edited.' },
+        { status: 400 },
+      );
+    }
 
-    // Ensure storage exists under that location
-    const storage = await prisma.storage.upsert({
-      where: { name_locationId: { name: 'Default Shelf', locationId: location.id } },
-      update: {},
-      create: { name: 'Default Shelf', locationId: location.id },
-    });
-
-    // Move item to pantry
-    await prisma.produce.create({
-      data: {
-        name: item.name,
-        quantity: item.quantity,
-        unit: item.unit || '',
-        type: 'Other',
-        owner: item.shoppingListId.toString(),
-        locationId: location.id,
-        storageId: storage.id,
-      },
-    });
-
-    // Delete from shopping list
     await prisma.shoppingListItem.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
@@ -56,6 +40,21 @@ export async function PUT(
   try {
     const id = Number(params.id);
     const body = await request.json();
+    const item = await prisma.shoppingListItem.findUnique({
+      where: { id },
+      include: { shoppingList: { select: { isCompleted: true } } },
+    });
+
+    if (!item) {
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+    }
+
+    if (item.shoppingList.isCompleted) {
+      return NextResponse.json(
+        { error: 'Completed shopping lists are locked and cannot be edited.' },
+        { status: 400 },
+      );
+    }
 
     const updatedItem = await prisma.shoppingListItem.update({
       where: { id },
@@ -73,5 +72,30 @@ export async function PUT(
   } catch (error: any) {
     console.error('Error updating item:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const id = Number(params.id);
+    const body = await request.json();
+
+    if (typeof body.purchased !== 'boolean') {
+      return NextResponse.json({ error: 'Invalid purchased value' }, { status: 400 });
+    }
+
+    const updated = await syncShoppingItemPurchaseToPantry(prisma, id, body.purchased);
+    revalidatePath('/view-pantry');
+    revalidatePath('/shopping-list');
+    return NextResponse.json(updated, { status: 200 });
+  } catch (error: any) {
+    const message = error?.message || 'Internal server error';
+    let status = 500;
+    if (message.includes('not found')) status = 404;
+    if (message.includes('locked')) status = 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -46,7 +46,14 @@ export default function ImageUploader({ user }: Props) {
     setUploading(true);
     const uid = user.id;
     const filePath = `images/${uid}/${Date.now()}_${file.name}`;
-    const storageRef = ref(storage, filePath);
+
+    if (!storage) {
+      swal('Upload Failed', 'Storage is not configured. Please try again later.', 'error');
+      setUploading(false);
+      return;
+    }
+
+    const storageRef = ref(storage!, filePath);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
     uploadTask.on(
@@ -62,7 +69,13 @@ export default function ImageUploader({ user }: Props) {
       },
       async () => {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-        await addDoc(collection(db, 'images'), {
+        if (!db) {
+          swal('Upload Failed', 'Database is not configured. Please try again later.', 'error');
+          setUploading(false);
+          return;
+        }
+
+        await addDoc(collection(db!, 'images'), {
           uid,
           path: filePath,
           url,

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button, Col, Modal, Row } from 'react-bootstrap';
 import { deleteProduce } from '@/lib/dbActions';
+import { useRouter } from 'next/navigation';
 import '../../styles/buttons.css';
 import type { ProduceRelations } from '@/types/ProduceRelations';
 
@@ -14,11 +15,13 @@ interface DeleteProduceModalProps {
 
 const DeleteProduceModal = ({ show, onHide, produce }: DeleteProduceModalProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
       await deleteProduce(produce.id);
+      router.refresh();
       onHide(); // close after successful delete
     } catch (err) {
       console.error('Error deleting produce:', err);

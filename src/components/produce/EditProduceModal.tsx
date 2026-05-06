@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
-  Col,
   Form,
   Modal,
-  Row,
   InputGroup,
   Image as RBImage,
 } from 'react-bootstrap';
+import {
+  PencilSquare, X, Tag, Grid, GeoAlt,
+  Archive, Stack, Rulers, ArrowRepeat, Calendar,
+} from 'react-bootstrap-icons';
 import { useForm } from 'react-hook-form';
 import swal from 'sweetalert';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -20,19 +22,31 @@ import { useRouter } from 'next/navigation';
 import ImagePickerModal from '@/components/images/ImagePickerModal';
 import '../../styles/buttons.css';
 import { ProduceRelations } from '@/types/ProduceRelations';
+import { getPantryDisplayAmount } from '@/lib/displayUnits';
+import {
+  COMMON_FRACTION_SUGGESTIONS,
+  formatQuantityForDisplay,
+  parseFractionInput,
+} from '@/lib/fractions';
 
 function mapProduceToFormValues(produce: ProduceRelations) {
+  const display = getPantryDisplayAmount(produce);
+
   return {
     id: produce.id,
     name: produce.name,
     type: produce.type,
-    quantity: produce.quantity,
-    unit: produce.unit,
+    quantity: formatQuantityForDisplay(display.quantity),
+    unit: display.unit,
     owner: produce.owner,
     image: produce.image ?? '',
-    restockThreshold: produce.restockThreshold ?? null,
+    restockThreshold:
+      produce.restockThreshold != null
+        ? formatQuantityForDisplay(produce.restockThreshold)
+        : null,
+    commonItemId: produce.commonItemId ?? null,
     expiration: produce.expiration
-      ? produce.expiration.toISOString().split('T')[0]
+      ? new Date(produce.expiration).toISOString().split('T')[0]
       : null,
     location: produce.location?.name || '',
     storage: produce.storage?.name || '',
@@ -42,12 +56,91 @@ function mapProduceToFormValues(produce: ProduceRelations) {
 type ProduceValues =
   Omit<InferType<typeof EditProduceSchema>, 'expiration'> & {
     expiration: string | null;
+    quantity: string;
+    restockThreshold: string | null;
   };
 
 interface EditProduceModalProps {
   show: boolean;
   onHide: () => void;
   produce: ProduceRelations & { restockThreshold?: number | null };
+}
+
+function FieldRow({
+  fieldKey,
+  label,
+  displayValue,
+  editingField,
+  setEditingField,
+  icon,
+  children,
+}: {
+  fieldKey: string;
+  label: string;
+  displayValue: string;
+  editingField: string | null;
+  setEditingField: (f: string | null) => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const isEditing = editingField === fieldKey;
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 0',
+        borderBottom: '1px solid #f0f0f0',
+      }}
+    >
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 10,
+          backgroundColor: 'var(--fern-green)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{label}</div>
+        {isEditing ? (
+          <div style={{ marginTop: 4 }}>{children}</div>
+        ) : (
+          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: 2 }}>
+            {displayValue || '—'}
+          </div>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+        {isEditing ? (
+          <X
+            size={20}
+            style={{
+              cursor: 'pointer',
+              color: '#888',
+            }}
+            onClick={() => setEditingField(null)}
+          />
+        ) : (
+          <PencilSquare
+            size={16}
+            style={{
+              cursor: 'pointer',
+              color: '#888',
+            }}
+            onClick={() => setEditingField(fieldKey)}
+          />
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function EditProduceModal({ show, onHide, produce }: EditProduceModalProps) {
@@ -69,15 +162,15 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
     [],
   );
 
+  const { unit: initialUnit } = getPantryDisplayAmount(produce);
+
   const [unitChoice, setUnitChoice] = useState(
-    unitOptions.includes(produce.unit) ? produce.unit : 'Other',
+    unitOptions.includes(initialUnit) ? initialUnit : 'Other',
   );
 
-  // Image picker modal state
   const [showPicker, setShowPicker] = useState(false);
-  const [imageAlt, setImageAlt] = useState('');
+  const [editingField, setEditingField] = useState<string | null>(null);
 
-  // RHF setup
   const {
     register,
     handleSubmit,
@@ -91,6 +184,8 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
   });
 
   const imageVal = watch('image') || '';
+  const watchedValues = watch();
+  const itemImage = imageVal || produce.image || '/no-image.png';
 
   const fetchStorage = useCallback(
     async (location: string) => {
@@ -100,12 +195,8 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
       );
       if (!res.ok) return;
       const data: string[] = await res.json();
-      setStorageOptions((prev) => {
-        const merged = Array.from(new Set([...prev, ...data]));
-        return merged;
-      });
+      setStorageOptions((prev) => Array.from(new Set([...prev, ...data])));
 
-      // Optional: auto-select if only one storage is found
       if (data.length === 1) {
         setSelectedStorage(data[0]);
         setValue('storage', data[0]);
@@ -120,21 +211,17 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
       setSelectedLocation(produce.location?.name || '');
       setSelectedStorage(produce.storage?.name || '');
 
-      setUnitChoice(unitOptions.includes(produce.unit) ? produce.unit : 'Other');
+      const { unit: unitToUse } = getPantryDisplayAmount(produce);
+      setUnitChoice(unitOptions.includes(unitToUse) ? unitToUse : 'Other');
 
-      // Always fetch available locations
       const fetchLocations = async () => {
         const res = await fetch(`/api/produce/${produce.id}/locations?owner=${produce.owner}`);
         if (!res.ok) return;
         const data: string[] = await res.json();
-        setLocations((prev) => {
-          const merged = Array.from(new Set([...prev, ...data]));
-          return merged;
-        });
+        setLocations((prev) => Array.from(new Set([...prev, ...data])));
       };
       fetchLocations();
 
-      // Fetch storages for current location (when editing)
       if (produce.location?.name) {
         fetchStorage(produce.location.name);
       }
@@ -142,7 +229,8 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
   }, [show, produce, reset, unitOptions, fetchStorage]);
 
   const handleClose = () => {
-    reset();
+    reset(mapProduceToFormValues(produce));
+    setEditingField(null);
     onHide();
   };
 
@@ -150,319 +238,296 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
     try {
       await editProduce({
         ...data,
+        quantity: parseFractionInput(data.quantity),
         expiration: data.expiration ? new Date(data.expiration) : null,
         image: data.image === '' ? null : data.image,
-        restockThreshold: data.restockThreshold
-          ? Number(data.restockThreshold)
-          : 0,
+        restockThreshold:
+          data.restockThreshold == null || data.restockThreshold === ''
+            ? null
+            : parseFractionInput(data.restockThreshold),
+        commonItemId: data.commonItemId ?? null,
       });
+
       swal('Success', 'Your item has been updated', 'success', { timer: 2000 });
       handleClose();
       router.refresh();
     } catch (err) {
-      swal('Error', 'Failed to update item', 'error');
+      swal('Error', err instanceof Error ? err.message : 'Failed to update item', 'error');
     }
   };
 
   return (
     <Modal show={show} onHide={onHide} centered>
-      <Modal.Header className="justify-content-center">
-        <Modal.Title>Edit Pantry Item</Modal.Title>
-      </Modal.Header>
+      <div
+        style={{
+          backgroundColor: 'var(--fern-green)',
+          borderRadius: '8px 8px 0 0',
+          padding: '20px 24px',
+        }}
+      >
+        <h5 style={{ color: 'white', margin: 0, fontWeight: 700 }}>Edit Pantry Item</h5>
+        <small style={{ color: 'rgba(255,255,255,0.75)' }}>{produce.name}</small>
+      </div>
 
-      <Modal.Body className="text-center">
+      <Modal.Body style={{ padding: '0 24px 24px' }}>
         <Form onSubmit={handleSubmit(onSubmit)}>
           <input type="hidden" {...register('id')} value={produce.id} />
-
-          {/* Name + Type */}
-          <Row className="mb-3">
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  {...register('name')}
-                  placeholder="e.g., Chicken"
-                  isInvalid={!!errors.name}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.name?.message}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Type</Form.Label>
-                <Form.Control
-                  type="text"
-                  {...register('type')}
-                  placeholder="e.g., Meat"
-                  isInvalid={!!errors.type}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.type?.message}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Location + Storage */}
-          <Row className="mb-3">
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Location</Form.Label>
-                <Form.Select
-                  value={selectedLocation}
-                  required
-                  className={`${errors.location ? 'is-invalid' : ''}`}
-                  onChange={async (e) => {
-                    const { value } = e.target;
-                    setSelectedLocation(value);
-                    if (value === 'Add Location') {
-                      setValue('location', '');
-                      setStorageOptions([]);
-                      setSelectedStorage('Add Storage'); // force user to add storage
-                      setValue('storage', '');
-                    } else {
-                      setValue('location', value);
-                      await fetchStorage(value); // fetch storages for selected location
-                    }
-                  }}
-                >
-                  <option value="" disabled>
-                    Select location...
-                  </option>
-
-                  {locations.map((loc) => (
-                    <option key={loc} value={loc}>
-                      {loc}
-                    </option>
-                  ))}
-                  <option value="Add Location">Add Location</option>
-                </Form.Select>
-
-                {/* Conditionally render the custom input */}
-                {selectedLocation === 'Add Location' && (
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter new location"
-                    className={`mt-2 ${errors.location ? 'is-invalid' : ''}`}
-                    {...register('location', { required: true })}
-                    onChange={(e) => setValue('location', e.target.value)}
-                    required
-                  />
-                )}
-
-                <div className="invalid-feedback">{errors.location?.message}</div>
-              </Form.Group>
-            </Col>
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Storage</Form.Label>
-                <Form.Select
-                  value={selectedStorage}
-                  required
-                  className={`${errors.storage ? 'is-invalid' : ''}`}
-                  onChange={(e) => {
-                    const { value } = e.target;
-                    setSelectedStorage(value);
-                    if (value === 'Add Storage') {
-                      // Clear the field so input starts empty
-                      setValue('storage', '');
-                    } else {
-                      setValue('storage', value);
-                    }
-                  }}
-                >
-                  <option value="" disabled>
-                    Select storage...
-                  </option>
-
-                  {storageOptions.map((storage) => (
-                    <option key={storage} value={storage}>
-                      {storage}
-                    </option>
-                  ))}
-                  <option value="Add Storage">Add Storage</option>
-                </Form.Select>
-
-                {/* Conditionally render the custom input */}
-                {selectedStorage === 'Add Storage' && (
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter new storage"
-                    className={`mt-2 ${errors.storage ? 'is-invalid' : ''}`}
-                    {...register('storage', { required: true })}
-                    onChange={(e) => setValue('storage', e.target.value)}
-                    required
-                  />
-                )}
-
-                <div className="invalid-feedback">{errors.storage?.message}</div>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Quantity + Unit */}
-          <Row className="mb-3">
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Quantity</Form.Label>
-                <Form.Control
-                  type="number"
-                  step={0.5}
-                  {...register('quantity')}
-                  placeholder="e.g., 1, 1.5"
-                  isInvalid={!!errors.quantity}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.quantity?.message}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0 required-field">Unit</Form.Label>
-                <Form.Select
-                  value={unitChoice}
-                  onChange={(e) => {
-                    const { value } = e.target;
-                    setUnitChoice(value);
-                    setValue('unit', value !== 'Other' ? value : '');
-                  }}
-                  isInvalid={!!errors.unit}
-                >
-                  {unitOptions.map((u) => (
-                    <option key={u}>{u}</option>
-                  ))}
-                </Form.Select>
-
-                {unitChoice === 'Other' && (
-                  <Form.Control
-                    type="text"
-                    {...register('unit')}
-                    placeholder="Enter custom unit"
-                    required
-                    className="mt-2"
-                    isInvalid={!!errors.unit}
-                  />
-                )}
-                <Form.Control.Feedback type="invalid">
-                  {errors.unit?.message}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Restock Threshold */}
-          <Row className="mb-3">
-            <Col xs={12}>
-              <Form.Group>
-                <Form.Label className="mb-0">Restock Threshold</Form.Label>
-                <Form.Control
-                  type="number"
-                  step={0.5}
-                  {...register('restockThreshold')}
-                  placeholder="e.g., 0.5"
-                  isInvalid={!!errors.restockThreshold}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.restockThreshold?.message}
-                </Form.Control.Feedback>
-                <Form.Text className="text-muted">
-                  When quantity falls below this value, the item will be added to your shopping list.
-                </Form.Text>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Expiration + Image (with picker) */}
-          <Row className="mb-3">
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0">Expiration Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  {...register('expiration')}
-                  isInvalid={!!errors.expiration}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.expiration?.message}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-
-            <Col xs={6}>
-              <Form.Group>
-                <Form.Label className="mb-0">Image</Form.Label>
-                <InputGroup>
-                  <Form.Control
-                    type="text"
-                    {...register('image')}
-                    placeholder="Image URL"
-                    isInvalid={!!errors.image}
-                  />
-                  <Button
-                    variant="outline-secondary"
-                    type="button"
-                    style={{ display: 'inline-block', zIndex: 99 }}
-                    onClick={() => setShowPicker(true)}
-                  >
-                    Pick
-                  </Button>
-                </InputGroup>
-                <Form.Control.Feedback type="invalid">
-                  {errors.image?.message}
-                </Form.Control.Feedback>
-
-                {imageVal && (
-                  <div className="mt-2">
-                    <RBImage
-                      src={imageVal}
-                      alt={imageAlt || 'Preview'}
-                      style={{
-                        maxHeight: 120,
-                        borderRadius: 8,
-                        objectFit: 'cover',
-                      }}
-                      thumbnail
-                    />
-                  </div>
-                )}
-              </Form.Group>
-            </Col>
-          </Row>
-
           <input type="hidden" {...register('owner')} value={produce.owner} />
+          <input
+            type="hidden"
+            {...register('commonItemId', { valueAsNumber: true })}
+            value={produce.commonItemId ?? ''}
+          />
 
-          {/* Buttons */}
-          <Row className="d-flex justify-content-between mt-4">
-            <Col xs={6}>
-              <Button type="submit" className="btn-submit">
-                Save Changes
-              </Button>
-            </Col>
-            <Col xs={6}>
+          <FieldRow
+            fieldKey="image"
+            label="Image"
+            displayValue={imageVal ? 'Image set' : 'No image'}
+            editingField={editingField}
+            setEditingField={setEditingField}
+            icon={(
+              <RBImage
+                src={itemImage}
+                alt={produce.name}
+                style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 10 }}
+              />
+            )}
+          >
+            <InputGroup>
+              <Form.Control
+                type="text"
+                {...register('image')}
+                placeholder="URL"
+                isInvalid={!!errors.image}
+              />
               <Button
+                variant="outline-secondary"
                 type="button"
-                variant="warning"
-                onClick={() => reset()}
-                className="btn-reset"
+                style={{ zIndex: 99 }}
+                onClick={() => setShowPicker(true)}
               >
-                Reset
+                Pick
               </Button>
-            </Col>
-          </Row>
+            </InputGroup>
+          </FieldRow>
+
+          <FieldRow
+            fieldKey="name"
+            label="Name"
+            displayValue={watchedValues.name}
+            editingField={editingField}
+            setEditingField={setEditingField}
+            icon={<Tag color="white" size={20} />}
+          >
+            <Form.Control type="text" {...register('name')} placeholder="e.g., Chicken" isInvalid={!!errors.name} />
+          </FieldRow>
+
+          <FieldRow
+            fieldKey="type"
+            label="Type"
+            displayValue={watchedValues.type}
+            editingField={editingField}
+            setEditingField={setEditingField}
+            icon={<Grid color="white" size={20} />}
+          >
+            <Form.Control type="text" {...register('type')} placeholder="e.g., Meat" isInvalid={!!errors.type} />
+          </FieldRow>
+
+          <FieldRow
+            fieldKey="location"
+            label="Location"
+            displayValue={selectedLocation}
+            editingField={editingField}
+            setEditingField={setEditingField}
+            icon={<GeoAlt color="white" size={20} />}
+          >
+            <Form.Select
+              value={selectedLocation}
+              required
+              className={errors.location ? 'is-invalid' : ''}
+              onChange={async (e) => {
+                const { value } = e.target;
+                setSelectedLocation(value);
+                if (value === 'Add Location') {
+                  setValue('location', '');
+                  setStorageOptions([]);
+                  setSelectedStorage('Add Storage');
+                  setValue('storage', '');
+                } else {
+                  setValue('location', value);
+                  await fetchStorage(value);
+                }
+              }}
+            >
+              <option value="" disabled>Select...</option>
+              {locations.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
+              <option value="Add Location">+ Add Location</option>
+            </Form.Select>
+            {selectedLocation === 'Add Location' && (
+              <Form.Control
+                type="text"
+                placeholder="New location"
+                className="mt-2"
+                {...register('location', { required: true })}
+                onChange={(e) => setValue('location', e.target.value)}
+                required
+              />
+            )}
+          </FieldRow>
+
+          <FieldRow
+            fieldKey="storage"
+            label="Storage"
+            displayValue={selectedStorage}
+            editingField={editingField}
+            setEditingField={setEditingField}
+            icon={<Archive color="white" size={20} />}
+          >
+            <Form.Select
+              value={selectedStorage}
+              required
+              className={errors.storage ? 'is-invalid' : ''}
+              onChange={(e) => {
+                const { value } = e.target;
+                setSelectedStorage(value);
+                setValue('storage', value === 'Add Storage' ? '' : value);
+              }}
+            >
+              <option value="" disabled>Select...</option>
+              {storageOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+              <option value="Add Storage">+ Add Storage</option>
+            </Form.Select>
+            {selectedStorage === 'Add Storage' && (
+              <Form.Control
+                type="text"
+                placeholder="New storage"
+                className="mt-2"
+                {...register('storage', { required: true })}
+                onChange={(e) => setValue('storage', e.target.value)}
+                required
+              />
+            )}
+          </FieldRow>
+
+          <FieldRow
+            fieldKey="quantity"
+            label="Quantity"
+            displayValue={`${watchedValues.quantity ?? ''} ${watchedValues.unit ?? ''}`}
+            editingField={editingField}
+            setEditingField={setEditingField}
+            icon={<Stack color="white" size={20} />}
+          >
+            <>
+              <Form.Control
+                type="text"
+                list="fraction-suggestions"
+                {...register('quantity')}
+                placeholder="e.g., 1/2, 1 1/2, 2"
+                isInvalid={!!errors.quantity}
+              />
+              <Form.Text className="text-muted">
+                Fractions and mixed numbers are allowed.
+              </Form.Text>
+            </>
+          </FieldRow>
+
+          <FieldRow
+            fieldKey="unit"
+            label="Unit"
+            displayValue={unitChoice}
+            editingField={editingField}
+            setEditingField={setEditingField}
+            icon={<Rulers color="white" size={20} />}
+          >
+            <>
+              <Form.Select
+                value={unitChoice}
+                isInvalid={!!errors.unit}
+                onChange={(e) => {
+                  setUnitChoice(e.target.value);
+                  setValue('unit', e.target.value !== 'Other' ? e.target.value : '');
+                }}
+              >
+                {unitOptions.map((u) => <option key={u}>{u}</option>)}
+              </Form.Select>
+              {unitChoice === 'Other' && (
+                <Form.Control
+                  type="text"
+                  {...register('unit')}
+                  placeholder="Custom unit"
+                  required
+                  className="mt-2"
+                  isInvalid={!!errors.unit}
+                />
+              )}
+            </>
+          </FieldRow>
+
+          <FieldRow
+            fieldKey="restockThreshold"
+            label="Restock Threshold"
+            displayValue={watchedValues.restockThreshold ?? '—'}
+            editingField={editingField}
+            setEditingField={setEditingField}
+            icon={<ArrowRepeat color="white" size={20} />}
+          >
+            <>
+              <Form.Control
+                type="text"
+                list="fraction-suggestions"
+                {...register('restockThreshold')}
+                placeholder="e.g., 1/4, 1/2, 1 1/2"
+                isInvalid={!!errors.restockThreshold}
+              />
+              <Form.Text className="text-muted">
+                Optional. Fractions and mixed numbers are allowed.
+              </Form.Text>
+            </>
+          </FieldRow>
+
+          <FieldRow
+            fieldKey="expiration"
+            label="Expiration Date"
+            displayValue={watchedValues.expiration ?? '—'}
+            editingField={editingField}
+            setEditingField={setEditingField}
+            icon={<Calendar color="white" size={20} />}
+          >
+            <Form.Control
+              type="date"
+              {...register('expiration')}
+              isInvalid={!!errors.expiration}
+            />
+          </FieldRow>
+
+          <datalist id="fraction-suggestions">
+            {COMMON_FRACTION_SUGGESTIONS.map((value) => (
+              // eslint-disable-next-line jsx-a11y/control-has-associated-label
+              <option key={value} value={value} />
+            ))}
+          </datalist>
+
+          <div className="d-flex gap-2 mt-4">
+            <Button type="submit" className="btn-submit flex-fill">
+              Save Changes
+            </Button>
+            <Button
+              type="button"
+              variant="warning"
+              onClick={() => reset(mapProduceToFormValues(produce))}
+              className="btn-reset flex-fill"
+            >
+              Reset
+            </Button>
+          </div>
         </Form>
       </Modal.Body>
 
-      {/* Image Picker Modal */}
       <ImagePickerModal
         show={showPicker}
         onClose={() => setShowPicker(false)}
-        onSelect={(url, meta) => {
+        onSelect={(url) => {
           setValue('image', url, { shouldValidate: true, shouldDirty: true });
-          if (meta?.alt) setImageAlt(meta.alt);
         }}
       />
     </Modal>

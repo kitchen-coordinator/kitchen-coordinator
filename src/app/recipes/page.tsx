@@ -3,7 +3,7 @@ import RecipesClient from '@/components/recipes/RecipesClient';
 import { getRecipes } from '@/lib/recipes';
 
 import { getServerSession } from 'next-auth';
-import { getUserProduceByEmail } from '@/lib/dbActions';
+import { getUserProduceByEmail } from '@/lib/pantryQueries';
 
 export const dynamic = 'force-dynamic';
 

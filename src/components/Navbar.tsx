@@ -18,7 +18,7 @@ const NavBar: React.FC = () => {
       <Navbar className="navandfooter" expand="lg">
         <Container>
           <Navbar.Brand as={Link} href="/">
-            Pantry Pals
+            Kitchen Coordinator
           </Navbar.Brand>
         </Container>
       </Navbar>
@@ -28,13 +28,20 @@ const NavBar: React.FC = () => {
   return (
     <Navbar className="navandfooter" expand="lg">
       <Container>
+        {/* Show the brand as active if the user is on the home page */}
         <Navbar.Brand as={Link} href="/" className={pathname === '/' ? 'active' : undefined}>
-          Pantry Pals
+          Kitchen Coordinator
         </Navbar.Brand>
 
+        {/* Show the navigation links only if the user is logged in */}
         {session && (
           <>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
+            <Navbar.Toggle aria-controls="basic-navbar-nav" className="kc-toggler">
+              {/* Hamburger menu icon */}
+              <span className="kc-bar" />
+              <span className="kc-bar" />
+              <span className="kc-bar" />
+            </Navbar.Toggle>
             <Navbar.Collapse id="basic-navbar-nav">
               <Nav className="me-auto justify-content-start">
                 <Nav.Link as={Link} id="dashboard-nav" href="/dashboard" active={isActive('/dashboard')}>
