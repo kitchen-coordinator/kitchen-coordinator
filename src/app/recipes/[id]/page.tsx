@@ -1,6 +1,10 @@
 import Link from 'next/link';
+<<<<<<< Updated upstream
 import { Container, Row, Col, Image, Badge, Button } from 'react-bootstrap';
 import { CheckCircleFill, XCircleFill } from 'react-bootstrap-icons';
+=======
+import { Container, Row, Col, Image, Badge, Button, Alert } from 'react-bootstrap';
+>>>>>>> Stashed changes
 import { notFound } from 'next/navigation';
 import { getRecipeById } from '@/lib/recipes';
 import { getServerSession } from 'next-auth';
@@ -17,7 +21,44 @@ export default async function RecipeDetailPage({ params }: PageProps) {
   const id = Number(params.id);
   if (Number.isNaN(id)) return notFound();
 
-  const recipe = await getRecipeById(id);
+  let recipe: Awaited<ReturnType<typeof getRecipeById>> = null;
+  try {
+    recipe = await getRecipeById(id);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const isDbDown = message.includes("Can't reach database server")
+      || message.includes('PrismaClientInitializationError');
+
+    if (isDbDown) {
+      return (
+        <main style={{ backgroundColor: '#f8f9fa' }}>
+          <Container className="py-5">
+            <Alert variant="warning">
+              <Alert.Heading>Database connection error</Alert.Heading>
+              <p className="mb-0">
+                This page needs the database, but Prisma couldn’t connect.
+                {' '}
+                Double-check your
+                {' '}
+                <code>DATABASE_URL</code>
+                {' '}
+                and that Neon is reachable, then restart
+                {' '}
+                <code>next dev</code>
+                .
+              </p>
+            </Alert>
+            <Link href="/recipes" passHref>
+              <Button variant="outline-secondary">Back to Recipes</Button>
+            </Link>
+          </Container>
+        </main>
+      );
+    }
+
+    throw err;
+  }
+
   if (!recipe) return notFound();
 
   const session = await getServerSession();
@@ -25,7 +66,12 @@ export default async function RecipeDetailPage({ params }: PageProps) {
 
   let pantry: any[] = [];
   if (email) {
-    pantry = await getUserProduceByEmail(email);
+    try {
+      pantry = await getUserProduceByEmail(email);
+    } catch {
+      // If DB is momentarily unavailable, still render the recipe page.
+      pantry = [];
+    }
   }
 
   // Create a set of pantry item names (lowercase for case-insensitive matching)
