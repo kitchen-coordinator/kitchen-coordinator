@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { storage, db } from '@/lib/firebase';
+import { ensureFirebaseSignedIn, getFirebaseClient, isFirebaseConfigured } from '@/lib/firebase';
 import swal from 'sweetalert';
 import Image from 'next/image';
 
@@ -12,6 +12,8 @@ type SessionUser = { id: string; email: string; randomKey: string };
 type Props = { user?: SessionUser | null };
 
 export default function ImageUploader({ user }: Props) {
+  const firebase = getFirebaseClient();
+  const firebaseReady = isFirebaseConfigured() && !!firebase;
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(0);
@@ -34,6 +36,10 @@ export default function ImageUploader({ user }: Props) {
   }
 
   async function handleUpload() {
+    if (!firebaseReady) {
+      swal('Uploads Disabled', 'Uploads are not configured right now.', 'info');
+      return;
+    }
     if (!file) {
       swal('No File Selected', 'Please select a file to upload.', 'warning');
       return;
@@ -43,10 +49,11 @@ export default function ImageUploader({ user }: Props) {
       return;
     }
 
+    await ensureFirebaseSignedIn(firebase.auth);
     setUploading(true);
     const uid = user.id;
     const filePath = `images/${uid}/${Date.now()}_${file.name}`;
-    const storageRef = ref(storage, filePath);
+    const storageRef = ref(firebase.storage, filePath);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
     uploadTask.on(
@@ -62,7 +69,7 @@ export default function ImageUploader({ user }: Props) {
       },
       async () => {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-        await addDoc(collection(db, 'images'), {
+        await addDoc(collection(firebase.db, 'images'), {
           uid,
           path: filePath,
           url,

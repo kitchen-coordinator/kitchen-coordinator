@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -127,6 +128,7 @@ model Recipe {
   dietary         String[]   // e.g., ["Vegan","Gluten-Free"]
   ingredientItems RecipeIngredient[]
   owner           String?
+  savedBy         SavedRecipe[]
 
   // Add these fields (nullable to match existing rows)
   instructions    String?    @db.Text
@@ -153,5 +155,33 @@ model RecipeIngredient {
   unit      String?
   order     Int?
 
+  @@index([recipeId])
+}
+
+model SavedRecipeFolder {
+  id        Int      @id @default(autoincrement())
+  owner     String   // email
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  savedRecipes SavedRecipe[]
+
+  @@unique([owner, name])
+  @@index([owner])
+}
+
+model SavedRecipe {
+  id        Int      @id @default(autoincrement())
+  owner     String   // email
+  recipeId  Int
+  folderId  Int?
+  createdAt DateTime @default(now())
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  folder SavedRecipeFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  @@unique([owner, recipeId])
+  @@index([owner, folderId])
   @@index([recipeId])
 }

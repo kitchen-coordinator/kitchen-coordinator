@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Spinner, Alert, Row, Col, Card } from 'react-bootstrap';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getFirebaseClient, isFirebaseConfigured } from '@/lib/firebase';
 import Image from 'next/image';
 
 type Props = {
@@ -22,6 +22,9 @@ type DishImage = {
 };
 
 export default function DishImagesModal({ show, onHide, recipeId, recipeTitle }: Props) {
+  const firebase = getFirebaseClient();
+  const db = firebase?.db ?? null;
+  const firebaseReady = isFirebaseConfigured() && !!db;
   const [images, setImages] = useState<DishImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +33,11 @@ export default function DishImagesModal({ show, onHide, recipeId, recipeTitle }:
     if (!show) return;
 
     async function fetchImages() {
+      if (!firebaseReady) {
+        setImages([]);
+        setError('Community photos are currently unavailable (Firebase is not configured).');
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
@@ -61,7 +69,7 @@ export default function DishImagesModal({ show, onHide, recipeId, recipeTitle }:
     }
 
     fetchImages();
-  }, [show, recipeId]);
+  }, [show, recipeId, firebaseReady, db]);
 
   return (
     <Modal show={show} onHide={onHide} centered size="xl">

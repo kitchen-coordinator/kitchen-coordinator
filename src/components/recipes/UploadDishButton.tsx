@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from 'react-bootstrap';
 import { CameraFill } from 'react-bootstrap-icons';
+import { isFirebaseConfigured } from '@/lib/firebase';
 import DishImageUploadModal from './DishImageUploadModal';
 import '../../styles/buttons.css';
 
@@ -14,6 +15,8 @@ type Props = {
 
 export default function UploadDishButton({ recipeId, recipeTitle, userEmail }: Props) {
   const [showModal, setShowModal] = useState(false);
+  const firebaseConfigured = isFirebaseConfigured();
+  const canUpload = !!userEmail && firebaseConfigured;
 
   return (
     <>
@@ -26,7 +29,7 @@ export default function UploadDishButton({ recipeId, recipeTitle, userEmail }: P
           fontSize: '1.05rem',
         }}
         onClick={() => setShowModal(true)}
-        disabled={!userEmail}
+        disabled={!canUpload}
       >
         <CameraFill size={20} />
         Made this dish? Show us!

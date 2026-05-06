@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from 'react-bootstrap';
 import { Images } from 'react-bootstrap-icons';
+import { isFirebaseConfigured } from '@/lib/firebase';
 import DishImagesModal from './DishImagesModal';
 import '../../styles/buttons.css';
 
@@ -13,6 +14,7 @@ type Props = {
 
 export default function ViewDishImagesButton({ recipeId, recipeTitle }: Props) {
   const [showModal, setShowModal] = useState(false);
+  const firebaseConfigured = isFirebaseConfigured();
 
   return (
     <>
@@ -25,6 +27,7 @@ export default function ViewDishImagesButton({ recipeId, recipeTitle }: Props) {
           fontSize: '1.05rem',
         }}
         onClick={() => setShowModal(true)}
+        disabled={!firebaseConfigured}
       >
         <Images size={20} />
         View Community Photos

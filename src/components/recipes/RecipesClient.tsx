@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { Row, Col, Button, Form } from 'react-bootstrap';
 import AddRecipeModal from '@/components/recipes/AddRecipeModal';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import RecipeCard from './RecipeCard';
 import '../../styles/buttons.css';
 
@@ -110,6 +111,12 @@ export default function RecipesClient({
         </div>
 
         <div className="d-flex gap-2">
+          <Link href="/recipes/saved" passHref legacyBehavior>
+            <Button variant="outline-success">
+              Saved recipes
+            </Button>
+          </Link>
+
           {canAdd && (
             <Button className="btn-add" onClick={() => setShowAdd(true)}>
               + Add Recipe

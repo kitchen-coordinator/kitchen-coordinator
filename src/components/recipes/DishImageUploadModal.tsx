@@ -3,10 +3,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Modal, Button, Form, ProgressBar } from 'react-bootstrap';
+import { Modal, Button, Form, ProgressBar, Alert } from 'react-bootstrap';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { storage, db } from '@/lib/firebase';
+import { ensureFirebaseSignedIn, getFirebaseClient, isFirebaseConfigured } from '@/lib/firebase';
 import swal from 'sweetalert';
 import Image from 'next/image';
 
@@ -25,6 +25,8 @@ export default function DishImageUploadModal({
   recipeTitle,
   userEmail,
 }: Props) {
+  const firebase = getFirebaseClient();
+  const firebaseReady = isFirebaseConfigured() && !!firebase;
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(0);
@@ -54,6 +56,10 @@ export default function DishImageUploadModal({
   }
 
   async function handleUpload() {
+    if (!firebaseReady) {
+      swal('Uploads Disabled', 'Dish photo uploads are not configured right now.', 'info');
+      return;
+    }
     if (!file) {
       swal('No File Selected', 'Please select a file to upload.', 'warning');
       return;
@@ -63,9 +69,10 @@ export default function DishImageUploadModal({
       return;
     }
 
+    await ensureFirebaseSignedIn(firebase.auth);
     setUploading(true);
     const filePath = `recipe-images/${userEmail}/${recipeId}/${Date.now()}_${file.name}`;
-    const storageRef = ref(storage, filePath);
+    const storageRef = ref(firebase.storage, filePath);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
     uploadTask.on(
@@ -85,7 +92,7 @@ export default function DishImageUploadModal({
       },
       async () => {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-        await addDoc(collection(db, 'recipeImages'), {
+        await addDoc(collection(firebase.db, 'recipeImages'), {
           userEmail,
           recipeId,
           recipeTitle,
@@ -117,6 +124,11 @@ export default function DishImageUploadModal({
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {!firebaseReady && (
+          <Alert variant="warning">
+            Dish photo uploads are currently unavailable (Firebase is not configured).
+          </Alert>
+        )}
         <Form>
           <Form.Group className="mb-3">
             <Form.Label>Upload Photo</Form.Label>
@@ -124,7 +136,7 @@ export default function DishImageUploadModal({
               type="file"
               accept="image/*"
               onChange={handleFile}
-              disabled={uploading}
+              disabled={uploading || !firebaseReady}
             />
             <Form.Text className="text-muted">
               Maximum file size: 5MB. Accepted formats: JPG, PNG, GIF, WebP
@@ -161,7 +173,7 @@ export default function DishImageUploadModal({
         <Button
           variant="success"
           onClick={handleUpload}
-          disabled={!file || !userEmail || uploading}
+          disabled={!firebaseReady || !file || !userEmail || uploading}
         >
           {uploading ? 'Uploading...' : 'Upload Photo'}
         </Button>
