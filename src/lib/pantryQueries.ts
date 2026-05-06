@@ -14,4 +14,3 @@ export async function getUserProduceWithQuantity(owner: string) {
     orderBy: { name: 'asc' },
   });
 }
-
