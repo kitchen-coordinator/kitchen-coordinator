@@ -31,7 +31,7 @@ export default function AddShoppingList({ show, onHide, owner }: Props) {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: yupResolver(AddShoppingListSchema),
+    resolver: yupResolver(AddShoppingListSchema) as any,
     defaultValues: {
       name: '',
       owner,
@@ -55,7 +55,7 @@ export default function AddShoppingList({ show, onHide, owner }: Props) {
       await addShoppingList({
         name: data.name.trim(),
         owner: data.owner,
-        deadline: data.deadline || null,
+        deadline: data.deadline ? new Date(data.deadline).toISOString() : null,
         location: data.location?.trim() || null,
         budgetLimit:
           typeof data.budgetLimit === 'number' && !Number.isNaN(data.budgetLimit)

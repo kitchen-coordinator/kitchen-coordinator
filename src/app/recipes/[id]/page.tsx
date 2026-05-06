@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Container, Row, Col, Image, Badge, Button } from 'react-bootstrap';
-import { CheckCircleFill, XCircleFill } from 'react-bootstrap-icons';
 import { notFound } from 'next/navigation';
 import { getRecipeById } from '@/lib/recipes';
 import { getServerSession } from 'next-auth';
@@ -8,7 +7,7 @@ import { getUserProduceByEmail, getUserProduceWithQuantity } from '@/lib/pantryQ
 import AddToShoppingList from '@/components/recipes/AddToShoppingList';
 import UploadDishButton from '@/components/recipes/UploadDishButton';
 import ViewDishImagesButton from '@/components/recipes/ViewDishImagesButton';
-import UseIngredientsButton from '@/components/recipes/UseIngredientsButton';
+import RecipeIngredientsPanel from '@/components/recipes/RecipeIngredientsPanel';
 
 type PageProps = { params: { id: string } };
 export const dynamic = 'force-dynamic';
@@ -24,12 +23,8 @@ export default async function RecipeDetailPage({ params }: PageProps) {
   const email = session?.user?.email ?? null;
 
   let pantry: any[] = [];
-  let pantryFull: any[] = [];
   if (email) {
-    [pantry, pantryFull] = await Promise.all([
-      getUserProduceByEmail(email),
-      getUserProduceWithQuantity(email),
-    ]);
+    pantry = await getUserProduceByEmail(email);
   }
 
   // Create a set of pantry item names (lowercase for case-insensitive matching)
@@ -40,8 +35,21 @@ export default async function RecipeDetailPage({ params }: PageProps) {
   // Only use ingredientItems from the relation
   const ingredientItems = recipe.ingredientItems ?? [];
 
+  const ingredientItemsDisplay = ingredientItems.map((item) => ({
+    ...item,
+    hasItem: pantryNames.has(item.name.toLowerCase()),
+  }));
+
   // Missing item names (for AddToShoppingList)
-  const missingItems = ingredientItems.filter((item) => !pantryNames.has(item.name.toLowerCase()));
+  const missingItems = ingredientItems
+    .filter((item) => !pantryNames.has(item.name.toLowerCase()))
+    .map((item) => ({
+      name: item.name,
+      quantity: item.quantity ?? null,
+      unit: item.unit ?? null,
+    }));
+
+  const baseServings = recipe.servings && recipe.servings > 0 ? recipe.servings : 1;
 
   return (
     <main style={{ backgroundColor: '#f8f9fa' }}>
@@ -268,62 +276,11 @@ export default async function RecipeDetailPage({ params }: PageProps) {
             )}
 
             {/* Ingredients */}
-            <div className="card border-0 shadow-sm mb-4">
-              <div className="card-body">
-                <h5 className="mb-3 fw-bold" style={{ color: '#2c3e50' }}>
-                  Ingredients
-                </h5>
-
-                <ul
-                  style={{
-                    paddingLeft: '1.25rem',
-                    lineHeight: '2',
-                    color: '#495057',
-                  }}
-                >
-                  {ingredientItems.map((item) => {
-                    const hasItem = pantryNames.has(item.name.toLowerCase());
-
-                    const parts: string[] = [];
-                    if (item.quantity != null) {
-                      parts.push(Number.isInteger(item.quantity) ? String(item.quantity) : String(item.quantity));
-                    }
-                    if (item.unit) {
-                      parts.push(item.unit);
-                    }
-                    parts.push(item.name);
-
-                    const label = parts.join(' ');
-
-                    return (
-                      <li key={item.id ?? `${item.name}-${item.unit ?? ''}`} style={{ marginBottom: '0.5rem' }}>
-                        <div className="d-flex align-items-center gap-2">
-                          <span>{label}</span>
-                          {hasItem ? (
-                            <CheckCircleFill color="#28a745" size={16} title="You have this in your pantry" />
-                          ) : (
-                            <XCircleFill color="#dc3545" size={16} title="You don't have this in your pantry" />
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-
-                {/* Add-to-shopping-list controls (client) */}
-                <AddToShoppingList missingItems={missingItems} />
-
-                {email && (
-                  <div className="mt-3">
-                    <UseIngredientsButton
-                      ingredientItems={ingredientItems}
-                      pantry={pantryFull}
-                      recipeTitle={recipe.title}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
+            <RecipeIngredientsPanel
+              baseServings={baseServings}
+              ingredientItems={ingredientItemsDisplay}
+              missingItems={missingItems}
+            />
 
             {/* Instructions */}
             {recipe.instructions?.trim() && (

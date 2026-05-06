@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-one-expression-per-line */
 import { useState } from 'react';
 import { Button } from 'react-bootstrap';
-import { PencilSquare, Trash, PlusLg } from 'react-bootstrap-icons';
+import { PlusLg } from 'react-bootstrap-icons';
 import { ProduceRelations } from '@/types/ProduceRelations';
 import { formatDisplayAmount, formatDisplayQuantity, getPantryDisplayAmount } from '@/lib/displayUnits';
 import EditProduceModal from './EditProduceModal';
@@ -60,16 +60,6 @@ const ProduceItem = ({
         <td>{formatDisplayAmount(display)}</td>
         <td>{formatDisplayQuantity(safeRestock, display.unit)}</td>
         <td>{expiration ? new Date(expiration).toISOString().split('T')[0] : 'N/A'}</td>
-        <td>
-          <Button className="btn-edit" onClick={() => setShowEditModal(true)}>
-            <PencilSquare color="white" size={18} />
-          </Button>
-        </td>
-        <td>
-          <Button variant="danger" className="btn-delete" onClick={() => setShowDeleteModal(true)}>
-            <Trash color="white" size={18} />
-          </Button>
-        </td>
         <td>
           <Button className="btn-edit" onClick={() => setShowAddListsModal(true)}>
             <PlusLg color="white" size={18} />

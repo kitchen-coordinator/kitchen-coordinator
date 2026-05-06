@@ -45,8 +45,6 @@ const ProduceTable = ({
             <th>Quantity</th>
             <th>Restock</th>
             <th>Expiration</th>
-            <th>Edit</th>
-            <th>Delete</th>
             <th>Add to Shopping List</th>
           </tr>
         </thead>
@@ -62,7 +60,7 @@ const ProduceTable = ({
             ))
           ) : (
             <tr>
-              <td colSpan={9} className="text-center">
+              <td colSpan={7} className="text-center">
                 No items found
               </td>
             </tr>

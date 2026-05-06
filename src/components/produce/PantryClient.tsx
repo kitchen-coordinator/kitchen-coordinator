@@ -3,8 +3,12 @@
 import { Button, Col, Container, Row, Nav, Modal, Toast } from 'react-bootstrap';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PlusCircle, Trash } from 'react-bootstrap-icons';
+import { PencilSquare, PlusCircle, Trash } from 'react-bootstrap-icons';
+import type { ProduceRelations } from '@/types/ProduceRelations';
 import AddProduceModal from './AddProduceModal';
+import EditProduceModal from './EditProduceModal';
+import DeleteProduceModal from './DeleteProduceModal';
+import SelectItemModal from './SelectItemModal';
 import ProduceListWithGrouping from './ProduceListWithGrouping';
 import ExpiredProduceBanner from './ExpiredProduceBanner';
 import '../../styles/buttons.css';
@@ -28,6 +32,11 @@ function PantryClient({
   const router = useRouter();
   const [showAddProduceModal, setShowAddProduceModal] = useState(false);
   const [showAddLocationModal, setShowAddLocationModal] = useState(false);
+  const [showSelectForEdit, setShowSelectForEdit] = useState(false);
+  const [showSelectForDelete, setShowSelectForDelete] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ProduceRelations | null>(null);
   const [activeLocation, setActiveLocation] = useState<string>('all');
   const [confirmLoc, setConfirmLoc] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -54,34 +63,23 @@ function PantryClient({
   // Refresh when user returns to this tab/page so inventory never stays stale.
   useEffect(() => {
     const refreshOnVisible = () => {
-      if (document.visibilityState === 'visible') {
-        router.refresh();
-      }
+      if (document.visibilityState === 'visible') router.refresh();
     };
-
     window.addEventListener('focus', refreshOnVisible);
     document.addEventListener('visibilitychange', refreshOnVisible);
-
     return () => {
       window.removeEventListener('focus', refreshOnVisible);
       document.removeEventListener('visibilitychange', refreshOnVisible);
     };
   }, [router]);
 
-  // Keep pantry data in sync while the user stays on this page.
   useEffect(() => {
     const interval = window.setInterval(() => {
-      if (document.visibilityState === 'visible' && navigator.onLine) {
-        router.refresh();
-      }
+      if (document.visibilityState === 'visible' && navigator.onLine) router.refresh();
     }, PANTRY_REFRESH_INTERVAL_MS);
-
-    return () => {
-      window.clearInterval(interval);
-    };
+    return () => window.clearInterval(interval);
   }, [router]);
 
-  // Filter produce based on selected location
   const filteredProduce = useMemo(() => {
     if (activeLocation === 'all') return initialProduce;
     return initialProduce.filter((p) => {
@@ -90,26 +88,19 @@ function PantryClient({
     });
   }, [initialProduce, activeLocation]);
 
-  // Handle delete
-  const handleDeleteLocation = async (loc: string) => {
-    setConfirmLoc(loc);
-  };
+  const handleDeleteLocation = async (loc: string) => setConfirmLoc(loc);
 
   const confirmDelete = async () => {
     if (!confirmLoc) return;
-
     try {
       const url = `/api/produce/0/locations?name=${encodeURIComponent(confirmLoc)}&owner=${encodeURIComponent(owner)}`;
       const res = await fetch(url, { method: 'DELETE' });
-
       if (!res.ok) {
         const errorData = await res.json();
         setToastMessage(`Failed to delete location: ${errorData.error || res.statusText}`);
         setConfirmLoc(null);
         return;
       }
-
-      // Remove deleted location from state instead of reloading
       setLocations((prev) => prev.filter((l) => l !== confirmLoc));
       setConfirmLoc(null);
       setToastMessage(`Deleted location: ${confirmLoc}`);
@@ -129,13 +120,24 @@ function PantryClient({
         <Row className="mb-3">
           <Col className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h1>Your Pantry at a Glance</h1>
-            <Button className="btn-add" onClick={() => setShowAddProduceModal(true)}>
-              + Add Item
-            </Button>
+            <div className="d-flex gap-2 align-items-center">
+              <Button className="btn-edit" onClick={() => setShowSelectForEdit(true)}>
+                <PencilSquare size={16} color="white" />
+                {' '}
+                Edit
+              </Button>
+              <Button className="btn-delete" onClick={() => setShowSelectForDelete(true)}>
+                <Trash size={16} color="white" />
+                {' '}
+                Delete
+              </Button>
+              <Button className="btn-add" onClick={() => setShowAddProduceModal(true)}>
+                + Add Item
+              </Button>
+            </div>
           </Col>
         </Row>
 
-        {/* Tabs */}
         <Row className="mb-4">
           <Col>
             <Nav
@@ -146,24 +148,16 @@ function PantryClient({
             >
               <Nav.Item style={{ alignItems: 'center', marginLeft: '6px' }}>
                 <Nav.Link>
-                  <PlusCircle
-                    size={18}
-                    onClick={() => setShowAddLocationModal(true)}
-                    style={{ cursor: 'pointer' }}
-                  />
+                  <PlusCircle size={18} onClick={() => setShowAddLocationModal(true)} style={{ cursor: 'pointer' }} />
                 </Nav.Link>
               </Nav.Item>
-
               <Nav.Item>
                 <Nav.Link eventKey="all">All Locations</Nav.Link>
               </Nav.Item>
-
               {locations.map((loc) => (
                 <Nav.Item key={loc}>
                   <div className="location-tab">
-                    <Nav.Link eventKey={loc} style={{ textTransform: 'capitalize' }}>
-                      {loc}
-                    </Nav.Link>
+                    <Nav.Link eventKey={loc} style={{ textTransform: 'capitalize' }}>{loc}</Nav.Link>
                     <Button
                       variant="danger"
                       size="sm"
@@ -180,7 +174,6 @@ function PantryClient({
           </Col>
         </Row>
 
-        {/* Produce list */}
         <Row>
           <Col>
             <ProduceListWithGrouping
@@ -191,6 +184,30 @@ function PantryClient({
         </Row>
       </Container>
 
+      {/* Select item → Edit */}
+      <SelectItemModal
+        show={showSelectForEdit}
+        onHide={() => setShowSelectForEdit(false)}
+        items={filteredProduce}
+        action="edit"
+        onConfirm={(item: ProduceRelations) => {
+          setSelectedItem(item);
+          setShowEditModal(true);
+        }}
+      />
+
+      {/* Select item → Delete */}
+      <SelectItemModal
+        show={showSelectForDelete}
+        onHide={() => setShowSelectForDelete(false)}
+        items={filteredProduce}
+        action="delete"
+        onConfirm={(item: ProduceRelations) => {
+          setSelectedItem(item);
+          setShowDeleteModal(true);
+        }}
+      />
+
       {/* Add Item Modal */}
       <AddProduceModal
         show={showAddProduceModal}
@@ -199,17 +216,29 @@ function PantryClient({
       />
 
       {/* Add Location Modal */}
-      <AddLocationModal
-        show={showAddLocationModal}
-        onHide={() => setShowAddLocationModal(false)}
-        owner={owner}
-      />
+      <AddLocationModal show={showAddLocationModal} onHide={() => setShowAddLocationModal(false)} owner={owner} />
 
-      {/* Confirm Delete Modal */}
+      {/* Edit Modal */}
+      {selectedItem && (
+        <EditProduceModal
+          show={showEditModal}
+          onHide={() => { setShowEditModal(false); setSelectedItem(null); }}
+          produce={selectedItem}
+        />
+      )}
+
+      {/* Delete Modal */}
+      {selectedItem && (
+        <DeleteProduceModal
+          show={showDeleteModal}
+          onHide={() => { setShowDeleteModal(false); setSelectedItem(null); }}
+          produce={selectedItem}
+        />
+      )}
+
+      {/* Confirm Delete Location Modal */}
       <Modal show={!!confirmLoc} onHide={() => setConfirmLoc(null)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete Location</Modal.Title>
-        </Modal.Header>
+        <Modal.Header closeButton><Modal.Title>Delete Location</Modal.Title></Modal.Header>
         <Modal.Body>
           Are you sure you want to delete
           {' '}
@@ -217,12 +246,8 @@ function PantryClient({
           ? This will remove all related items.
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setConfirmLoc(null)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={confirmDelete}>
-            Delete
-          </Button>
+          <Button variant="secondary" onClick={() => setConfirmLoc(null)}>Cancel</Button>
+          <Button variant="danger" onClick={confirmDelete}>Delete</Button>
         </Modal.Footer>
       </Modal>
 
@@ -233,7 +258,12 @@ function PantryClient({
         delay={4000}
         autohide
         bg="danger"
-        style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999 }}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          zIndex: 9999,
+        }}
       >
         <Toast.Body>{toastMessage}</Toast.Body>
       </Toast>

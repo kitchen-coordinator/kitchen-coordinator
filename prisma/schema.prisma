@@ -1,11 +1,17 @@
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  engineType    = "binary"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 model User {
@@ -169,9 +175,4 @@ model RecipeIngredient {
   recipe   Recipe  @relation(fields: [recipeId], references: [id])
 
   @@index([recipeId])
-}
-
-enum Role {
-  USER
-  ADMIN
 }

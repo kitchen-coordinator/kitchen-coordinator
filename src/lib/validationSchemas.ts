@@ -75,12 +75,40 @@ export const AddShoppingListSchema = Yup.object({
   owner: Yup.string()
     .required('You must be signed in to create a list')
     .min(1),
+  deadline: Yup.date()
+    .nullable()
+    .transform((curr: Date | null, orig: string) => (orig === '' ? null : curr))
+    .notRequired(),
+  location: Yup.string().nullable().notRequired(),
+  budgetLimit: Yup.number()
+    .typeError('Budget must be a number')
+    .nullable()
+    .transform((curr, orig) => {
+      if (orig === '' || orig === null || typeof orig === 'undefined') return null;
+      return Number.isNaN(curr) ? null : curr;
+    })
+    .min(0, 'Budget cannot be negative')
+    .notRequired(),
 });
 
 export const EditShoppingListSchema = Yup.object({
   id: Yup.number().required('ID is required'),
   name: Yup.string().required('List name is required'),
   owner: Yup.string().required('Owner is required'),
+  deadline: Yup.date()
+    .nullable()
+    .transform((curr: Date | null, orig: string) => (orig === '' ? null : curr))
+    .notRequired(),
+  location: Yup.string().nullable().notRequired(),
+  budgetLimit: Yup.number()
+    .typeError('Budget must be a number')
+    .nullable()
+    .transform((curr, orig) => {
+      if (orig === '' || orig === null || typeof orig === 'undefined') return null;
+      return Number.isNaN(curr) ? null : curr;
+    })
+    .min(0, 'Budget cannot be negative')
+    .notRequired(),
 });
 
 export const AddShoppingListItemSchema = Yup.object({
