@@ -4,7 +4,7 @@ import { CheckCircleFill, XCircleFill } from 'react-bootstrap-icons';
 import { notFound } from 'next/navigation';
 import { getRecipeById } from '@/lib/recipes';
 import { getServerSession } from 'next-auth';
-import { getUserProduceByEmail, getUserProduceWithQuantity } from '@/lib/dbActions';
+import { getUserProduceByEmail, getUserProduceWithQuantity } from '@/lib/pantryQueries';
 import AddToShoppingList from '@/components/recipes/AddToShoppingList';
 import UploadDishButton from '@/components/recipes/UploadDishButton';
 import ViewDishImagesButton from '@/components/recipes/ViewDishImagesButton';
